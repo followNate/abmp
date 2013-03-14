@@ -5,7 +5,7 @@ commands.gdb
 # normal build system output
 disk0.img
 disk0.vmdk
-*.[oad]
+*.[od]
 *.pyc
 *.gdbcomm
 *.so
