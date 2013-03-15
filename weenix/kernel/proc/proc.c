@@ -109,6 +109,7 @@ proc_create(char *name)
  * never exit this way.
  *
  * @param status the status to exit the process with
+ * @author mohit aggarwal
  */
 void
 proc_cleanup(int status)
@@ -135,11 +136,23 @@ proc_kill(proc_t *p, int status)
  * Don't kill direct children of the idle process.
  *
  * In Weenix, this is only called by sys_halt.
+ * @author mohit aggarwal
  */
 void
 proc_kill_all()
 {
-        NOT_YET_IMPLEMENTED("PROCS: proc_kill_all");
+        //NOT_YET_IMPLEMENTED("PROCS: proc_kill_all");
+	//start processing the kill all only when the list holding process info
+	//is not empty.
+	//Also ensure that init process is not deleted
+	list_t * processList = proc_list();	
+	if(!list_empty(processList)){
+		//iterate over each element and call proc_kill()
+		proc_t *process;		
+		list_iterate_begin(processList,process,proc_t,p_list_link){
+			 
+		}list_iterate_end();
+	}
 }
 
 proc_t *
