@@ -83,44 +83,65 @@ proc_t *
 proc_create(char *name)
 {
         /*Allocate a slab to a process*/
-         proc_t *new_proc_t = slab_obj_alloc(proc_allocator);
+        proc_t *new_proc_t = slab_obj_alloc(proc_allocator);
  
-          /*check whether allocation is succesful or not*/
-          KASSERT(new_proc_t!=NULL);
+        /*check whether allocation is succesful or not*/
+        KASSERT(new_proc_t!=NULL);
          
-          /*Empty the content of the slab*/
-          memset(new_proc_t, 0, sizeof(proc_t));
+        /*Empty the content of the slab*/
+        memset(new_proc_t, 0, sizeof(proc_t));
          
-          /*Get the proc_id*/
-          new_proc_t->p_pid=_proc_getid();
-          KASSERT(new_proc_t->p_pid>=0);  
+        /*Get the proc_id*/
+        new_proc_t->p_pid=_proc_getid();
+        KASSERT(new_proc_t->p_pid>=0);  
           
-          if(new_proc_t->p_pid==0)
+        if(new_proc_t->p_pid==0)
                 {};
-          if(new_proc_t->p_pid==1)
-                 proc_initproc =new_proc_t;/*set the process list header to point the INIT process*/
-          else{};
+        if(new_proc_t->p_pid==1)
+                proc_initproc =new_proc_t;/*set the process list header to point the INIT process*/
+        else{};
         
-          /*Assign the Process name */
-          if(strlen(name)<PROC_NAME_LEN)
+        /*Assign the Process name */
+        if(strlen(name)<PROC_NAME_LEN)
                 strcpy(new_proc_t->p_comm,name);
-          else
+        else
                 strncpy(new_proc_t->p_comm,name,PROC_NAME_LEN);
               
-          /*Initialize the list containing its threads*/
-          list_init(&(new_proc_t->p_threads));
+        /*Initialize the list containing its threads*/
+        list_init(&(new_proc_t->p_threads));
           
-          /*Initialize the list containg its childrens*/
-          list_init(&(new_proc_t->p_children));
+        /*Initialize the list containg its childrens*/
+        list_init(&(new_proc_t->p_children));
 
-          /*pOINTER TO PARENT PROCESS*/
-          new_proc_t->p_pproc=curproc;
+        /*pOINTER TO PARENT PROCESS*/
+        new_proc_t->p_pproc=curproc;
           
-          /*Set Process State*/
-          new_proc_t->p_state=PROC_RUNNING;
-                
+        /*Set Process State*/
+        new_proc_t->p_state=PROC_RUNNING;
+                    
+        /*Set Process Status
+        Exit status will be set on exit*/
+          
+          
+        /*Set Process State*/
+        new_proc_t->p_state=PROC_RUNNING;
+          
+        /*Initialize queue for wait*/
+        sched_queue_init(&p_wait);
+          
+        /*Initialize Page Directory*/
+        p_pagedir=pt_create_pagedir();
+          
+        /*link on the list of all processes*/
+        list_insert_tail(&_proc_list,&p_list_link);
+          
+        /*link on proc list of children */
+        KASSERT(curproc!=NULL);
+        list_insert_tail(&(curproc->p_children),&p_child_link);
+          
+    
         NOT_YET_IMPLEMENTED("PROCS: proc_create");
-        return NULL;
+        return new_proc_t;      
 }
 
 /**
