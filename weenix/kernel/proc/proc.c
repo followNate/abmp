@@ -127,10 +127,10 @@ proc_create(char *name)
         new_proc_t->p_state=PROC_RUNNING;
           
         /*Initialize queue for wait*/
-        sched_queue_init(&p_wait);
+        sched_queue_init(&new_proc_t->p_wait);
           
         /*Initialize Page Directory*/
-        p_pagedir=pt_create_pagedir();
+        new_proc_t->p_pagedir=pt_create_pagedir();
           
         /*link on the list of all processes*/
         list_insert_tail(&_proc_list,&(new_proc_t->p_list_link));
@@ -211,7 +211,7 @@ proc_kill_all()
 			/* if parent id == idle process and it is not itself the
 			 idle processthen skip that process*/
 			if(process->p_pproc->p_pid != PID_IDLE && process->p_pid != PID_IDLE)
-				proc_kill(process,process->status);
+				proc_kill(process,process->p_status);
 		}list_iterate_end();
 	}
 }
@@ -278,7 +278,7 @@ do_waitpid(pid_t pid, int options, int *status)
                 if(pid==-1)
                 {
                 wait_to_die1:
-                        list_iterate_begin(&(curproc->p_children), iter,list_t,p_child_link)
+                        list_iterate_begin(&(curproc->p_children), iter,proc_t,p_child_link)
                         {
                                 if(iter->p_state==PROC_DEAD)
                                 {
@@ -297,7 +297,7 @@ do_waitpid(pid_t pid, int options, int *status)
                 }
                 else if(pid>0)
                 {
-                       list_iterate_begin(&(curproc->p_children), iter,list_t,p_child_link)
+                       list_iterate_begin(&(curproc->p_children), iter,proc_t,p_child_link)
                        {
                                 if(iter->p_pid==pid)
                                 {       
