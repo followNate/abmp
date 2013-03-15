@@ -173,6 +173,8 @@ void
 proc_cleanup(int status)
 {
         NOT_YET_IMPLEMENTED("PROCS: proc_cleanup");
+	/*TODO Code for VFS and VM */
+	
 }
 
 /*
