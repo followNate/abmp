@@ -245,7 +245,9 @@ proc_list()
 void
 proc_thread_exited(void *retval)
 {
-        NOT_YET_IMPLEMENTED("PROCS: proc_thread_exited");
+        proc_cleanup((int)retval);
+	sched_switch();
+	NOT_YET_IMPLEMENTED("PROCS: proc_thread_exited");
 }
 
 /* If pid is -1 dispose of one of the exited children of the current
