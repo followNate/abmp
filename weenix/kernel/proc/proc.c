@@ -187,6 +187,7 @@ void
 proc_kill(proc_t *p, int status)
 {
         NOT_YET_IMPLEMENTED("PROCS: proc_kill");
+	
 }
 
 /*
@@ -201,12 +202,16 @@ proc_kill_all()
 {
 	/* start processing the kill all only when the list holding process info is not empty.
 	Also ensure that init process is not deleted*/
+	NOT_YET_IMPLEMENTED("PROCS: proc_kill_all");
 	list_t *processList = proc_list();	
 	if(!list_empty(processList)){
 		/*iterate over each element and call proc_kill()*/
 		proc_t *process;		
 		list_iterate_begin(processList,process,proc_t,p_list_link){
-			 proc_kill(process,1);
+			/* if parent id == idle process and it is not itself the
+			 idle processthen skip that process*/
+			if(process->p_pproc->p_pid != PID_IDLE && process->p_pid != PID_IDLE)
+				proc_kill(process,process->status);
 		}list_iterate_end();
 	}
 }
