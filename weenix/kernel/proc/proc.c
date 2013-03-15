@@ -133,11 +133,11 @@ proc_create(char *name)
         p_pagedir=pt_create_pagedir();
           
         /*link on the list of all processes*/
-        list_insert_tail(&_proc_list,&p_list_link);
+        list_insert_tail(&_proc_list,&(new_proc_t->p_list_link));
           
         /*link on proc list of children */
         KASSERT(curproc!=NULL);
-        list_insert_tail(&(curproc->p_children),&p_child_link);
+        list_insert_tail(&(curproc->p_children),&(new_proc_t->p_child_link));
           
     
         NOT_YET_IMPLEMENTED("PROCS: proc_create");
@@ -261,8 +261,68 @@ proc_thread_exited(void *retval)
 pid_t
 do_waitpid(pid_t pid, int options, int *status)
 {
-        NOT_YET_IMPLEMENTED("PROCS: do_waitpid");
-        return 0;
+        int i=0;
+        int closed_pid=0;
+        proc_t *iter;
+        KASSERT(options == 0);
+        KASSERT(curproc!=NULL);
+        if(list_empty(&(curproc->p_children)))
+                return -ECHILD;
+        else
+        {
+                if(pid==-1)
+                {
+                wait_to_die1:
+                        list_iterate_begin(&(curproc->p_children), iter,list_t,p_child_link)
+                        {
+                                if(iter->p_state==PROC_DEAD)
+                                {
+                                        i=1;
+                                        closed_pid=iter->p_pid;
+                                        *status=(iter->p_status);
+                                        list_remove(&(iter->p_list_link));
+                                        break;
+                                }
+                        }list_iterate_end();
+                        if(i==0)
+                        {
+                                sched_sleep_on(&(curproc->p_wait));
+                                goto wait_to_die1;
+                        }
+                }
+                else if(pid>0)
+                {
+                       list_iterate_begin(&(curproc->p_children), iter,list_t,p_child_link)
+                       {
+                                if(iter->p_pid==pid)
+                                {       
+                                        i=1;
+                                
+                                wait_to_die2:                    
+                                        if (iter->p_state == PROC_DEAD)
+                                        {
+                                                closed_pid=iter->p_pid;
+                                                *status=(iter->p_status);
+                                                list_remove(&(iter->p_list_link));
+                                                break;   
+                                        }
+                                        else
+                                        {
+                                                sched_sleep_on(&(curproc->p_wait));
+                                                goto wait_to_die2;
+                                        }
+                                }
+                      }list_iterate_end();
+                      if(i==0)
+                                return -ECHILD;    
+                 }
+                 else
+                        KASSERT((int)pid!=0);
+         }
+                                       
+        if(i==1)
+                return closed_pid;
+               NOT_YET_IMPLEMENTED("PROCS: do_waitpid");
 }
 
 /*
@@ -274,6 +334,7 @@ do_waitpid(pid_t pid, int options, int *status)
 void
 do_exit(int status)
 {
+        proc_kill(curproc,status);
         NOT_YET_IMPLEMENTED("PROCS: do_exit");
 }
 
