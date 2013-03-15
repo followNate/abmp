@@ -82,40 +82,41 @@ failed:
 proc_t *
 proc_create(char *name)
 {
-        //Allocate a slab to a process
+        /*Allocate a slab to a process*/
          proc_t *new_proc_t = slab_obj_alloc(proc_allocator);
  
-          //check whether allocation is succesful or not
+          /*check whether allocation is succesful or not*/
           KASSERT(new_proc_t!=NULL);
          
-          //Empty the content of the slab
+          /*Empty the content of the slab*/
           memset(new_proc_t, 0, sizeof(proc_t));
          
-          //Get the proc_id
+          /*Get the proc_id*/
           new_proc_t->p_pid=_proc_getid();
           KASSERT(new_proc_t->p_pid>=0);  
+          
           if(new_proc_t->p_pid==0)
-                //create INIT process
-          else if(new_proc_t->p_pid==1)
-                 proc_initproc =new_proc_t;//set the process list header to point the INIT process
-          else;
+                {};
+          if(new_proc_t->p_pid==1)
+                 proc_initproc =new_proc_t;/*set the process list header to point the INIT process*/
+          else{};
         
-          //Assign the Process name 
+          /*Assign the Process name */
           if(strlen(name)<PROC_NAME_LEN)
                 strcpy(new_proc_t->p_comm,name);
           else
                 strncpy(new_proc_t->p_comm,name,PROC_NAME_LEN);
               
-          //Initialize the list containing its threads
-          list_init(&(newProcess->p_threads));
+          /*Initialize the list containing its threads*/
+          list_init(&(new_proc_t->p_threads));
           
-          //Initialize the list containg its childrens
-          list_init(&(newProcess->p_children));
+          /*Initialize the list containg its childrens*/
+          list_init(&(new_proc_t->p_children));
 
-          //pOINTER TO PARENT PROCESS
+          /*pOINTER TO PARENT PROCESS*/
           new_proc_t->p_pproc=curproc;
           
-          //Set Process State
+          /*Set Process State*/
           new_proc_t->p_state=PROC_RUNNING;
                 
         NOT_YET_IMPLEMENTED("PROCS: proc_create");
@@ -177,12 +178,11 @@ proc_kill(proc_t *p, int status)
 void
 proc_kill_all()
 {
-	// start processing the kill all only when the list holding process info
-	// is not empty.
-	// Also ensure that init process is not deleted
+	/* start processing the kill all only when the list holding process info is not empty.
+	Also ensure that init process is not deleted*/
 	list_t *processList = proc_list();	
 	if(!list_empty(processList)){
-		//iterate over each element and call proc_kill()
+		/*iterate over each element and call proc_kill()*/
 		proc_t *process;		
 		list_iterate_begin(processList,process,proc_t,p_list_link){
 			 proc_kill(process,1);
