@@ -177,15 +177,15 @@ proc_kill(proc_t *p, int status)
 void
 proc_kill_all()
 {
-	// start processing the kill all only when the list holding process info
-	// is not empty.
-	// Also ensure that init process is not deleted
+	/* start processing the kill all only when the list holding process info
+	 is not empty.
+	 Also ensure that init process is not deleted*/
 	list_t *processList = proc_list();	
 	if(!list_empty(processList)){
 		//iterate over each element and call proc_kill()
 		proc_t *process;		
 		list_iterate_begin(processList,process,proc_t,p_list_link){
-			 proc_kill(process,1);
+			 proc_kill(process,process->status);
 		}list_iterate_end();
 	}
 }
