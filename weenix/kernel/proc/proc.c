@@ -201,7 +201,7 @@ proc_kill_all()
 {
 	/* start processing the kill all only when the list holding process info is not empty.
 	Also ensure that init process is not deleted*/
-
+	NOT_YET_IMPLEMENTED("PROCS: proc_kill_all");
 	list_t *processList = proc_list();	
 	if(!list_empty(processList)){
 		/*iterate over each element and call proc_kill()*/
