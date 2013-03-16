@@ -36,8 +36,7 @@ typedef struct context {
  * @param kstacksz the size of the kernel stack
  * @param pdptr the pagetable this context will use
  */
-void context_setup(context_t *c, context_func_t func, int arg1, void *arg2,
-                   void *kstack, size_t kstacksz, pagedir_t *pdptr);
+void context_setup(context_t *c, context_func_t func, int arg1, void *arg2,void *kstack, size_t kstacksz, pagedir_t *pdptr);
 
 /**
  * Makes the given context the one currently running on the CPU. Use

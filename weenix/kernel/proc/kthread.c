@@ -74,21 +74,21 @@ free_stack(char *stack)
 kthread_t *kthread_create(struct proc *p, kthread_func_t func, long arg1, void *arg2)
 {
         /* allocate a slab to a thread */
-        kthread_t *new_kthread_t = slab_obj_alloc(proc_allocator);
-        
-        /* chek for slab allocation */
+        kthread_t *new_kthread_t = slab_obj_alloc(proc_allocator);      
         KASSERT(new_kthread_t != NULL);
         
         /* allocate the stack for nethread */
         new_kthread_t->kt_kstack = alloc_stack();
-        
-        /* check for stack allocation */
         KASSERT(new_kthread_t->kt_kstack != NULL);
         
-        
+        /* insert the thread link into process list */
+        list_insert_head(&(p->p_thread),&(kthread_t->kt_plink));
 
         /* set the current state of new thread */
         new_kthread_t.kt_state = KT_RUN;
+        
+        /* thread's process */
+        new_kthread_t->kt_proc = p;
         
         NOT_YET_IMPLEMENTED("PROCS: kthread_create");
         return NULL;
