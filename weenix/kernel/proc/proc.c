@@ -175,6 +175,31 @@ proc_cleanup(int status)
         NOT_YET_IMPLEMENTED("PROCS: proc_cleanup");
 	/*TODO Code for VFS and VM */
 	
+	/*clean the PCB expect for p_pid and return value(or status code)*/
+	free(p_pagedir);
+	p_state = PROC_DEAD;
+	p_status = status;
+	
+#ifdef __MTP__
+	kthread_t *kthr;
+	list_iterator_begin(&p_threads,kthr, kthread_t, kt_plink){
+		list_remove_tail(kthr);
+	}list_iterator_end();
+#else
+	list_remove_head(&p_threads);
+#endif
+	
+	
+	/*link any child of this process with the parent*/
+	proc_t *initProc = proc_lookup(PID_INIT);
+	proc_t *child;
+	list_iterator_begin(&p_children,child,proc_t,p_child_link){
+		list_insert_tail(&initProc->p_children,child);
+		list_remove(child);
+	}list_iterator_end();
+	
+	/* signalling waiting parent process*/
+	sched_wakeup_on(p_wait);
 }
 
 /*
@@ -189,7 +214,8 @@ void
 proc_kill(proc_t *p, int status)
 {
         NOT_YET_IMPLEMENTED("PROCS: proc_kill");
-	
+	/* Call proc_cleanup() here to clean the PCB and make it a Zombie*/
+	p->proc_cleanup(status);
 }
 
 /*
