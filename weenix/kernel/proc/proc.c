@@ -298,7 +298,7 @@ pid_t
 do_waitpid(pid_t pid, int options, int *status)
 {
         int i=0;
-        int closed_pid=0;
+        int closed_pid=-ECHILD;
         proc_t *iter;
         KASSERT(options == 0);
         KASSERT(curproc!=NULL);
@@ -356,9 +356,9 @@ do_waitpid(pid_t pid, int options, int *status)
                         KASSERT((int)pid!=0);
          }
                                        
-        if(i==1)
-                return closed_pid;
+       
                NOT_YET_IMPLEMENTED("PROCS: do_waitpid");
+         return closed_pid;
 }
 
 /*
