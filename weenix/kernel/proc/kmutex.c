@@ -21,8 +21,8 @@ kmutex_init(kmutex_t *mtx)
 	((mtx->km_waitq).tq_size) = 0;
 	/*(mtx->km_holder) = 0; */
 	
-	memset(&(mtx->km_waitq),0,sizeof(mtx->km_waitq));
-	memset(&(mtx->km_holder),0,sizeof(mtx->km_holder));
+	/*memset(&(mtx->km_waitq),0,sizeof(mtx->km_waitq));
+	memset(&(mtx->km_holder),0,sizeof(mtx->km_holder));*/
 	
         NOT_YET_IMPLEMENTED("PROCS: kmutex_init");
 }
@@ -38,7 +38,7 @@ kmutex_lock(kmutex_t *mtx)
 {
         if(mtx->km_holder != 0)
         {
-			ktqueue_enqueue(mtx->km_waitq, curthr);
+			ktqueue_enqueue(&(mtx->km_waitq), &curthr);
 		}
 		else
 		{
@@ -58,7 +58,7 @@ kmutex_lock_cancellable(kmutex_t *mtx)
 {
         if(mtx->km_holder !=0)
         {
-			sched_cancellable_sleep_on(mtx->km_waitq);
+			sched_cancellable_sleep_on(&(mtx->km_waitq));
 		}
 		else
 		{
@@ -93,8 +93,8 @@ kmutex_unlock(kmutex_t *mtx)
 	    }
 	    else
 	    {
-			mtx->km_holder = ktqueue_dequeue(mtx->km_waitq);
-			ktqueue_enqueue(scheduler run queue pending,mtx->km_holder);
+			mtx->km_holder = ktqueue_dequeue(&(mtx->km_waitq));
+			ktqueue_enqueue(&kt_runq,&(mtx->km_holder));
 			
 		}
         NOT_YET_IMPLEMENTED("PROCS: kmutex_unlock");
