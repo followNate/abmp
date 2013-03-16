@@ -123,9 +123,9 @@ sched_cancellable_sleep_on(ktqueue_t *q)
         sched_switch();
         switch(curthr->kt_cancelled)
         {
-                Case 1: return -EINTR;
+                case 1: return -EINTR;
                         break;
-                Default: return 0;
+                default: return 0;
         }
         
         NOT_YET_IMPLEMENTED("PROCS: sched_cancellable_sleep_on");
@@ -135,13 +135,16 @@ kthread_t *
 sched_wakeup_on(ktqueue_t *q)
 {
         KASSERT(q!=NULL);
-        kthread_t *q_d;
+        kthread_t *q_d=NULL;
         if(!sched_queue_empty(q))
+        {
                 q_d=ktqueue_dequeue(q);
                 sched_make_runnable(q_d);
-                return q_d;
+                
+        }
         else
                 KASSERT(sched_queue_empty(q));
+        return q_d;
         NOT_YET_IMPLEMENTED("PROCS: sched_wakeup_on");
 }
 
@@ -149,11 +152,13 @@ void
 sched_broadcast_on(ktqueue_t *q)
 {
         KASSERT(q!=NULL);
-        kthread_t *q_d;
         int i=0;
         i=q->tq_size;
-        for(i;i>0;i--)
-               q_d=sched_wakeup_on(ktqueue_t *q);               
+        while(i>0)
+        {
+                i--;
+                sched_wakeup_on(q);               
+        }
         NOT_YET_IMPLEMENTED("PROCS: sched_broadcast_on");
 }
 
@@ -170,7 +175,7 @@ void
 sched_cancel(struct kthread *kthr)
 {
          KASSERT(kthr!=NULL);
-         KASSERT((kthr->kt_state!=KT_NO_STATE)&&(kthr->kt_state!=KT_EXITED))
+         KASSERT((kthr->kt_state!=KT_NO_STATE)&&(kthr->kt_state!=KT_EXITED));
          
          if(kthr->kt_state==KT_SLEEP_CANCELLABLE)
          {
@@ -179,7 +184,9 @@ sched_cancel(struct kthread *kthr)
                 sched_make_runnable(kthr);
          }
          else
+         {
                 kthr->kt_cancelled=1;
+         }
          NOT_YET_IMPLEMENTED("PROCS: sched_cancel");
 }
 

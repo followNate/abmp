@@ -120,11 +120,16 @@ proc_create(char *name)
         new_proc_t->p_state=PROC_RUNNING;
                     
         /*Set Process Status
+<<<<<<< HEAD
         Exit status will be set on exit*/          
           
         /*Set Process State*/
         new_proc_t->p_state=PROC_RUNNING;
           
+=======
+        Exit status will be set on exit*/
+                
+>>>>>>> 31e9f483e9506707ab49964f6f15d5cdb57317af
         /*Initialize queue for wait*/
         sched_queue_init(&new_proc_t->p_wait);
           
@@ -176,27 +181,26 @@ proc_cleanup(int status)
 	/*TODO Code for VFS and VM */
 	
 	/*clean the PCB expect for p_pid and return value(or status code)*/
-	free(curproc->p_pagedir);
+	
 	curproc->p_state = PROC_DEAD;
 	curproc->p_status = status;
 	
-#ifdef __MTP__
 	kthread_t *kthr;
-	list_iterator_begin(&curproc->p_threads,kthr, kthread_t, kt_plink){
-		list_remove_tail(kthr);
-	}list_iterator_end();
-#else
+	kthr=list_head(&curproc->p_threads, kthread_t, kt_plink);
+	kthread_destroy(kthr);
 	list_remove_head(&curproc->p_threads);
-#endif
 	
 	
 	/*link any child of this process with the parent*/
-	proc_t *initProc = proc_lookup(PID_INIT);
-	proc_t *child;
-	list_iterate_begin(&curproc->p_children,child,proc_t,p_child_link){
-		list_insert_tail(&initProc->p_children,child);
-		list_remove(child);
-	}list_iterate_end();
+	
+	if(!list_empty(&curproc->p_children)){
+		proc_t *initProc = proc_lookup(PID_INIT);
+		proc_t *child;		
+		list_iterate_begin(&curproc->p_children,child,proc_t,p_child_link){
+			list_insert_tail(&initProc->p_children,&child->p_child_link);
+			list_remove(&child->p_child_link);
+		}list_iterate_end();
+	}
 	
 	/* signalling waiting parent process*/
 	sched_wakeup_on(&curproc->p_pproc->p_wait);
@@ -215,8 +219,29 @@ proc_kill(proc_t *p, int status)
 {
         NOT_YET_IMPLEMENTED("PROCS: proc_kill");
 	/* Call proc_cleanup() here to clean the PCB and make it a Zombie*/
-	curproc = p;	
-	proc_cleanup(status);
+	/*clean the PCB expect for p_pid and return value(or status code)*/
+	
+	p->p_state = PROC_DEAD;
+	p->p_status = status;
+	
+	kthread_t *kthr;
+	kthr=list_head(&p->p_threads, kthread_t, kt_plink);
+	kthread_destroy(kthr);
+	list_remove_head(&p->p_threads);
+	
+	
+	/*link any child of this process with the parent*/
+	if(!list_empty(&p->p_children)){
+		proc_t *initProc = proc_lookup(PID_INIT);
+		proc_t *child;
+		list_iterate_begin(&p->p_children,child,proc_t,p_child_link){
+			list_insert_tail(&initProc->p_children,&child->p_child_link);
+			list_remove(&child->p_child_link);
+		}list_iterate_end();
+	}
+	
+	/* signalling waiting parent process*/
+	sched_wakeup_on(&p->p_pproc->p_wait);
 }
 
 /*
@@ -298,8 +323,9 @@ pid_t
 do_waitpid(pid_t pid, int options, int *status)
 {
         int i=0;
-        int closed_pid=0;
+        int closed_pid=-ECHILD;
         proc_t *iter;
+        kthread_t *cur_proc_thd;
         KASSERT(options == 0);
         KASSERT(curproc!=NULL);
         if(list_empty(&(curproc->p_children)))
@@ -317,6 +343,12 @@ do_waitpid(pid_t pid, int options, int *status)
                                         closed_pid=iter->p_pid;
                                         *status=(iter->p_status);
                                         list_remove(&(iter->p_list_link));
+                                        list_iterate_begin(&(iter->p_threads), cur_proc_thd, kthread_t, kt_plink)
+                                        {
+                                                kthread_destroy(cur_proc_thd);
+                                        } list_iterate_end();
+                                        pt_destroy_pagedir(iter->p_pagedir);
+                                        list_remove(&(iter->p_child_link));
                                         break;
                                 }
                         }list_iterate_end();
@@ -340,6 +372,12 @@ do_waitpid(pid_t pid, int options, int *status)
                                                 closed_pid=iter->p_pid;
                                                 *status=(iter->p_status);
                                                 list_remove(&(iter->p_list_link));
+                                                list_iterate_begin(&(iter->p_threads), cur_proc_thd, kthread_t, kt_plink)
+                                                {
+                                                        kthread_destroy(cur_proc_thd);
+                                                } list_iterate_end();
+                                                pt_destroy_pagedir(iter->p_pagedir);
+                                                list_remove(&(iter->p_child_link));
                                                 break;   
                                         }
                                         else
@@ -356,9 +394,8 @@ do_waitpid(pid_t pid, int options, int *status)
                         KASSERT((int)pid!=0);
          }
                                        
-        if(i==1)
-                return closed_pid;
-               NOT_YET_IMPLEMENTED("PROCS: do_waitpid");
+         NOT_YET_IMPLEMENTED("PROCS: do_waitpid");
+         return closed_pid;
 }
 
 /*
