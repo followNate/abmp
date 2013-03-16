@@ -183,12 +183,15 @@ proc_cleanup(int status)
 	
 	
 	/*link any child of this process with the parent*/
-	proc_t *initProc = proc_lookup(PID_INIT);
-	proc_t *child;
-	list_iterate_begin(&curproc->p_children,child,proc_t,p_child_link){
-		list_insert_tail(&initProc->p_children,&child->p_child_link);
-		list_remove(&child->p_child_link);
-	}list_iterate_end();
+	
+	if(!list_empty(&curproc->p_children)){
+		proc_t *initProc = proc_lookup(PID_INIT);
+		proc_t *child;		
+		list_iterate_begin(&curproc->p_children,child,proc_t,p_child_link){
+			list_insert_tail(&initProc->p_children,&child->p_child_link);
+			list_remove(&child->p_child_link);
+		}list_iterate_end();
+	}
 	
 	/* signalling waiting parent process*/
 	sched_wakeup_on(&curproc->p_pproc->p_wait);
@@ -219,12 +222,14 @@ proc_kill(proc_t *p, int status)
 	
 	
 	/*link any child of this process with the parent*/
-	proc_t *initProc = proc_lookup(PID_INIT);
-	proc_t *child;
-	list_iterate_begin(&p->p_children,child,proc_t,p_child_link){
-		list_insert_tail(&initProc->p_children,&child->p_child_link);
-		list_remove(&child->p_child_link);
-	}list_iterate_end();
+	if(!list_empty(&p->p_children)){
+		proc_t *initProc = proc_lookup(PID_INIT);
+		proc_t *child;
+		list_iterate_begin(&p->p_children,child,proc_t,p_child_link){
+			list_insert_tail(&initProc->p_children,&child->p_child_link);
+			list_remove(&child->p_child_link);
+		}list_iterate_end();
+	}
 	
 	/* signalling waiting parent process*/
 	sched_wakeup_on(&p->p_pproc->p_wait);
