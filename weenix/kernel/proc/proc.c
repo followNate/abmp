@@ -129,6 +129,7 @@ proc_create(char *name)
         sched_queue_init(&new_proc_t->p_wait);
           
         /*Initialize Page Directory*/
+        
         new_proc_t->p_pagedir=pt_create_pagedir();
           
         /*link on the list of all processes*/

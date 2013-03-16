@@ -12,6 +12,7 @@
 static ktqueue_t kt_runq;
 
 static __attribute__((unused)) void
+
 sched_init(void)
 {
         sched_queue_init(&kt_runq);
@@ -173,7 +174,7 @@ sched_cancel(struct kthread *kthr)
          
          if(kthr->kt_state==KT_SLEEP_CANCELLABLE)
          {
-                kthr->kt_cancelled=1;
+                kthr->kt_cancelled=1;                
                 ktqueue_remove(kthr->kt_wchan,kthr);
                 sched_make_runnable(kthr);
          }

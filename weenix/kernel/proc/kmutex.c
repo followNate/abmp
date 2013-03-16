@@ -26,12 +26,12 @@ kmutex_init(kmutex_t *mtx)
 	memset(&(mtx->km_holder),0,sizeof(mtx->km_holder));*/
 	
         NOT_YET_IMPLEMENTED("PROCS: kmutex_init");
-=======
+
 	mtx->km_holder = NULL;
 	/*(mtx->km_holder) = 0; */
 	
     NOT_YET_IMPLEMENTED("PROCS: kmutex_init");
->>>>>>> 42191bb70ceba23a913ad6ec439bcc147d7a47e9
+
 }
 
 /*

@@ -123,7 +123,7 @@ static void *bootstrap(int arg1, void *arg2)
         /* necessary to finalize page table information */
         pt_template_init();
 
-	proc_t *idle_proc = proc_create();
+/*	proc_t *idle_proc = proc_create();*/
 	
 	
 	     NOT_YET_IMPLEMENTED("PROCS: bootstrap");
