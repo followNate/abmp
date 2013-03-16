@@ -118,13 +118,12 @@ kmain()
  * @param arg1 the first argument (unused)
  * @param arg2 the second argument (unused)
  */
-static void *
-bootstrap(int arg1, void *arg2)
+static void *bootstrap(int arg1, void *arg2)
 {
         /* necessary to finalize page table information */
         pt_template_init();
-
-        NOT_YET_IMPLEMENTED("PROCS: bootstrap");
+	
+	//        NOT_YET_IMPLEMENTED("PROCS: bootstrap");
 
         panic("weenix returned to bootstrap()!!! BAD!!!\n");
         return NULL;
@@ -142,8 +141,7 @@ bootstrap(int arg1, void *arg2)
  * @param arg1 the first argument (unused)
  * @param arg2 the second argument (unused)
  */
-static void *
-idleproc_run(int arg1, void *arg2)
+static void *idleproc_run(int arg1, void *arg2)
 {
         int status;
         pid_t child;

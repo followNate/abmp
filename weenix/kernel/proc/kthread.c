@@ -16,6 +16,7 @@
 #include "mm/page.h"
 
 kthread_t *curthr; /* global */
+
 static slab_allocator_t *kthread_allocator = NULL;
 
 #ifdef __MTP__
@@ -41,8 +42,7 @@ kthread_init()
  * @return a newly allocated stack, or NULL if there is not enough
  * memory available
  */
-static char *
-alloc_stack(void)
+static char *alloc_stack(void)
 {
         /* extra page for "magic" data */
         char *kstack;
@@ -71,9 +71,25 @@ free_stack(char *stack)
  * context_setup function. The context should have the same pagetable
  * pointer as the process.
  */
-kthread_t *
-kthread_create(struct proc *p, kthread_func_t func, long arg1, void *arg2)
+kthread_t *kthread_create(struct proc *p, kthread_func_t func, long arg1, void *arg2)
 {
+        /* allocate a slab to a thread */
+        kthread_t *new_kthread_t = slab_obj_alloc(proc_allocator);
+        
+        /* chek for slab allocation */
+        KASSERT(new_kthread_t != NULL);
+        
+        /* allocate the stack for nethread */
+        new_kthread_t->kt_kstack = alloc_stack();
+        
+        /* check for stack allocation */
+        KASSERT(new_kthread_t->kt_kstack != NULL);
+        
+        
+
+        /* set the current state of new thread */
+        new_kthread_t.kt_state = KT_RUN;
+        
         NOT_YET_IMPLEMENTED("PROCS: kthread_create");
         return NULL;
 }

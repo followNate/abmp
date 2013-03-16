@@ -93,7 +93,7 @@ proc_create(char *name)
          
         /*Get the proc_id*/
         new_proc_t->p_pid=_proc_getid();
-        KASSERT(new_proc_t->p_pid>=0);  
+        KASSERT(new_proc_t->p_pid>=0);
           
         if(new_proc_t->p_pid==0)
                 {};
@@ -120,8 +120,7 @@ proc_create(char *name)
         new_proc_t->p_state=PROC_RUNNING;
                     
         /*Set Process Status
-        Exit status will be set on exit*/
-          
+        Exit status will be set on exit*/          
           
         /*Set Process State*/
         new_proc_t->p_state=PROC_RUNNING;

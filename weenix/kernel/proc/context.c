@@ -25,8 +25,7 @@ __context_initial_func(context_func_t func, int arg1, void *arg2)
 }
 
 void
-context_setup(context_t *c, context_func_t func, int arg1, void *arg2,
-              void *kstack, size_t kstacksz, pagedir_t *pdptr)
+context_setup(context_t *c, context_func_t func, int arg1, void *arg2,void *kstack, size_t kstacksz, pagedir_t *pdptr)
 {
         KASSERT(NULL != pdptr);
         KASSERT(PAGE_ALIGNED(kstack));
