@@ -182,7 +182,7 @@ proc_cleanup(int status)
 	
 	kthread_t *kthr;
 	kthr=list_head(&curproc->p_threads, kthread_t, kt_plink);
-	kthread_destory(kthr);
+	kthread_destroy(kthr);
 	list_remove_head(&curproc->p_threads);
 	
 	
