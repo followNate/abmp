@@ -19,12 +19,10 @@ kmutex_init(kmutex_t *mtx)
 	((mtx->km_waitq).tq_list).l_next = NULL;
 	((mtx->km_waitq).tq_list).l_prev = NULL;
 	((mtx->km_waitq).tq_size) = 0;
+	mtx->km_holder = NULL;
 	/*(mtx->km_holder) = 0; */
 	
-	/*memset(&(mtx->km_waitq),0,sizeof(mtx->km_waitq));
-	memset(&(mtx->km_holder),0,sizeof(mtx->km_holder));*/
-	
-        NOT_YET_IMPLEMENTED("PROCS: kmutex_init");
+    NOT_YET_IMPLEMENTED("PROCS: kmutex_init");
 }
 
 /*
@@ -93,7 +91,7 @@ kmutex_unlock(kmutex_t *mtx)
 	    }
 	    else
 	    {
-			mtx->km_holder = ktqueue_dequeue(&(mtx->km_waitq));
+			mtx->km_holder =(kthread_t*)ktqueue_dequeue(&(mtx->km_waitq));
 			ktqueue_enqueue(&kt_runq,&(mtx->km_holder));
 			
 		}
