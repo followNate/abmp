@@ -353,7 +353,7 @@ proc_info(const void *arg, char *buf, size_t osize)
 
         KASSERT(NULL != p);
         KASSERT(NULL != buf);
-
+	
         iprintf(&buf, &size, "pid:          %i\n", p->p_pid);
         iprintf(&buf, &size, "name:         %s\n", p->p_comm);
         if (NULL != p->p_pproc) {

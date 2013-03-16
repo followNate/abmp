@@ -74,7 +74,7 @@ free_stack(char *stack)
 kthread_t *kthread_create(struct proc *p, kthread_func_t func, long arg1, void *arg2)
 {
         /* allocate a slab to a thread */
-        kthread_t *new_kthread_t = slab_obj_alloc(proc_allocator);      
+        kthread_t *new_kthread_t = slab_obj_alloc(kthread_allocator);
         KASSERT(new_kthread_t != NULL);
         
         /* allocate the stack for nethread */
@@ -82,10 +82,10 @@ kthread_t *kthread_create(struct proc *p, kthread_func_t func, long arg1, void *
         KASSERT(new_kthread_t->kt_kstack != NULL);
         
         /* insert the thread link into process list */
-        list_insert_head(&(p->p_thread),&(kthread_t->kt_plink));
+      list_insert_head(&(p->p_threads),&(new_kthread_t->kt_plink));
 
         /* set the current state of new thread */
-        new_kthread_t.kt_state = KT_RUN;
+        new_kthread_t->kt_state = KT_RUN;
         
         /* thread's process */
         new_kthread_t->kt_proc = p;
@@ -116,9 +116,10 @@ kthread_destroy(kthread_t *t)
  *
  * If the thread's sleep is not cancellable, we do nothing else here.
  */
-void
-kthread_cancel(kthread_t *kthr, void *retval)
+void kthread_cancel(kthread_t *kthr, void *retval)
 {
+        
+        
         NOT_YET_IMPLEMENTED("PROCS: kthread_cancel");
 }
 
@@ -132,9 +133,14 @@ kthread_cancel(kthread_t *kthr, void *retval)
  * exiting does not necessarily mean that the process needs to be
  * cleaned up.
  */
-void
-kthread_exit(void *retval)
+void kthread_exit(void *retval)
 {
+        curthr->kt_retval = retval;
+        curthr->kt_state = KT_EXITED;
+        proc_thread_exited(retval);
+        free_stack(curthr->kt_kstack);
+        slab_obj_free();
+        
         NOT_YET_IMPLEMENTED("PROCS: kthread_exit");
 }
 

@@ -37,7 +37,8 @@ context_setup(context_t *c, context_func_t func, int arg1, void *arg2,void *ksta
         /* put the arguments for __contect_initial_func onto the
          * stack, leave room at the bottom of the stack for a phony
          * return address (we should never return from the lowest
-         * function on the stack */
+         * function on the stack 
+         */
         c->c_esp = (uintptr_t)kstack + kstacksz;
         c->c_esp -= sizeof(arg2);
         *(void **)c->c_esp = arg2;

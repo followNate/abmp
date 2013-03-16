@@ -42,8 +42,7 @@ ktqueue_enqueue(ktqueue_t *q, kthread_t *thr)
  * @param q the queue to dequeue a thread from
  * @return the thread dequeued from the queue
  */
-static kthread_t *
-ktqueue_dequeue(ktqueue_t *q)
+static kthread_t *ktqueue_dequeue(ktqueue_t *q)
 {
         kthread_t *thr;
         list_link_t *link;
@@ -97,8 +96,7 @@ sched_queue_empty(ktqueue_t *q)
  *
  * Use the private queue manipulation functions above.
  */
-void
-sched_sleep_on(ktqueue_t *q)
+void sched_sleep_on(ktqueue_t *q)
 {
         KASSERT(q!=NULL&&curthr!=NULL);
         curthr->kt_state=KT_SLEEP;
