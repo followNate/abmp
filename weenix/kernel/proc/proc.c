@@ -190,8 +190,8 @@ proc_cleanup(int status)
 	proc_t *initProc = proc_lookup(PID_INIT);
 	proc_t *child;
 	list_iterate_begin(&curproc->p_children,child,proc_t,p_child_link){
-		list_insert_tail(&initProc->p_children,child);
-		list_remove(child);
+		list_insert_tail(&initProc->p_children,&child->p_child_link);
+		list_remove(&child->p_child_link);
 	}list_iterate_end();
 	
 	/* signalling waiting parent process*/
@@ -211,8 +211,27 @@ proc_kill(proc_t *p, int status)
 {
         NOT_YET_IMPLEMENTED("PROCS: proc_kill");
 	/* Call proc_cleanup() here to clean the PCB and make it a Zombie*/
-	curproc = p;	
-	proc_cleanup(status);
+	/*clean the PCB expect for p_pid and return value(or status code)*/
+	pt_destroy_pagedir(p->p_pagedir);
+	p->p_state = PROC_DEAD;
+	p->p_status = status;
+	
+	kthread_t *kthr;
+	kthr=list_head(&p->p_threads, kthread_t, kt_plink);
+	kthread_destroy(kthr);
+	list_remove_head(&p->p_threads);
+	
+	
+	/*link any child of this process with the parent*/
+	proc_t *initProc = proc_lookup(PID_INIT);
+	proc_t *child;
+	list_iterate_begin(&p->p_children,child,proc_t,p_child_link){
+		list_insert_tail(&initProc->p_children,&child->p_child_link);
+		list_remove(&child->p_child_link);
+	}list_iterate_end();
+	
+	/* signalling waiting parent process*/
+	sched_wakeup_on(&p->p_pproc->p_wait);
 }
 
 /*
