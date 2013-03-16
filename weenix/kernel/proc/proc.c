@@ -172,7 +172,7 @@ proc_cleanup(int status)
 	/*TODO Code for VFS and VM */
 	
 	/*clean the PCB expect for p_pid and return value(or status code)*/
-	pt_destroy_pagedir(curproc->p_pagedir);
+	
 	curproc->p_state = PROC_DEAD;
 	curproc->p_status = status;
 	
@@ -208,7 +208,7 @@ proc_kill(proc_t *p, int status)
         NOT_YET_IMPLEMENTED("PROCS: proc_kill");
 	/* Call proc_cleanup() here to clean the PCB and make it a Zombie*/
 	/*clean the PCB expect for p_pid and return value(or status code)*/
-	pt_destroy_pagedir(p->p_pagedir);
+	
 	p->p_state = PROC_DEAD;
 	p->p_status = status;
 	
