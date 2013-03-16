@@ -121,11 +121,7 @@ proc_create(char *name)
                     
         /*Set Process Status
         Exit status will be set on exit*/
-          
-          
-        /*Set Process State*/
-        new_proc_t->p_state=PROC_RUNNING;
-          
+                
         /*Initialize queue for wait*/
         sched_queue_init(&new_proc_t->p_wait);
           
@@ -315,6 +311,7 @@ do_waitpid(pid_t pid, int options, int *status)
         int i=0;
         int closed_pid=-ECHILD;
         proc_t *iter;
+        kthread_t *cur_proc_thd;
         KASSERT(options == 0);
         KASSERT(curproc!=NULL);
         if(list_empty(&(curproc->p_children)))
@@ -332,6 +329,12 @@ do_waitpid(pid_t pid, int options, int *status)
                                         closed_pid=iter->p_pid;
                                         *status=(iter->p_status);
                                         list_remove(&(iter->p_list_link));
+                                        list_iterate_begin(&(iter->p_threads), cur_proc_thd, kthread_t, kt_plink)
+                                        {
+                                                kthread_destroy(cur_proc_thd);
+                                        } list_iterate_end();
+                                        pt_destroy_pagedir(iter->p_pagedir);
+                                        list_remove(&(iter->p_child_link));
                                         break;
                                 }
                         }list_iterate_end();
@@ -355,6 +358,12 @@ do_waitpid(pid_t pid, int options, int *status)
                                                 closed_pid=iter->p_pid;
                                                 *status=(iter->p_status);
                                                 list_remove(&(iter->p_list_link));
+                                                list_iterate_begin(&(iter->p_threads), cur_proc_thd, kthread_t, kt_plink)
+                                                {
+                                                        kthread_destroy(cur_proc_thd);
+                                                } list_iterate_end();
+                                                pt_destroy_pagedir(iter->p_pagedir);
+                                                list_remove(&(iter->p_child_link));
                                                 break;   
                                         }
                                         else
@@ -371,8 +380,7 @@ do_waitpid(pid_t pid, int options, int *status)
                         KASSERT((int)pid!=0);
          }
                                        
-       
-               NOT_YET_IMPLEMENTED("PROCS: do_waitpid");
+         NOT_YET_IMPLEMENTED("PROCS: do_waitpid");
          return closed_pid;
 }
 
