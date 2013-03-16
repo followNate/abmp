@@ -176,18 +176,14 @@ proc_cleanup(int status)
 	/*TODO Code for VFS and VM */
 	
 	/*clean the PCB expect for p_pid and return value(or status code)*/
-	free(curproc->p_pagedir);
+	pt_destroy_pagedir(curproc->p_pagedir);
 	curproc->p_state = PROC_DEAD;
 	curproc->p_status = status;
 	
-#ifdef __MTP__
 	kthread_t *kthr;
-	list_iterator_begin(&curproc->p_threads,kthr, kthread_t, kt_plink){
-		list_remove_tail(kthr);
-	}list_iterator_end();
-#else
+	kthr=list_head(&curproc->p_threads, kthread_t, kt_plink);
+	kthread_destory(kthr);
 	list_remove_head(&curproc->p_threads);
-#endif
 	
 	
 	/*link any child of this process with the parent*/
