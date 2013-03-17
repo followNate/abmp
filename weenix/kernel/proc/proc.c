@@ -117,19 +117,8 @@ proc_create(char *name)
         new_proc_t->p_pproc=curproc;
           
         /*Set Process State*/
-        new_proc_t->p_state=PROC_RUNNING;
-                    
-        /*Set Process Status
-<<<<<<< HEAD
-        Exit status will be set on exit*/          
-          
-        /*Set Process State*/
-        new_proc_t->p_state=PROC_RUNNING;
-          
-=======
-        Exit status will be set on exit*/
-                
->>>>>>> 31e9f483e9506707ab49964f6f15d5cdb57317af
+        new_proc_t->p_state=PROC_RUNNING;                    
+
         /*Initialize queue for wait*/
         sched_queue_init(&new_proc_t->p_wait);
           

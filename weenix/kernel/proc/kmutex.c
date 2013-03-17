@@ -51,9 +51,6 @@ kmutex_lock(kmutex_t *mtx)
 int
 kmutex_lock_cancellable(kmutex_t *mtx)
 {
-
-        if(mtx->km_holder !=0)
-
         if(mtx->km_holder !=NULL)
 
         {
