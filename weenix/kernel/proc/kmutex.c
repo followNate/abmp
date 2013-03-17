@@ -52,9 +52,7 @@ int
 kmutex_lock_cancellable(kmutex_t *mtx)
 {
 
-        if(mtx->km_holder !=0)
-
-        if(mtx->km_holder !=NULL)
+       if(mtx->km_holder !=NULL)
 
         {
 			sched_cancellable_sleep_on(&(mtx->km_waitq));
