@@ -98,7 +98,7 @@ kthread_t *kthread_create(struct proc *p, kthread_func_t func, long arg1, void *
         
         pagedir_t *kt_pdptr = p->p_pagedir;
         /* setup the context */
-        context_setup(&(new_kthread_t->kt_ctx),func,arg1,arg2,&(new_kthread_t->kt_kstack),DEFAULT_STACK_SIZE,kt_pdptr);          
+        context_setup(&(new_kthread_t->kt_ctx),func,arg1,arg2,&(new_kthread_t->kt_kstack),DEFAULT_STACK_SIZE,kt_pdptr);
         
         /* current thread */
         curthr = new_kthread_t;
