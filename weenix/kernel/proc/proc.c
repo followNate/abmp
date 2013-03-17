@@ -95,12 +95,9 @@ proc_create(char *name)
         new_proc_t->p_pid=_proc_getid();
         KASSERT(new_proc_t->p_pid>=0);  
           
-        if(new_proc_t->p_pid==0)
-                {};
         if(new_proc_t->p_pid==1)
                 proc_initproc =new_proc_t;/*set the process list header to point the INIT process*/
-        else{};
-        
+               
         /*Assign the Process name */
         if(strlen(name)<PROC_NAME_LEN)
                 strcpy(new_proc_t->p_comm,name);
@@ -176,12 +173,6 @@ proc_cleanup(int status)
 	curproc->p_state = PROC_DEAD;
 	curproc->p_status = status;
 	
-	kthread_t *kthr;
-	kthr=list_head(&curproc->p_threads, kthread_t, kt_plink);
-	kthread_destroy(kthr);
-	list_remove_head(&curproc->p_threads);
-	
-	
 	/*link any child of this process with the parent*/
 	
 	if(!list_empty(&curproc->p_children)){
@@ -194,7 +185,7 @@ proc_cleanup(int status)
 	}
 	
 	/* signalling waiting parent process*/
-	sched_wakeup_on(&curproc->p_pproc->p_wait);
+	sched_broadcast_on(&curproc->p_pproc->p_wait);
 }
 
 /*
