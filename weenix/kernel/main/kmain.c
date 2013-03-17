@@ -121,9 +121,9 @@ kmain()
 static void *bootstrap(int arg1, void *arg2)
 {
         /* necessary to finalize page table information */
-<<<<<<< HEAD
+
         pt_template_init();
-        proc_t *procc;
+        /*proc_t *procc;
         char *name[]="IDLE";
         proc_init();
         procc=proc_create(name);
@@ -133,10 +133,7 @@ static void *bootstrap(int arg1, void *arg2)
         context_make_active();
         curproc=procc;
         curthr=initthr;
-=======
-        pt_template_init();	
-	
->>>>>>> e6a44ded8b8c996ddb07c7da2bfc8c6c2b68a080
+       */
         NOT_YET_IMPLEMENTED("PROCS: bootstrap");
 
         panic("weenix returned to bootstrap()!!! BAD!!!\n");
