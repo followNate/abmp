@@ -21,7 +21,7 @@ __context_initial_func(context_func_t func, int arg1, void *arg2)
         void *result = func(arg1, arg2);
         kthread_exit(result);
 
-        panic("\nReturned from kthread_exit.\n");
+        panic("\nReturned from kthread_exit.\n");    
 }
 
 void
