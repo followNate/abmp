@@ -129,6 +129,8 @@ static void *bootstrap(int arg1, void *arg2)
         dbg_print("\n IDLE Process Creating \n");
         
         curproc=proc_create(name);
+        KASSERT(curproc != NULL);
+        KASSERT(curproc->p_pid == PID_IDLE);
         dbg_print("\n IDLE Process Created \n");
         /*kthread_init();*/
         
@@ -137,7 +139,7 @@ static void *bootstrap(int arg1, void *arg2)
         dbg_print("\n IDLE Thread Created \n");     
         
         context_make_active(&(curthr->kt_ctx));
-        panic("IDLE created\n");
+         dbg_print("IDLE created\n");
         NOT_YET_IMPLEMENTED("PROCS: bootstrap");
 
         panic("weenix returned to bootstrap()!!! BAD!!!\n");
