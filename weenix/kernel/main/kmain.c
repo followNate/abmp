@@ -128,11 +128,11 @@ static void *bootstrap(int arg1, void *arg2)
         /*proc_init();*/
         procc=proc_create(name);
        /* kthread_init();*/
-        kthread_t *initthr;
-        initthr=kthread_create(procc,idleproc_run,arg1,arg2);
+        kthread_t *IDLEthr;
+        IDLEthr=kthread_create(procc,idleproc_run,arg1,arg2);
         curproc=procc;
-        curthr=initthr;
-        context_make_active(&(initthr->kt_ctx));
+        curthr=IDLEthr;
+        context_make_active(&(IDLEthr->kt_ctx));
         
         NOT_YET_IMPLEMENTED("PROCS: bootstrap");
 
@@ -222,8 +222,17 @@ static void *idleproc_run(int arg1, void *arg2)
 static kthread_t *
 initproc_create(void)
 {
+        proc_t *procc;
+        char name[4]="INIT";
+        /*proc_init();*/
+        procc=proc_create(name);
+        /* kthread_init();*/
+        kthread_t *initthr;
+        initthr=kthread_create(procc,initproc_run,NULL,NULL);
+        context_make_active(&(initthr->kt_ctx));
+       
         NOT_YET_IMPLEMENTED("PROCS: initproc_create");
-        return NULL;
+        return initthr;
 }
 
 /**
