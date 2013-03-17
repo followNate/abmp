@@ -123,17 +123,21 @@ static void *bootstrap(int arg1, void *arg2)
         /* necessary to finalize page table information */
 
         pt_template_init();
-        proc_t *procc;
+        /*proc_t *procc;*/
         char name[4]="IDLE";
         /*proc_init();*/
-        procc=proc_create(name);
-       /* kthread_init();*/
-        kthread_t *IDLEthr;
-        IDLEthr=kthread_create(procc,idleproc_run,arg1,arg2);
-        curproc=procc;
-        curthr=IDLEthr;
-        context_make_active(&(IDLEthr->kt_ctx));
+        dbg_print("\n IDLE Process Creating \n");
         
+        curproc=proc_create(name);
+        dbg_print("\n IDLE Process Created \n");
+        /*kthread_init();*/
+        
+        dbg_print("\n IDLE Thread Creating \n");
+        curthr=kthread_create(curproc,idleproc_run,arg1,arg2);
+        dbg_print("\n IDLE Thread Created \n");     
+        
+        context_make_active(&(curthr->kt_ctx));
+        panic("IDLE created\n");
         NOT_YET_IMPLEMENTED("PROCS: bootstrap");
 
         panic("weenix returned to bootstrap()!!! BAD!!!\n");

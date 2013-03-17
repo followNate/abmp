@@ -96,16 +96,17 @@ kthread_t *kthread_create(struct proc *p, kthread_func_t func, long arg1, void *
         /* initialize join queue 
         sched_queue_init(&(new_kthread_t->kt_joinq));*/
         
-        pagedir_t *kt_pdptr = p->p_pagedir;
-        /* setup the context */
-        context_setup(&(new_kthread_t->kt_ctx),func,arg1,arg2,&(new_kthread_t->kt_kstack),DEFAULT_STACK_SIZE,kt_pdptr);          
-        
+        /*pagedir_t *kt_pdptr = p->p_pagedir;
+         setup the context */
+           dbg_print("\n fbhdjfjd\n"); 
+        context_setup(&(new_kthread_t->kt_ctx),func,arg1,arg2,(new_kthread_t->kt_kstack),PAGE_SIZE,(p->p_pagedir));          
+        dbg_print("\n lllll\n"); 
         /* current thread */
         curthr = new_kthread_t;
-        
+        dbg_print("\n lllll\n"); 
         /* make curthr runnable */
         sched_make_runnable(curthr);
-        
+        dbg_print("\n lllll\n"); 
         NOT_YET_IMPLEMENTED("PROCS: kthread_create");
         return curthr;
 }
