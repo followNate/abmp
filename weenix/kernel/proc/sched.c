@@ -12,6 +12,7 @@
 static ktqueue_t kt_runq;
 
 static __attribute__((unused)) void
+
 sched_init(void)
 {
         sched_queue_init(&kt_runq);
@@ -42,8 +43,7 @@ ktqueue_enqueue(ktqueue_t *q, kthread_t *thr)
  * @param q the queue to dequeue a thread from
  * @return the thread dequeued from the queue
  */
-static kthread_t *
-ktqueue_dequeue(ktqueue_t *q)
+static kthread_t *ktqueue_dequeue(ktqueue_t *q)
 {
         kthread_t *thr;
         list_link_t *link;
@@ -97,8 +97,7 @@ sched_queue_empty(ktqueue_t *q)
  *
  * Use the private queue manipulation functions above.
  */
-void
-sched_sleep_on(ktqueue_t *q)
+void sched_sleep_on(ktqueue_t *q)
 {
         KASSERT(q!=NULL&&curthr!=NULL);
         curthr->kt_state=KT_SLEEP;
@@ -180,7 +179,7 @@ sched_cancel(struct kthread *kthr)
          
          if(kthr->kt_state==KT_SLEEP_CANCELLABLE)
          {
-                kthr->kt_cancelled=1;
+                kthr->kt_cancelled=1;                
                 ktqueue_remove(kthr->kt_wchan,kthr);
                 sched_make_runnable(kthr);
          }

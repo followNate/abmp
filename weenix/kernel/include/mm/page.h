@@ -8,7 +8,7 @@
  * they require page-aligned buffers. */
 
 #define PAGE_SHIFT         12
-#define PAGE_SIZE          ((uint32_t)(1UL<<PAGE_SHIFT))
+#define PAGE_SIZE          ((uint32_t)(1UL<<PAGE_SHIFT))       
 #define PAGE_MASK          (0xffffffff<<PAGE_SHIFT)
 
 #define PAGE_ALIGN_DOWN(x) ((void*)(((uintptr_t)(x))&PAGE_MASK))

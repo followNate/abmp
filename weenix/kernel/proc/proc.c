@@ -93,7 +93,7 @@ proc_create(char *name)
          
         /*Get the proc_id*/
         new_proc_t->p_pid=_proc_getid();
-        KASSERT(new_proc_t->p_pid>=0);  
+        KASSERT(new_proc_t->p_pid>=0);
           
         if(new_proc_t->p_pid==1)
                 proc_initproc =new_proc_t;/*set the process list header to point the INIT process*/
@@ -117,12 +117,21 @@ proc_create(char *name)
         new_proc_t->p_state=PROC_RUNNING;
                     
         /*Set Process Status
+<<<<<<< HEAD
+        Exit status will be set on exit*/          
+          
+        /*Set Process State*/
+        new_proc_t->p_state=PROC_RUNNING;
+          
+=======
         Exit status will be set on exit*/
                 
+>>>>>>> 31e9f483e9506707ab49964f6f15d5cdb57317af
         /*Initialize queue for wait*/
         sched_queue_init(&new_proc_t->p_wait);
           
         /*Initialize Page Directory*/
+        
         new_proc_t->p_pagedir=pt_create_pagedir();
           
         /*link on the list of all processes*/
@@ -402,7 +411,7 @@ proc_info(const void *arg, char *buf, size_t osize)
 
         KASSERT(NULL != p);
         KASSERT(NULL != buf);
-
+	
         iprintf(&buf, &size, "pid:          %i\n", p->p_pid);
         iprintf(&buf, &size, "name:         %s\n", p->p_comm);
         if (NULL != p->p_pproc) {
