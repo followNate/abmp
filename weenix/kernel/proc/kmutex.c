@@ -15,23 +15,11 @@
 void
 kmutex_init(kmutex_t *mtx)
 {
-	/*list_init(&(mtx->km_waitq).tq_list);
 	((mtx->km_waitq).tq_list).l_next = NULL;
 	((mtx->km_waitq).tq_list).l_prev = NULL;
-	((mtx->km_waitq).tq_size) = 0;
-<<<<<<< HEAD
-	(mtx->km_holder) = 0; 
-	
-	memset(&(mtx->km_waitq),0,sizeof(mtx->km_waitq));
-	memset(&(mtx->km_holder),0,sizeof(mtx->km_holder));*/
-	
+	((mtx->km_waitq).tq_size) = 0;        
+	(mtx->km_holder) = NULL; 	
         NOT_YET_IMPLEMENTED("PROCS: kmutex_init");
-
-	mtx->km_holder = NULL;
-	/*(mtx->km_holder) = 0; */
-	
-    NOT_YET_IMPLEMENTED("PROCS: kmutex_init");
-
 }
 
 /*
@@ -43,7 +31,7 @@ kmutex_init(kmutex_t *mtx)
 void
 kmutex_lock(kmutex_t *mtx)
 {
-      /*  if(mtx->km_holder != 0)
+       if(mtx->km_holder != 0)
         {
 			sched_sleep_on(&(mtx->km_waitq));
 		}
@@ -53,7 +41,7 @@ kmutex_lock(kmutex_t *mtx)
 		}
 		
         
-        NOT_YET_IMPLEMENTED("PROCS: kmutex_lock");*/
+        NOT_YET_IMPLEMENTED("PROCS: kmutex_lock");
 }
 
 /*
@@ -63,11 +51,11 @@ kmutex_lock(kmutex_t *mtx)
 int
 kmutex_lock_cancellable(kmutex_t *mtx)
 {
-<<<<<<< HEAD
-       /* if(mtx->km_holder !=0)
-=======
+
+        if(mtx->km_holder !=0)
+
         if(mtx->km_holder !=NULL)
->>>>>>> 31e9f483e9506707ab49964f6f15d5cdb57317af
+
         {
 			sched_cancellable_sleep_on(&(mtx->km_waitq));
 		}
@@ -76,7 +64,7 @@ kmutex_lock_cancellable(kmutex_t *mtx)
 			mtx->km_holder = curthr;
 		}
         
-        NOT_YET_IMPLEMENTED("PROCS: kmutex_lock_cancellable");*/
+        NOT_YET_IMPLEMENTED("PROCS: kmutex_lock_cancellable");
         return 0;
 }
 
@@ -98,7 +86,7 @@ void
 kmutex_unlock(kmutex_t *mtx)
 {
         
- /*       if(sched_queue_empty(&(mtx->km_waitq)))
+       if(sched_queue_empty(&(mtx->km_waitq)))
         {
 			mtx->km_holder = NULL;
 	    }
@@ -106,6 +94,6 @@ kmutex_unlock(kmutex_t *mtx)
 	    {
 			mtx->km_holder = sched_wakeup_on(&(mtx->km_waitq));
 			
-		}*/
+		}
         NOT_YET_IMPLEMENTED("PROCS: kmutex_unlock");
 }

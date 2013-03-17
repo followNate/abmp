@@ -121,12 +121,9 @@ kmain()
 static void *bootstrap(int arg1, void *arg2)
 {
         /* necessary to finalize page table information */
-        pt_template_init();
-
-/*	proc_t *idle_proc = proc_create();*/
+        pt_template_init();	
 	
-	
-	     NOT_YET_IMPLEMENTED("PROCS: bootstrap");
+        NOT_YET_IMPLEMENTED("PROCS: bootstrap");
 
         panic("weenix returned to bootstrap()!!! BAD!!!\n");
         return NULL;
