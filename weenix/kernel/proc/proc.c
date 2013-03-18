@@ -131,6 +131,7 @@ proc_create(char *name)
         /*link on proc list of children */
         if(curproc!=NULL)
         {
+        dbg_print("\n Child\n");
         list_insert_tail(&(curproc->p_children),&(new_proc_t->p_child_link));
          } 
     
@@ -181,15 +182,18 @@ proc_cleanup(int status)
 		list_iterate_begin(&curproc->p_children,child,proc_t,p_child_link){
 
 			if(curproc->p_pproc->p_pid!=PID_INIT)
-				list_insert_head(&initProc->p_children,&child->p_child_link);
+				list_insert_tail(&initProc->p_children,&child->p_child_link);
 
 			list_remove(&child->p_child_link);
 		}list_iterate_end();
 	}
-	
+	if(curproc->p_pid!=0)
+	{
+	sched_wakeup_on(&curproc->p_pproc->p_wait);
+	}
 	/* signalling waiting parent process*/
 
-	sched_wakeup_on(&curproc->p_pproc->p_wait);
+	
 
 /*	sched_broadcast_on(&curproc->p_pproc->p_wait);*/
 	NOT_YET_IMPLEMENTED("PROCS: proc_cleanup");
