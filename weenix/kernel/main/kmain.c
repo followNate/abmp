@@ -237,8 +237,10 @@ static kthread_t *initproc_create(void)
 
         kthread_t *initthr;
         initthr=kthread_create(procc,initproc_run,NULL,NULL);
-
         dbg_print("\n init thread created \n");
+
+        /*context_make_active(&(initthr->kt_ctx)); // Makes kernel halting cleanly*/
+
        
         NOT_YET_IMPLEMENTED("PROCS: initproc_create");
         return initthr;

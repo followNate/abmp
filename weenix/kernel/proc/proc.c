@@ -94,7 +94,7 @@ proc_create(char *name)
         /*Get the proc_id*/
         new_proc_t->p_pid=_proc_getid();
         KASSERT(new_proc_t->p_pid>=0);
-        dbg_print("\n Process Created %d\n",new_proc_t->p_pid);  
+       /* dbg_print("\n Process Created %d\n",new_proc_t->p_pid);  */
         if(new_proc_t->p_pid==1)
                 proc_initproc =new_proc_t;/*set the process list header to point the INIT process*/
                
@@ -166,7 +166,6 @@ proc_create(char *name)
 void
 proc_cleanup(int status)
 {
-        NOT_YET_IMPLEMENTED("PROCS: proc_cleanup");
 	/*TODO Code for VFS and VM */
 	
 	/*clean the PCB expect for p_pid and return value(or status code)*/
@@ -180,14 +179,21 @@ proc_cleanup(int status)
 		proc_t *initProc = proc_lookup(PID_INIT);
 		proc_t *child;		
 		list_iterate_begin(&curproc->p_children,child,proc_t,p_child_link){
-		        if(curproc->p_pproc->p_pid != PID_INIT)
-			        list_insert_tail(&initProc->p_children,&child->p_child_link);
+
+			if(curproc->p_pproc->p_pid!=PID_INIT)
+				list_insert_head(&initProc->p_children,&child->p_child_link);
+
 			list_remove(&child->p_child_link);
 		}list_iterate_end();
 	}
 	
 	/* signalling waiting parent process*/
+
 	sched_wakeup_on(&curproc->p_pproc->p_wait);
+
+/*	sched_broadcast_on(&curproc->p_pproc->p_wait);*/
+	NOT_YET_IMPLEMENTED("PROCS: proc_cleanup");
+
 }
 
 /*
