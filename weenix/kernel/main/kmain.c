@@ -239,7 +239,7 @@ static kthread_t *initproc_create(void)
         initthr=kthread_create(procc,initproc_run,NULL,NULL);
         dbg_print("\n init thread created \n");
 
-        /*context_make_active(&(initthr->kt_ctx)); // Makes kernel halting cleanly*/
+        /*context_make_active(&(initthr->kt_ctx)); Makes kernel halting cleanly*/
 
        
         NOT_YET_IMPLEMENTED("PROCS: initproc_create");
@@ -278,14 +278,14 @@ initproc_run(int arg1, void *arg2)
         kthread_t *thread2 = kthread_create(proc1,get_sum2,40,(void*)20);
         KASSERT(thread2 !=NULL);
         sched_make_runnable(thread2);
-        sched_switch();
-
+       
 	int status;
        while(!list_empty(&curproc->p_children))
         {
                 pid_t child = do_waitpid(-1, 0, &status);
                 dbg(DBG_INIT, "Process %d cleaned successfully\n", child);
         }
+        dbg(DBG_INIT, "fgsggsgsgsgf\n");
         NOT_YET_IMPLEMENTED("PROCS: initproc_run");
 
         return NULL;
@@ -294,8 +294,7 @@ initproc_run(int arg1, void *arg2)
 void *get_sum(int arg1,void *arg2)
 {
 dbg_print("\n switching in get_sum \n");
-sched_make_runnable(curthr);
-sched_switch();
+
 int result = arg1 + (int)arg2;
 
 dbg_print("\n Sum is == %d\n",result);

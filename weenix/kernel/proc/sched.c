@@ -51,6 +51,7 @@ ktqueue_enqueue(ktqueue_t *q, kthread_t *thr)
  */
 static kthread_t *ktqueue_dequeue(ktqueue_t *q)
 {
+       
         kthread_t *thr;
         list_link_t *link;
 
@@ -140,18 +141,27 @@ sched_cancellable_sleep_on(ktqueue_t *q)
 kthread_t *
 sched_wakeup_on(ktqueue_t *q)
 {
-        KASSERT(q!=NULL);
+         static int ii=0;
+         KASSERT(q!=NULL);
         kthread_t *q_d=NULL;
         if(!sched_queue_empty(q))
         {
+                ii++;
                 q_d=ktqueue_dequeue(q);
                 sched_make_runnable(q_d);
+                dbg_print("\nwaqke count %d\n",ii);
                 
         }
+<<<<<<< HEAD
         else
                 KASSERT(sched_queue_empty(q));
 	NOT_YET_IMPLEMENTED("PROCS: sched_wakeup_on");        
 	return q_d;
+=======
+     
+        return q_d;
+        NOT_YET_IMPLEMENTED("PROCS: sched_wakeup_on");
+>>>>>>> 596c12c94b401a1ea87397a06f62dbb5df2fe624
 }
 
 void
