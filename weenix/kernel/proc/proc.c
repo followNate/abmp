@@ -94,7 +94,7 @@ proc_create(char *name)
         /*Get the proc_id*/
         new_proc_t->p_pid=_proc_getid();
         KASSERT(new_proc_t->p_pid>=0);
-          
+        dbg_print("\n Process Created %d\n",new_proc_t->p_pid);  
         if(new_proc_t->p_pid==1)
                 proc_initproc =new_proc_t;/*set the process list header to point the INIT process*/
                
@@ -129,9 +129,10 @@ proc_create(char *name)
         list_insert_tail(&_proc_list,&(new_proc_t->p_list_link));
           
         /*link on proc list of children */
-        KASSERT(curproc!=NULL);
+        if(curproc!=NULL)
+        {
         list_insert_tail(&(curproc->p_children),&(new_proc_t->p_child_link));
-          
+         } 
     
         NOT_YET_IMPLEMENTED("PROCS: proc_create");
         return new_proc_t;      

@@ -90,22 +90,25 @@ kthread_t *kthread_create(struct proc *p, kthread_func_t func, long arg1, void *
         /* insert the thread link into process list */
         list_insert_head(&(p->p_threads),&(new_kthread_t->kt_plink));
 
-        /* set the current state of new thread 
-        new_kthread_t->kt_state = KT_RUN; */
+        /* set the current state of new thread */
+        new_kthread_t->kt_wchan = NULL; 
         
         /* initialize join queue 
         sched_queue_init(&(new_kthread_t->kt_joinq));*/
         
-        pagedir_t *kt_pdptr = p->p_pagedir;
-        /* setup the context */
-        context_setup(&(new_kthread_t->kt_ctx),func,arg1,arg2,&(new_kthread_t->kt_kstack),DEFAULT_STACK_SIZE,kt_pdptr);
-        
+        /*pagedir_t *kt_pdptr = p->p_pagedir;
+         setup the context */
+           dbg_print("\nP->pid %d\n",p->p_pid); 
+           dbg_print("\nthre->pid %d\n",(new_kthread_t->kt_proc)->p_pid); 
+        context_setup(&(new_kthread_t->kt_ctx),func,arg1,arg2,(new_kthread_t->kt_kstack),PAGE_SIZE,(p->p_pagedir));          
+        dbg_print("\n lllll\n"); 
+
         /* current thread */
         curthr = new_kthread_t;
-        
+        dbg_print("\n lllll\n"); 
         /* make curthr runnable */
-        sched_make_runnable(curthr);
-        
+
+        dbg_print("\n lllll\n"); 
         NOT_YET_IMPLEMENTED("PROCS: kthread_create");
         return curthr;
 }

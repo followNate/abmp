@@ -77,7 +77,7 @@ typedef struct list {
                 prev->l_prev = next->l_prev;                            \
                 next->l_prev->l_next = prev;                            \
                 next->l_prev = prev;                                    \
-        } while(0)
+        } while(0)  
 
 #define list_insert_head(list, link)                                    \
         list_insert_before((list)->l_next, link)

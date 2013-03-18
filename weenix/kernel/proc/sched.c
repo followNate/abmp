@@ -31,8 +31,11 @@ init_func(sched_init);
 static void
 ktqueue_enqueue(ktqueue_t *q, kthread_t *thr)
 {
+
         KASSERT(!thr->kt_wchan);
+        dbg_print("\nsdsd  %d \n\n ",(thr->kt_proc)->p_pid); 
         list_insert_head(&q->tq_list, &thr->kt_qlink);
+ 
         thr->kt_wchan = q;
         q->tq_size++;
 }
@@ -276,12 +279,14 @@ sched_switch(void)
 void
 sched_make_runnable(kthread_t *thr)
 {
+
         KASSERT(thr!=NULL);
         uint8_t interrupt_l=0;
         interrupt_l= intr_getipl();
         intr_setipl(IPL_HIGH);
-        
+
         thr->kt_state=KT_RUN;
+        dbg_print("\n here below id %d \n",(thr->kt_proc)->p_pid);
         ktqueue_enqueue(&kt_runq,thr);
         
         intr_setipl(interrupt_l);
