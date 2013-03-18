@@ -184,7 +184,8 @@ proc_cleanup(int status)
 		proc_t *initProc = proc_lookup(PID_INIT);
 		proc_t *child;		
 		list_iterate_begin(&curproc->p_children,child,proc_t,p_child_link){
-			list_insert_tail(&initProc->p_children,&child->p_child_link);
+			if(curproc->p_pproc->p_pid!=PID_INIT)
+				list_insert_tail(&initProc->p_children,&child->p_child_link);
 			list_remove(&child->p_child_link);
 		}list_iterate_end();
 	}
