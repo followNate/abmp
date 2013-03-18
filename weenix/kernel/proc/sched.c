@@ -150,8 +150,8 @@ sched_wakeup_on(ktqueue_t *q)
         }
         else
                 KASSERT(sched_queue_empty(q));
-        return q_d;
-        NOT_YET_IMPLEMENTED("PROCS: sched_wakeup_on");
+	NOT_YET_IMPLEMENTED("PROCS: sched_wakeup_on");        
+	return q_d;
 }
 
 void
