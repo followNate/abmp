@@ -235,7 +235,7 @@ initproc_create(void)
         /* kthread_init();*/
         kthread_t *initthr;
         initthr=kthread_create(procc,initproc_run,NULL,NULL);
-        context_make_active(&(initthr->kt_ctx));
+        /*context_make_active(&(initthr->kt_ctx)); // Makes kernel halting cleanly*/
        
         NOT_YET_IMPLEMENTED("PROCS: initproc_create");
         return initthr;

@@ -171,7 +171,6 @@ proc_create(char *name)
 void
 proc_cleanup(int status)
 {
-        NOT_YET_IMPLEMENTED("PROCS: proc_cleanup");
 	/*TODO Code for VFS and VM */
 	
 	/*clean the PCB expect for p_pid and return value(or status code)*/
@@ -192,6 +191,7 @@ proc_cleanup(int status)
 	
 	/* signalling waiting parent process*/
 	sched_broadcast_on(&curproc->p_pproc->p_wait);
+	NOT_YET_IMPLEMENTED("PROCS: proc_cleanup");
 }
 
 /*
