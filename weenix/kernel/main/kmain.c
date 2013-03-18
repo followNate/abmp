@@ -100,6 +100,7 @@ kmain()
         pagedir_t *bpdir = pt_get();
         KASSERT(NULL != bstack && "Ran out of memory while booting.");
         context_setup(&bootstrap_context, bootstrap, 0, NULL, bstack, PAGE_SIZE, bpdir);
+        dbg_print("\n context activate #1 \n");
         context_make_active(&bootstrap_context);
 
         panic("\nReturned to kmain()!!!\n");
@@ -129,15 +130,17 @@ static void *bootstrap(int arg1, void *arg2)
         dbg_print("\n IDLE Process Creating \n");
         
         curproc=proc_create(name);
+        KASSERT(curproc != NULL);
+        KASSERT(curproc->p_pid == PID_IDLE);
         dbg_print("\n IDLE Process Created \n");
         /*kthread_init();*/
         
         dbg_print("\n IDLE Thread Creating \n");
         curthr=kthread_create(curproc,idleproc_run,arg1,arg2);
         dbg_print("\n IDLE Thread Created \n");     
-        
+                dbg_print("\n context activate #1 \n");
         context_make_active(&(curthr->kt_ctx));
-        panic("IDLE created\n");
+         dbg_print("IDLE created\n");
         NOT_YET_IMPLEMENTED("PROCS: bootstrap");
 
         panic("weenix returned to bootstrap()!!! BAD!!!\n");
@@ -163,7 +166,7 @@ static void *idleproc_run(int arg1, void *arg2)
 
         /* create init proc */
         kthread_t *initthr = initproc_create();
-
+        dbg_print("\n got the init thread \n");
         init_call_all();
         GDB_CALL_HOOK(initialized);
 
@@ -181,11 +184,13 @@ static void *idleproc_run(int arg1, void *arg2)
         /* Finally, enable interrupts (we want to make sure interrupts
          * are enabled AFTER all drivers are initialized) */
         intr_enable();
-
+        dbg_print("calling sched_make_runnable\n");
         /* Run initproc */
         sched_make_runnable(initthr);
+        dbg_print("\n returned from sched_make_rinnable \n");
         /* Now wait for it */
         child = do_waitpid(-1, 0, &status);
+        dbg_print("\n wait over for child die \n");
         KASSERT(PID_INIT == child);
 
 #ifdef __MTP__
@@ -227,12 +232,13 @@ static kthread_t *initproc_create(void)
 {
         proc_t *procc;
         char name[4]="INIT";
-        /*proc_init();*/
+
         procc=proc_create(name);
-        /* kthread_init();*/
+
         kthread_t *initthr;
         initthr=kthread_create(procc,initproc_run,NULL,NULL);
-        /*context_make_active(&(initthr->kt_ctx));*/
+
+        dbg_print("\n init thread created \n");
        
         NOT_YET_IMPLEMENTED("PROCS: initproc_create");
         return initthr;
@@ -249,14 +255,57 @@ static kthread_t *initproc_create(void)
  * @param arg1 the first argument (unused)
  * @param arg2 the second argument (unused)
  */
+void *get_sum(int arg1,void *arg2);
+void *get_sum2(int arg1,void *arg2);
 static void *
 initproc_run(int arg1, void *arg2)
 {
+        
+        dbg_print("\n inside initproc_run \n");
+
+        /* 1st child proc */
+        proc_t *proc1 = proc_create("proc1");
+        KASSERT(proc1 != NULL);
+        kthread_t *thread1 = kthread_create(proc1,get_sum,10,(void*)20);
+        KASSERT(thread1 !=NULL);
+        sched_make_runnable(thread1);
+        
+        /* 2nd child proc */
+        proc_t *proc2 = proc_create("proc2");
+        KASSERT(proc2 != NULL);
+        kthread_t *thread2 = kthread_create(proc1,get_sum2,40,(void*)20);
+        KASSERT(thread2 !=NULL);
+        sched_make_runnable(thread2);
+        sched_switch();
+
+	int status;
+       while(!list_empty(&curproc->p_children))
+        {
+                pid_t child = do_waitpid(-1, 0, &status);
+                dbg(DBG_INIT, "Process %d cleaned successfully\n", child);
+        }
         NOT_YET_IMPLEMENTED("PROCS: initproc_run");
 
         return NULL;
 }
 
+void *get_sum(int arg1,void *arg2)
+{
+dbg_print("\n switching in get_sum \n");
+sched_make_runnable(curthr);
+sched_switch();
+int result = arg1 + (int)arg2;
+
+dbg_print("\n Sum is == %d\n",result);
+return NULL;
+}
+void *get_sum2(int arg1,void *arg2)
+{
+
+int result = arg1 + (int)arg2;
+dbg_print("\n Sum is == %d\n",result);
+return NULL;
+}
 /**
  * Clears all interrupts and halts, meaning that we will never run
  * again.

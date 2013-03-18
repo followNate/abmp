@@ -175,18 +175,19 @@ proc_cleanup(int status)
 	curproc->p_status = status;
 	
 	/*link any child of this process with the parent*/
-	
+	/* TODO ensure that init process will also wait on newly added child procs */
 	if(!list_empty(&curproc->p_children)){
 		proc_t *initProc = proc_lookup(PID_INIT);
 		proc_t *child;		
 		list_iterate_begin(&curproc->p_children,child,proc_t,p_child_link){
-			list_insert_tail(&initProc->p_children,&child->p_child_link);
+		        if(curproc->p_pproc->p_pid != PID_INIT)
+			        list_insert_tail(&initProc->p_children,&child->p_child_link);
 			list_remove(&child->p_child_link);
 		}list_iterate_end();
 	}
 	
 	/* signalling waiting parent process*/
-	sched_broadcast_on(&curproc->p_pproc->p_wait);
+	sched_wakeup_on(&curproc->p_pproc->p_wait);
 }
 
 /*
@@ -345,7 +346,7 @@ do_waitpid(pid_t pid, int options, int *status)
                 {
                        list_iterate_begin(&(curproc->p_children), iter,proc_t,p_child_link)
                        {
-                                if(iter->p_pid==pid)
+                                if(iter->p_pid==pid) /* doubt */
                                 {       
                                         i=1;
                                 

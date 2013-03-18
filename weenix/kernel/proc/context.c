@@ -17,8 +17,9 @@ __context_initial_func(context_func_t func, int arg1, void *arg2)
 {
         apic_setipl(IPL_LOW);
         intr_enable();
-
+                dbg_print("\n in context b444   initial\n");
         void *result = func(arg1, arg2);
+        dbg_print("\n in context initial\n");
         kthread_exit(result);
 
         panic("\nReturned from kthread_exit.\n");    
@@ -45,7 +46,9 @@ context_setup(context_t *c, context_func_t func, int arg1, void *arg2,void *ksta
         c->c_esp -= sizeof(arg1);
         *(int *)c->c_esp = arg1;
         c->c_esp -= sizeof(context_func_t);
+               
         *(context_func_t *)c->c_esp = func;
+               
         c->c_esp -= sizeof(uintptr_t);
 
         c->c_ebp = c->c_esp;

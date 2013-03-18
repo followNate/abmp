@@ -31,11 +31,12 @@ init_func(sched_init);
 static void
 ktqueue_enqueue(ktqueue_t *q, kthread_t *thr)
 {
-
+        dbg_print("\n In enque \n");
         KASSERT(!thr->kt_wchan);
-        dbg_print("\nsdsd  %d \n\n ",(thr->kt_proc)->p_pid); 
+        dbg_print("\n In enque \n");
         list_insert_head(&q->tq_list, &thr->kt_qlink);
- 
+        dbg_print("\n In enque \n");
+
         thr->kt_wchan = q;
         q->tq_size++;
 }
@@ -286,10 +287,11 @@ sched_make_runnable(kthread_t *thr)
         intr_setipl(IPL_HIGH);
 
         thr->kt_state=KT_RUN;
-        dbg_print("\n here below id %d \n",(thr->kt_proc)->p_pid);
+        dbg_print("\n In sched \n");  
+
         ktqueue_enqueue(&kt_runq,thr);
-        
+        dbg_print("\n In sched \n");  
         intr_setipl(interrupt_l);
-        
+           dbg_print("\n In sched \n"); 
         NOT_YET_IMPLEMENTED("PROCS: sched_make_runnable");
 }

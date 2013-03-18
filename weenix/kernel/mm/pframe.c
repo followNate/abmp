@@ -571,7 +571,6 @@ pageoutd_init(void)
         KASSERT(NULL != pageoutd);
         pageoutd_thr = kthread_create(pageoutd, pageoutd_run, 0, NULL);
         KASSERT(NULL != pageoutd_thr);
-
         sched_make_runnable(pageoutd_thr);
 }
 init_func(pageoutd_init);
