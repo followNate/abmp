@@ -130,15 +130,17 @@ static void *bootstrap(int arg1, void *arg2)
         dbg_print("\n IDLE Process Creating \n");
         
         curproc=proc_create(name);
-        KASSERT(curproc != NULL);
+       KASSERT(curproc != NULL && "Could not create Idle process"); /* make sure that the "idle" process has been created successfully */
         KASSERT(curproc->p_pid == PID_IDLE);
+        KASSERT(PID_IDLE == curproc->p_pid && "Process create is not Idle");
         dbg_print("\n IDLE Process Created \n");
-        /*kthread_init();*/
+
         
         dbg_print("\n IDLE Thread Creating \n");
         curthr=kthread_create(curproc,idleproc_run,arg1,arg2);
+        KASSERT(curthr != NULL && "Could not create thread for Idle process");      
         dbg_print("\n IDLE Thread Created \n");     
-                dbg_print("\n context activate #1 \n");
+
         context_make_active(&(curthr->kt_ctx));
          dbg_print("IDLE created\n");
         NOT_YET_IMPLEMENTED("PROCS: bootstrap");
@@ -166,6 +168,7 @@ static void *idleproc_run(int arg1, void *arg2)
 
         /* create init proc */
         kthread_t *initthr = initproc_create();
+        KASSERT(curthr != NULL && "Could not create thread for Idle process");      
         dbg_print("\n got the init thread \n");
         init_call_all();
         GDB_CALL_HOOK(initialized);
@@ -184,13 +187,13 @@ static void *idleproc_run(int arg1, void *arg2)
         /* Finally, enable interrupts (we want to make sure interrupts
          * are enabled AFTER all drivers are initialized) */
         intr_enable();
-        dbg_print("calling sched_make_runnable\n");
+        dbg_print("idleproc_run calling sched_make_runnable\n");
         /* Run initproc */
         sched_make_runnable(initthr);
-        dbg_print("\n returned from sched_make_rinnable \n");
+        dbg_print("\nidleproc_run returned from sched_make_rinnable \n");
         /* Now wait for it */
         child = do_waitpid(-1, 0, &status);
-        dbg_print("\n wait over for child die \n");
+        dbg_print("\n idleproc_run wait over for child die \n");
         KASSERT(PID_INIT == child);
 
 #ifdef __MTP__
@@ -270,19 +273,26 @@ initproc_run(int arg1, void *arg2)
         KASSERT(proc1 != NULL);
         kthread_t *thread1 = kthread_create(proc1,get_sum,10,(void*)20);
         KASSERT(thread1 !=NULL);
+        dbg_print("\n initproc_run th1 calling sched make runnable \n");
         sched_make_runnable(thread1);
-        
+        dbg_print("\n initproc_run returned sched make runnable \n");
+
         /* 2nd child proc */
         proc_t *proc2 = proc_create("proc2");
         KASSERT(proc2 != NULL);
-        kthread_t *thread2 = kthread_create(proc1,get_sum2,40,(void*)20);
+        kthread_t *thread2 = kthread_create(proc2,get_sum2,40,(void*)20);
         KASSERT(thread2 !=NULL);
+        dbg_print("\n initproc_run th2 calling sched make runnable \n");
         sched_make_runnable(thread2);
+                dbg_print("\n initproc_run returned sched make runnable \n");
+/*        dbg_print("\n initproc_run calling sched switch \n");
         sched_switch();
-
+        dbg_print("\n initproc_run returning sched switch \n");*/
+        
 	int status;
        while(!list_empty(&curproc->p_children))
         {
+                dbg_print("\n initproc run waintig for child in init\n");
                 pid_t child = do_waitpid(-1, 0, &status);
                 dbg(DBG_INIT, "Process %d cleaned successfully\n", child);
         }
@@ -293,9 +303,12 @@ initproc_run(int arg1, void *arg2)
 
 void *get_sum(int arg1,void *arg2)
 {
-dbg_print("\n switching in get_sum \n");
+/*dbg_print("\n get)sum calling sched make runnable \n");
 sched_make_runnable(curthr);
+dbg_print("\n get)sum returning sched make runnable \n");
+dbg_print("\n get sum calling sched switch \n");
 sched_switch();
+        dbg_print("\n get sum returning sched switch \n");*/
 int result = arg1 + (int)arg2;
 
 dbg_print("\n Sum is == %d\n",result);

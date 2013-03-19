@@ -86,7 +86,7 @@ kthread_t *kthread_create(struct proc *p, kthread_func_t func, long arg1, void *
         
         /* thread's process */
         new_kthread_t->kt_proc = p;
-
+        KASSERT(NULL != p);
         /* insert the thread link into process list */
         list_insert_head(&(p->p_threads),&(new_kthread_t->kt_plink));
 
@@ -140,6 +140,7 @@ kthread_destroy(kthread_t *t)
  */
 void kthread_cancel(kthread_t *kthr, void *retval)
 {
+        KASSERT(NULL != kthr);
         if(kthr == curthr)
           {
                 dbg_print("\n canceled \n");
@@ -165,9 +166,12 @@ void kthread_cancel(kthread_t *kthr, void *retval)
  */
 void kthread_exit(void *retval)
 {
-        dbg_print("\n exiting the thread \n");
+        KASSERT(!curthr->kt_wchan);
+        KASSERT(!curthr->kt_qlink.l_next && !curthr->kt_qlink.l_prev);
+        KASSERT(curthr->kt_proc == curproc);
         curthr->kt_retval = retval;
         curthr->kt_state = KT_EXITED;
+      dbg_print("\n exiting the thread \n");
         proc_thread_exited(retval);
         
         NOT_YET_IMPLEMENTED("PROCS: kthread_exit");

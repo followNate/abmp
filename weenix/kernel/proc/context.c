@@ -6,20 +6,21 @@
 #include "main/apic.h"
 #include "main/interrupt.h"
 #include "main/gdt.h"
-
+#include "globals.h" /* need to remove this header added by bikram */
 #include "mm/page.h"
 #include "mm/pagetable.h"
 
 #include "util/debug.h"
-
+int count =0;
 static void
 __context_initial_func(context_func_t func, int arg1, void *arg2)
 {
+        count++;
         apic_setipl(IPL_LOW);
         intr_enable();
-                dbg_print("\n in context b444   initial\n");
+           if(count > 2){dbg_print("\n in context b444   initial curproc is= %d\n",(curthr->kt_proc)->p_pid);}
         void *result = func(arg1, arg2);
-        dbg_print("\n in context initial\n");
+        dbg_print("\n in context initi  al\n");
         kthread_exit(result);
 
         panic("\nReturned from kthread_exit.\n");    
@@ -74,6 +75,7 @@ context_make_active(context_t *c)
 void
 context_switch(context_t *oldc, context_t *newc)
 {
+
         gdt_set_kernel_stack((void *)((uintptr_t)newc->c_kstack + newc->c_kstacksz));
         pt_set(newc->c_pdptr);
 
