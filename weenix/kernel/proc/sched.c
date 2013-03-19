@@ -143,17 +143,18 @@ sched_wakeup_on(ktqueue_t *q)
 {
          static int ii=0;
          KASSERT(q!=NULL);
-        kthread_t *q_d=NULL;
+        kthread_t *thr=NULL;
         if(!sched_queue_empty(q))
         {
                 ii++;
-                q_d=ktqueue_dequeue(q);
-                sched_make_runnable(q_d);
-                dbg_print("\nwaqke count %d\n",ii);
+                thr=ktqueue_dequeue(q);
+                KASSERT((thr->kt_state == KT_SLEEP) || (thr->kt_state == KT_SLEEP_CANCELLABLE));
+                 sched_make_runnable(thr);
+                /*dbg_print("\nwake count %d\n",ii);*/
                 
         }
      
-        return q_d;
+        return thr;
         NOT_YET_IMPLEMENTED("PROCS: sched_wakeup_on");
 }
 
@@ -240,7 +241,7 @@ sched_switch(void)
 {
         uint8_t interrupt_l=0;
         kthread_t *thr1;
-        
+       /* dbg_print("\nIn sched switch %d\n",curproc->p_pid);*/
         interrupt_l= intr_getipl();
         intr_setipl(IPL_HIGH);
         if(!sched_queue_empty(&kt_runq))
@@ -248,6 +249,7 @@ sched_switch(void)
                 thr1=curthr;
                 curthr=ktqueue_dequeue(&kt_runq);
                 curproc=curthr->kt_proc;
+               /* dbg_print("\nIn sched switch %d to %d\n",thr1->kt_proc->p_pid,curproc->p_pid);*/
                 context_switch(&(thr1->kt_ctx), &(curthr->kt_ctx));
                 intr_setipl(interrupt_l);
          }
@@ -255,6 +257,7 @@ sched_switch(void)
          {
                 while(sched_queue_empty(&kt_runq))
                 {
+                       /* dbg_print("\nIn sched switch %d\n",curproc->p_pid);*/
                         intr_setipl(IPL_LOW);
                         intr_wait();
                         intr_setipl(IPL_HIGH);
@@ -262,10 +265,11 @@ sched_switch(void)
                 thr1=curthr;
                 curthr=ktqueue_dequeue(&kt_runq);
                 curproc=curthr->kt_proc;
+                /*dbg_print("\nIn sched switch %d to %d\n",thr1->kt_proc->p_pid,curproc->p_pid);*/
                 context_switch(&(thr1->kt_ctx), &(curthr->kt_ctx));
                 intr_setipl(interrupt_l);
           }
-       
+        /*dbg_print("\nIn sched switch %d to %d\n",thr1->kt_proc->p_pid,curproc->p_pid);*/
           NOT_YET_IMPLEMENTED("PROCS: sched_switch");
 }
 
@@ -288,6 +292,7 @@ sched_make_runnable(kthread_t *thr)
 {
 
         KASSERT(thr!=NULL);
+        KASSERT(&kt_runq != thr->kt_wchan); 
         uint8_t interrupt_l=0;
         interrupt_l= intr_getipl();
         intr_setipl(IPL_HIGH);

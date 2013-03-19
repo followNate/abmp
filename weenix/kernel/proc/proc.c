@@ -82,22 +82,26 @@ failed:
 proc_t *
 proc_create(char *name)
 {
-        /*Allocate a slab to a process*/
-        proc_t *new_proc_t = slab_obj_alloc(proc_allocator);
+      
+        proc_t *new_proc_t = slab_obj_alloc(proc_allocator);  /*Allocate a slab to a process*/
  
-        /*check whether allocation is succesful or not*/
-        KASSERT(new_proc_t!=NULL);
+        
+        KASSERT(new_proc_t!=NULL);/*check whether allocation is succesful or not*/
          
-        /*Empty the content of the slab*/
-        memset(new_proc_t, 0, sizeof(proc_t));
+       
+        memset(new_proc_t, 0, sizeof(proc_t)); /*Empty the content of the slab*/
          
-        /*Get the proc_id*/
-        new_proc_t->p_pid=_proc_getid();
-        KASSERT(new_proc_t->p_pid>=0);
-       /* dbg_print("\n Process Created %d\n",new_proc_t->p_pid);  */
+       
+        pid_t pid=_proc_getid(); /*Get the proc_id*/
+       
+        KASSERT(PID_IDLE != pid || list_empty(&_proc_list));
+        new_proc_t->p_pid=pid;
+        /*dbg_print("\n Process Created %d\n",new_proc_t->p_pid);*/  
         if(new_proc_t->p_pid==1)
+         {
+                KASSERT(PID_INIT != pid || PID_IDLE == curproc->p_pid); 
                 proc_initproc =new_proc_t;/*set the process list header to point the INIT process*/
-               
+        }       
         /*Assign the Process name */
         if(strlen(name)<PROC_NAME_LEN)
                 strcpy(new_proc_t->p_comm,name);
@@ -131,7 +135,8 @@ proc_create(char *name)
         /*link on proc list of children */
         if(curproc!=NULL)
         {
-        dbg_print("\n Child\n");
+        
+         /*dbg_print("\n Child\n");*/
         list_insert_tail(&(curproc->p_children),&(new_proc_t->p_child_link));
          } 
     
@@ -170,27 +175,26 @@ proc_cleanup(int status)
 	/*TODO Code for VFS and VM */
 	
 	/*clean the PCB expect for p_pid and return value(or status code)*/
-	
+	KASSERT(1 <= curproc->p_pid);
 	curproc->p_state = PROC_DEAD;
 	curproc->p_status = status;
 	
 	/*link any child of this process with the parent*/
 	/* TODO ensure that init process will also wait on newly added child procs */
+	
 	if(!list_empty(&curproc->p_children)){
-		proc_t *initProc = proc_lookup(PID_INIT);
+		KASSERT(NULL != proc_initproc);
 		proc_t *child;		
 		list_iterate_begin(&curproc->p_children,child,proc_t,p_child_link){
 
 			if(curproc->p_pproc->p_pid!=PID_INIT)
-				list_insert_tail(&initProc->p_children,&child->p_child_link);
-
-			list_remove(&child->p_child_link);
+			{
+				list_insert_tail(&(proc_initproc->p_children),&(child->p_child_link));
+                	}	
 		}list_iterate_end();
 	}
-	if(curproc->p_pid!=0)
-	{
+	KASSERT(NULL != curproc->p_pproc);
 	sched_wakeup_on(&curproc->p_pproc->p_wait);
-	}
 	/* signalling waiting parent process*/
 
 	
@@ -226,15 +230,20 @@ proc_kill(proc_t *p, int status)
 	
 	/*link any child of this process with the parent*/
 	if(!list_empty(&p->p_children)){
-		proc_t *initProc = proc_lookup(PID_INIT);
-		proc_t *child;
+		KASSERT(NULL != proc_initproc);
+		proc_t *child;		
 		list_iterate_begin(&p->p_children,child,proc_t,p_child_link){
-			list_insert_tail(&initProc->p_children,&child->p_child_link);
-			list_remove(&child->p_child_link);
+
+			if(p->p_pproc->p_pid!=PID_INIT)
+			{
+				list_insert_tail(&(proc_initproc->p_children),&(child->p_child_link));
+                	}	
 		}list_iterate_end();
+		
 	}
 	
 	/* signalling waiting parent process*/
+	KASSERT(NULL != p->p_pproc);
 	sched_wakeup_on(&p->p_pproc->p_wait);
 }
 
@@ -316,7 +325,10 @@ proc_thread_exited(void *retval)
 pid_t
 do_waitpid(pid_t pid, int options, int *status)
 {
-        int i=0;
+        static int ii=0;
+         ii++;
+         dbg_print("\nwait count %d\n",ii);
+         int i=0;
         int closed_pid=-ECHILD;
         proc_t *iter;
         kthread_t *cur_proc_thd;
@@ -343,7 +355,7 @@ do_waitpid(pid_t pid, int options, int *status)
                                         } list_iterate_end();
                                         pt_destroy_pagedir(iter->p_pagedir);
                                         list_remove(&(iter->p_child_link));
-                                        break;
+                                        goto END;
                                 }
                         }list_iterate_end();
                         if(i==0)
@@ -372,7 +384,7 @@ do_waitpid(pid_t pid, int options, int *status)
                                                 } list_iterate_end();
                                                 pt_destroy_pagedir(iter->p_pagedir);
                                                 list_remove(&(iter->p_child_link));
-                                                break;   
+                                                 goto END;  
                                         }
                                         else
                                         {
@@ -389,7 +401,7 @@ do_waitpid(pid_t pid, int options, int *status)
          }
                                        
          NOT_YET_IMPLEMENTED("PROCS: do_waitpid");
-         return closed_pid;
+     END:    return closed_pid;
 }
 
 /*
