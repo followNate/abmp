@@ -220,10 +220,10 @@ proc_kill(proc_t *p, int status)
 	p->p_state = PROC_DEAD;
 	p->p_status = status;
 	
-	kthread_t *kthr;
+	/*kthread_t *kthr;
 	kthr=list_head(&p->p_threads, kthread_t, kt_plink);
 	kthread_destroy(kthr);
-	list_remove_head(&p->p_threads);
+	list_remove_head(&p->p_threads);*/
 	
 	
 	/*link any child of this process with the parent*/
@@ -354,8 +354,10 @@ pid_t do_waitpid(pid_t pid, int options, int *status)
                                         list_remove(&(iter->p_list_link));
                                         list_iterate_begin(&(iter->p_threads), cur_proc_thd, kthread_t, kt_plink)
                                         {
-                                                kthread_destroy(cur_proc_thd);
+                                                KASSERT(KT_EXITED == cur_proc_thd->kt_state);
+						kthread_destroy(cur_proc_thd);
                                         } list_iterate_end();
+					KASSERT(NULL != iter->p_pagedir);
                                         pt_destroy_pagedir(iter->p_pagedir);
                                         list_remove(&(iter->p_child_link));
                                         goto END;
@@ -385,8 +387,10 @@ pid_t do_waitpid(pid_t pid, int options, int *status)
                                                 list_remove(&(iter->p_list_link));
                                                 list_iterate_begin(&(iter->p_threads), cur_proc_thd, kthread_t, kt_plink)
                                                 {
-                                                        kthread_destroy(cur_proc_thd);
+                                                        KASSERT(KT_EXITED == cur_proc_thd->kt_state);
+							kthread_destroy(cur_proc_thd);
                                                 } list_iterate_end();
+						KASSERT(NULL != iter->p_pagedir);
                                                 pt_destroy_pagedir(iter->p_pagedir);
                                                 list_remove(&(iter->p_child_link));
                                                  goto END;  
