@@ -218,8 +218,7 @@ proc_kill(proc_t *p, int status)
 	/*clean the PCB expect for p_pid and return value(or status code)*/
 
 	KASSERT(1 < p->p_pid);
-	p->p_state = PROC_DEAD;
-	p->p_status = status;
+	
         dbg(DBG_PROC,"Killing Process with PID=%d\n",p->p_pid);
 
 	
@@ -238,12 +237,19 @@ proc_kill(proc_t *p, int status)
 	/* signalling waiting parent process*/
 	KASSERT(NULL != p->p_pproc);
 	sched_wakeup_on(&p->p_pproc->p_wait);
-	
 	kthread_t *kthr;
 	list_iterate_begin(&(p->p_threads), kthr, kthread_t, kt_plink)
         {
-           kthread_cancel(kthr,(void*)status);
+               /* while(KT_EXITED !=kthr->kt_state)*/
+                {
+                        kthread_cancel(kthr,(void*)status);
+                        sched_make_runnable(curthr);
+        	        sched_switch();
+                }
         }list_iterate_end();
+	
+	p->p_state = PROC_DEAD;
+	p->p_status = status;
 }
 
 /*
@@ -336,6 +342,7 @@ pid_t do_waitpid(pid_t pid, int options, int *status)
         kthread_t *cur_proc_thd;
         KASSERT(options == 0);
         KASSERT(curproc!=NULL);
+        dbg(DBG_PROC,"Wait in Process with PID=%d\n",curproc->p_pid);
 /*        dbg_print("\n inside the do_waitpid curproc is %d  pid== %d\n",curproc->p_pid,pid);*/
         
         if(list_empty(&(curproc->p_children)))
