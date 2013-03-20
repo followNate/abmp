@@ -309,7 +309,7 @@ proc_t *proc5 = proc_create("proc3");
           int status;
 
           dbg_print("\n Created proc 5 inside proc4 \n");
-    /* while(!list_empty(&curproc->p_children))
+/*     while(!list_empty(&curproc->p_children))
         {
            pid_t child = do_waitpid(-1, 0, &status);
                 dbg_print("Process %d cleaned successfully\n", child);
