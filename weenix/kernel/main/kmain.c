@@ -282,7 +282,12 @@ initproc_run(int arg1, void *arg2)
 
 void *get_sum1(int arg1,void *arg2)
 {
-
+int x =1;
+kmutex_t lock;
+kmutex_init(&lock);
+kmutex_lock(&lock);
+x=x+1;
+kmutex_unlock(&lock);
 int result = arg1 + (int)arg2;
 
 dbg_print("\n pid %d: Sum is == %d\n",curproc->p_pid,result);
