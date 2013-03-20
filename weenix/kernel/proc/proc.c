@@ -178,7 +178,7 @@ proc_cleanup(int status)
 	KASSERT(1 <= curproc->p_pid);
 	curproc->p_state = PROC_DEAD;
 	curproc->p_status = status;
-/*	dbg_print("\n inside proc_cleanup curproc->pid %d\n",curproc->p_pid); */
+	/*dbg_print("\n inside proc_cleanup curproc->pid %d\n",curproc->p_pid); */
 	/*link any child of this process with the parent*/
 	/* TODO ensure that init process will also wait on newly added child procs */
 	
@@ -187,14 +187,16 @@ proc_cleanup(int status)
 		KASSERT(NULL != proc_initproc);
 		proc_t *child;		
 		list_iterate_begin(&curproc->p_children,child,proc_t,p_child_link)
-		{
-
-			if(curproc->p_pproc->p_pid!=PID_INIT)
+		{                        
+			if(child->p_pproc->p_pid!=PID_INIT)
 			{
-				list_insert_tail(&(proc_initproc->p_children),&(child->p_child_link));
+                                child->p_pproc = proc_initproc;
+                		list_insert_tail(&(proc_initproc->p_children),&(child->p_child_link));
                 	}	
+
 		}list_iterate_end();
 	}
+		
 	KASSERT(NULL != curproc->p_pproc);
 	sched_wakeup_on(&curproc->p_pproc->p_wait);
 
@@ -217,11 +219,12 @@ proc_kill(proc_t *p, int status)
 	/* Call proc_cleanup() here to clean the PCB and make it a Zombie*/
 	/*clean the PCB expect for p_pid and return value(or status code)*/
 	
-	p->p_state = PROC_DEAD;
+	p->p_state = PROC_DEAD;	
 	p->p_status = status;
 	
-	/*kthread_t *kthr;
+/*        kthread_t *kthr;
 	kthr=list_head(&p->p_threads, kthread_t, kt_plink);
+	kthr->kt_state = KT_EXITED;
 	kthread_destroy(kthr);
 	list_remove_head(&p->p_threads);*/
 	
@@ -232,10 +235,12 @@ proc_kill(proc_t *p, int status)
 		proc_t *child;		
 		list_iterate_begin(&p->p_children,child,proc_t,p_child_link){
 
-			if(p->p_pproc->p_pid!=PID_INIT)
+			if(child->p_pproc->p_pid!=PID_INIT)
 			{
+				child->p_pproc = proc_initproc;
 				list_insert_tail(&(proc_initproc->p_children),&(child->p_child_link));
                 	}	
+
 		}list_iterate_end();
 		
 	}
@@ -333,10 +338,11 @@ pid_t do_waitpid(pid_t pid, int options, int *status)
         kthread_t *cur_proc_thd;
         KASSERT(options == 0);
         KASSERT(curproc!=NULL);
-       /* dbg_print("\n inside the do_waitpid curproc is %d \n",curproc->p_pid);*/
+/*        dbg_print("\n inside the do_waitpid curproc is %d  pid== %d\n",curproc->p_pid,pid);*/
+        
         if(list_empty(&(curproc->p_children)))
                { 
-  /*              dbg_print("\n in do_waitpid curproc= %d  child list empty\n",curproc->p_pid);*/
+          /*     dbg_print("\n in do_waitpid curproc= %d  child list empty\n",curproc->p_pid);*/
                 return -ECHILD;
                }
         else

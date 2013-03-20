@@ -34,7 +34,7 @@ kmutex_init(kmutex_t *mtx)
 void
 kmutex_lock(kmutex_t *mtx)
 {
-       KASSERT(curthr && (curthr != mtx->km_holder));
+       KASSERT(curthr && (curthr != mtx->km_holder) && "Current thread and mutex lock holder are same");
        if(mtx->km_holder != 0)
         {
 			sched_sleep_on(&(mtx->km_waitq));
