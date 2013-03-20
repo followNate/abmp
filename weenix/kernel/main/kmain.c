@@ -257,8 +257,9 @@ static kthread_t *initproc_create(void)
  * @param arg1 the first argument (unused)
  * @param arg2 the second argument (unused)
  */
-void *get_sum(int arg1,void *arg2);
+void *get_sum1(int arg1,void *arg2);
 void *get_sum2(int arg1,void *arg2);
+void *get_mul(int arg1,void *arg2);
 static void *
 initproc_run(int arg1, void *arg2)
 {
@@ -268,22 +269,29 @@ initproc_run(int arg1, void *arg2)
         /* 1st child proc */
         proc_t *proc1 = proc_create("proc1");
         KASSERT(proc1 != NULL);
-        kthread_t *thread1 = kthread_create(proc1,get_sum,10,(void*)20);
+        kthread_t *thread1 = kthread_create(proc1,get_sum1,10,(void*)20);
         KASSERT(thread1 !=NULL);
-        sched_make_runnable(thread1);
+      /* dbg_print("\n pid %d",proc1->p_pid);*/
         
         /* 2nd child proc */
         proc_t *proc2 = proc_create("proc2");
         KASSERT(proc2 != NULL);
-        kthread_t *thread2 = kthread_create(proc1,get_sum2,40,(void*)20);
+        kthread_t *thread2 = kthread_create(proc2,get_sum2,40,(void*)20);
         KASSERT(thread2 !=NULL);
-        sched_make_runnable(thread2);
+        /*dbg_print("\n pid %d",proc2->p_pid);*/
+        
+        
+        
        
+        sched_make_runnable(thread1);
+        sched_make_runnable(thread2);
+      
+        
 	int status;
        while(!list_empty(&curproc->p_children))
         {
                 pid_t child = do_waitpid(-1, 0, &status);
-                dbg(DBG_INIT, "Process %d cleaned successfully\n", child);
+                dbg_print("Process %d cleaned successfully\n", child);
         }
         dbg(DBG_INIT, "fgsggsgsgsgf\n");
         NOT_YET_IMPLEMENTED("PROCS: initproc_run");
@@ -291,20 +299,38 @@ initproc_run(int arg1, void *arg2)
         return NULL;
 }
 
-void *get_sum(int arg1,void *arg2)
+void *get_sum1(int arg1,void *arg2)
 {
 dbg_print("\n switching in get_sum \n");
 
 int result = arg1 + (int)arg2;
 
-dbg_print("\n Sum is == %d\n",result);
+dbg_print("\n pid %d: Sum is == %d\n",curproc->p_pid,result);
 return NULL;
 }
 void *get_sum2(int arg1,void *arg2)
 {
 
 int result = arg1 + (int)arg2;
-dbg_print("\n Sum is == %d\n",result);
+dbg_print("\n pid %d:  Sum is == %d\n",curproc->p_pid,result);
+proc_t *proc3 = proc_create("proc3");
+        KASSERT(proc3 != NULL);
+        kthread_t *thread3 = kthread_create(proc3,get_mul,40,(void*)20);
+        KASSERT(thread3 !=NULL);
+          sched_make_runnable(thread3);
+          int status;
+       while(!list_empty(&curproc->p_children))
+        {
+                pid_t child = do_waitpid(-1, 0, &status);
+                dbg_print("Process %d cleaned successfully\n", child);
+        }
+return NULL;
+}
+void *get_mul(int arg1,void *arg2)
+{
+
+int result = arg1 * (int)arg2;
+dbg_print("\n pid %d:  Mul is == %d\n",curproc->p_pid,result);
 return NULL;
 }
 /**
