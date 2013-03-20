@@ -235,7 +235,7 @@ proc_kill(proc_t *p, int status)
 	kthread_t *kthr;
 	list_iterate_begin(&(p->p_threads), kthr, kthread_t, kt_plink)
         {
-           kthread_destroy(kthr);
+           kthread_cancel(kthr,(void*)status);
         }list_iterate_end();
 }
 
@@ -300,7 +300,7 @@ proc_thread_exited(void *retval)
 /*        dbg_print("\n came back from cleanup\n");
         dbg_print("\n calling switch \n");*/
 	sched_switch();
-	NOT_YET_IMPLEMENTED("PROCS: proc_thread_exited");
+	/*NOT_YET_IMPLEMENTED("PROCS: proc_thread_exited");*/
 }
 
 /* If pid is -1 dispose of one of the exited children of the current
@@ -320,12 +320,12 @@ proc_thread_exited(void *retval)
  */
 pid_t do_waitpid(pid_t pid, int options, int *status)
 {
-        static int ii=0;
+       /* static int ii=0;
          ii++;
-         dbg_print("\nwait count %d\n",ii);
-         int i=0;
+         dbg_print("\nwait count %d\n",ii);*/
+        int i=0;
         int closed_pid=-ECHILD;
-        proc_t *iter;
+        proc_t *p;
         kthread_t *cur_proc_thd;
         KASSERT(options == 0);
         KASSERT(curproc!=NULL);
@@ -340,22 +340,25 @@ pid_t do_waitpid(pid_t pid, int options, int *status)
                 if(pid==-1)
                 {
                 wait_to_die1:
-                        list_iterate_begin(&(curproc->p_children), iter,proc_t,p_child_link)
+                        list_iterate_begin(&(curproc->p_children), p,proc_t,p_child_link)
                         {
-                                if(iter->p_state==PROC_DEAD)
+                                KASSERT(p!=NULL);
+                                if(p->p_state==PROC_DEAD)
                                 {
+                                        KASSERT(-1 == pid || p->p_pid == pid);
                                         i=1;
-                                        closed_pid=iter->p_pid;
-                                        *status=(iter->p_status);
-                                        list_remove(&(iter->p_list_link));
-                                        list_iterate_begin(&(iter->p_threads), cur_proc_thd, kthread_t, kt_plink)
+                                        closed_pid=p->p_pid;
+                                        *status=(p->p_status);
+                                        list_remove(&(p->p_list_link));
+                                        list_iterate_begin(&(p->p_threads), cur_proc_thd, kthread_t, kt_plink)
                                         {
                                                 KASSERT(KT_EXITED == cur_proc_thd->kt_state);
 						kthread_destroy(cur_proc_thd);
                                         } list_iterate_end();
-					KASSERT(NULL != iter->p_pagedir);
-                                        pt_destroy_pagedir(iter->p_pagedir);
-                                        list_remove(&(iter->p_child_link));
+					KASSERT(NULL != p->p_pagedir);
+                                        pt_destroy_pagedir(p->p_pagedir);
+                                        list_remove(&(p->p_child_link));
+                                        slab_obj_free(proc_allocator,p);
                                         goto END;
                                 }
                         }list_iterate_end();
@@ -369,27 +372,30 @@ pid_t do_waitpid(pid_t pid, int options, int *status)
                 }
                 else if(pid>0)
                 {
-                       list_iterate_begin(&(curproc->p_children), iter,proc_t,p_child_link)
+                       list_iterate_begin(&(curproc->p_children), p,proc_t,p_child_link)
                        {
-                                if(iter->p_pid==pid) /* doubt */
+                                KASSERT(p!=NULL);
+                                if(p->p_pid==pid) /* doubt */
                                 {       
                                         i=1;
                                 
                                 wait_to_die2:                    
-                                        if (iter->p_state == PROC_DEAD)
+                                        if (p->p_state == PROC_DEAD)
                                         {
-                                                closed_pid=iter->p_pid;
-                                                *status=(iter->p_status);
-                                                list_remove(&(iter->p_list_link));
-                                                list_iterate_begin(&(iter->p_threads), cur_proc_thd, kthread_t, kt_plink)
+                                                KASSERT(-1 == pid || p->p_pid == pid);
+                                                closed_pid=p->p_pid;
+                                                *status=(p->p_status);
+                                                list_remove(&(p->p_list_link));
+                                                list_iterate_begin(&(p->p_threads), cur_proc_thd, kthread_t, kt_plink)
                                                 {
                                                         KASSERT(KT_EXITED == cur_proc_thd->kt_state);
 							kthread_destroy(cur_proc_thd);
                                                 } list_iterate_end();
-						KASSERT(NULL != iter->p_pagedir);
-                                                pt_destroy_pagedir(iter->p_pagedir);
-                                                list_remove(&(iter->p_child_link));
-                                                 goto END;  
+						KASSERT(NULL != p->p_pagedir);
+                                                pt_destroy_pagedir(p->p_pagedir);
+                                                list_remove(&(p->p_child_link));
+                                                slab_obj_free(proc_allocator,p);
+                                                goto END;  
                                         }
                                         else
                                         {
@@ -407,7 +413,7 @@ pid_t do_waitpid(pid_t pid, int options, int *status)
                         KASSERT((int)pid!=0);
          }
                                        
-         NOT_YET_IMPLEMENTED("PROCS: do_waitpid");
+         /*NOT_YET_IMPLEMENTED("PROCS: do_waitpid");*/
      END:    return closed_pid;
 }
 
@@ -422,7 +428,9 @@ do_exit(int status)
 {
         proc_kill(curproc,status);
         /*NOT_YET_IMPLEMENTED("PROCS: do_exit");*/
+        sched_switch();/* exit from the current thread*/
 }
+
 
 size_t
 proc_info(const void *arg, char *buf, size_t osize)
