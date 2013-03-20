@@ -31,16 +31,15 @@ init_func(sched_init);
 static void
 ktqueue_enqueue(ktqueue_t *q, kthread_t *thr)
 {
-        /*dbg_print("\n In enque \n");*/
         KASSERT(!thr->kt_wchan);
-        /*dbg_print("\n In enque \n");*/
-        dbg_print("\n In  the enque \n");
-        dbg_print("\n thr going in is %d \n",(thr->kt_proc)->p_pid);
+       
+     /*   dbg_print("\n In  the enque \n");
+        dbg_print("\n in enqueethr going in is %d \n",(thr->kt_proc)->p_pid);*/
         list_insert_head(&q->tq_list, &thr->kt_qlink);    
 
         thr->kt_wchan = q;
         q->tq_size++;
-                dbg_print("\n in enqueue  Size of queue is %d\n",q->tq_size);
+              /*  dbg_print("\n in enqueue  Size of queue is %d\n",q->tq_size);*/
 }
 
 /**
@@ -51,6 +50,7 @@ ktqueue_enqueue(ktqueue_t *q, kthread_t *thr)
  */
 static kthread_t *ktqueue_dequeue(ktqueue_t *q)
 {
+       
         kthread_t *thr;
         list_link_t *link;
 
@@ -60,12 +60,12 @@ static kthread_t *ktqueue_dequeue(ktqueue_t *q)
 
         link = q->tq_list.l_prev;
         thr = list_item(link, kthread_t, kt_qlink);
-        dbg_print("\nin dequeue  thr going out is %d \n",(thr->kt_proc)->p_pid);
+/*        dbg_print("\nin dequeue  thr going out is %d \n",(thr->kt_proc)->p_pid);*/
         list_remove(link);
         thr->kt_wchan = NULL;
 
         q->tq_size--;
-        dbg_print("\n size of current queue is %d\n",q->tq_size);
+/*        dbg_print("\n size of current queue is %d\n",q->tq_size);*/
         return thr;
 }
 
@@ -78,7 +78,7 @@ static kthread_t *ktqueue_dequeue(ktqueue_t *q)
 static void
 ktqueue_remove(ktqueue_t *q, kthread_t *thr)
 {
-        dbg_print("\nin remove  thr from QUE is %d \n",(thr->kt_proc)->p_pid);
+/*        dbg_print("\nin remove  thr from QUE is %d \n",(thr->kt_proc)->p_pid);*/
         KASSERT(thr->kt_qlink.l_next && thr->kt_qlink.l_prev);
         list_remove(&thr->kt_qlink);
         thr->kt_wchan = NULL;
@@ -143,22 +143,22 @@ sched_cancellable_sleep_on(ktqueue_t *q)
 kthread_t *
 sched_wakeup_on(ktqueue_t *q)
 {
-        KASSERT(q!=NULL);
-        kthread_t *q_d=NULL;
+         static int ii=0;
+         KASSERT(q!=NULL);
+        kthread_t *thr=NULL;
         if(!sched_queue_empty(q))
         {
-               dbg_print("\n in sched_wakeup_on \n");
-                q_d=ktqueue_dequeue(q);
-              dbg_print("\n in schedwkup call mk runable \n");
-                sched_make_runnable(q_d);                
+
+                ii++;
+                thr=ktqueue_dequeue(q);
+                KASSERT((thr->kt_state == KT_SLEEP) || (thr->kt_state == KT_SLEEP_CANCELLABLE));
+                 sched_make_runnable(thr);
+                /*dbg_print("\nwake count %d\n",ii);*/
+                
         }
-        else
-                {
-                dbg_print("\n in wakeup on KASSERT \n");
-                KASSERT(sched_queue_empty(q));
-                }
-        NOT_YET_IMPLEMENTED("PROCS: sched_wakeup_on");                
-        return q_d;
+     
+        return thr;
+        NOT_YET_IMPLEMENTED("PROCS: sched_wakeup_on");
 
 }
 
@@ -245,40 +245,36 @@ sched_switch(void)
 {
         uint8_t interrupt_l=0;
         kthread_t *thr1;
-        dbg_print("\n inside switch-- curproc is %d \n",curproc->p_pid);
+  /*      dbg_print("\n inside switch-- curproc is %d \n",curproc->p_pid);*/
         interrupt_l= intr_getipl();
         intr_setipl(IPL_HIGH);
         if(!sched_queue_empty(&kt_runq))
         {
-                dbg_print("\n sched queue not emty \n");
                 thr1=curthr;
                 curthr=ktqueue_dequeue(&kt_runq);
-                dbg_print("\n size of run queue is %d\n",kt_runq.tq_size);
                 curproc=curthr->kt_proc;
-                dbg_print("\n inside sched switch calling context switch\n");
                 context_switch(&(thr1->kt_ctx), &(curthr->kt_ctx));
-                dbg_print("\n inside sched switch returning from context switch\n");
                 intr_setipl(interrupt_l);
          }
          else
          {
-               dbg_print("\n sched queue emty \n");
+         
                 while(sched_queue_empty(&kt_runq))
-                {
-                        dbg_print("\n in while \n");
+                {         
                         intr_setipl(IPL_LOW);
                         intr_wait();
-                        intr_setipl(IPL_HIGH);
-                        dbg_print("\n in while \n");
+                        intr_setipl(IPL_HIGH);         
                 }
                 thr1=curthr;
                 curthr=ktqueue_dequeue(&kt_runq);
                 curproc=curthr->kt_proc;
+
                 context_switch(&(thr1->kt_ctx), &(curthr->kt_ctx));
                 intr_setipl(interrupt_l);
           }
-           dbg_print("\n exiting switch-- curproc is %d \n",curproc->p_pid);
+
        
+
           NOT_YET_IMPLEMENTED("PROCS: sched_switch");
 }
 
@@ -301,17 +297,18 @@ sched_make_runnable(kthread_t *thr)
 {
 
         KASSERT(thr!=NULL);
+        KASSERT(&kt_runq != thr->kt_wchan); 
         uint8_t interrupt_l=0;
         interrupt_l= intr_getipl();
         intr_setipl(IPL_HIGH);
 
         thr->kt_state=KT_RUN;
-        dbg_print("\n In make runnable incoming thr is %d \n",(thr->kt_proc)->p_pid);
+/*        dbg_print("\n In make runnable incoming thr is %d \n",(thr->kt_proc)->p_pid);*/
 
         ktqueue_enqueue(&kt_runq,thr);
-       dbg_print("\n in make runnable returned from enqueue \n"); 
-       dbg_print("\n in make runnable Size of run queue is %d\n",kt_runq.tq_size);
+  /*     dbg_print("\n in make runnable returned from enqueue \n"); 
+      dbg_print("\n in make runnable Size of run queue is %d\n",kt_runq.tq_size);*/
         intr_setipl(interrupt_l);
-        /*   dbg_print("\n In sched \n"); */
+
         NOT_YET_IMPLEMENTED("PROCS: sched_make_runnable");
 }

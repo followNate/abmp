@@ -18,9 +18,9 @@ __context_initial_func(context_func_t func, int arg1, void *arg2)
         count++;
         apic_setipl(IPL_LOW);
         intr_enable();
-           if(count > 2){dbg_print("\n in context b444   initial curproc is= %d\n",(curthr->kt_proc)->p_pid);}
+/*      if(count > 2){dbg_print("\n in context b444   initial curproc is= %d\n",(curthr->kt_proc)->p_pid);}*/
         void *result = func(arg1, arg2);
-        dbg_print("\n in context initi  al\n");
+/*        dbg_print("\n in context initi  al\n");*/
         kthread_exit(result);
 
         panic("\nReturned from kthread_exit.\n");    

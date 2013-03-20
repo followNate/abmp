@@ -100,7 +100,6 @@ kmain()
         pagedir_t *bpdir = pt_get();
         KASSERT(NULL != bstack && "Ran out of memory while booting.");
         context_setup(&bootstrap_context, bootstrap, 0, NULL, bstack, PAGE_SIZE, bpdir);
-        dbg_print("\n context activate #1 \n");
         context_make_active(&bootstrap_context);
 
         panic("\nReturned to kmain()!!!\n");
@@ -122,29 +121,18 @@ kmain()
 static void *bootstrap(int arg1, void *arg2)
 {
         /* necessary to finalize page table information */
-
         pt_template_init();
-        /*proc_t *procc;*/
-        char name[4]="IDLE";
-        /*proc_init();*/
-        dbg_print("\n IDLE Process Creating \n");
-        
+        char name[4]="IDLE";                 
         curproc=proc_create(name);
        KASSERT(curproc != NULL && "Could not create Idle process"); /* make sure that the "idle" process has been created successfully */
         KASSERT(curproc->p_pid == PID_IDLE);
-        KASSERT(PID_IDLE == curproc->p_pid && "Process create is not Idle");
-        dbg_print("\n IDLE Process Created \n");
-
-        
-        dbg_print("\n IDLE Thread Creating \n");
+        KASSERT(PID_IDLE == curproc->p_pid && "Process created is not Idle");        
+      
         curthr=kthread_create(curproc,idleproc_run,arg1,arg2);
         KASSERT(curthr != NULL && "Could not create thread for Idle process");      
-        dbg_print("\n IDLE Thread Created \n");     
 
         context_make_active(&(curthr->kt_ctx));
-         dbg_print("IDLE created\n");
         NOT_YET_IMPLEMENTED("PROCS: bootstrap");
-
         panic("weenix returned to bootstrap()!!! BAD!!!\n");
         return NULL;
 }
@@ -167,9 +155,7 @@ static void *idleproc_run(int arg1, void *arg2)
         pid_t child;
 
         /* create init proc */
-        kthread_t *initthr = initproc_create();
-        KASSERT(curthr != NULL && "Could not create thread for Idle process");      
-        dbg_print("\n got the init thread \n");
+        kthread_t *initthr = initproc_create();        
         init_call_all();
         GDB_CALL_HOOK(initialized);
 
@@ -187,12 +173,13 @@ static void *idleproc_run(int arg1, void *arg2)
         /* Finally, enable interrupts (we want to make sure interrupts
          * are enabled AFTER all drivers are initialized) */
         intr_enable();
-        dbg_print("idleproc_run calling sched_make_runnable\n");
+        
         /* Run initproc */
         sched_make_runnable(initthr);
-        dbg_print("\nidleproc_run returned from sched_make_rinnable \n");
-        /* Now wait for it */
+/*        dbg_print("\nidleproc_run returned from sched_make_rinnable and calling do wait_pid \n");*/
+        /* Now wait for it */        
         child = do_waitpid(-1, 0, &status);
+        dbg_print("Process %d cleaned successfully\n", child);
         dbg_print("\n idleproc_run wait over for child die \n");
         KASSERT(PID_INIT == child);
 
@@ -235,16 +222,12 @@ static kthread_t *initproc_create(void)
 {
         proc_t *procc;
         char name[4]="INIT";
-
         procc=proc_create(name);
-
+        KASSERT(NULL != procc);
+        KASSERT(PID_INIT == procc->p_pid);
         kthread_t *initthr;
-        initthr=kthread_create(procc,initproc_run,NULL,NULL);
-        dbg_print("\n init thread created \n");
-
-        /*context_make_active(&(initthr->kt_ctx)); // Makes kernel halting cleanly*/
-
-       
+        initthr=kthread_create(procc,initproc_run,NULL,NULL);       
+        KASSERT(initthr != NULL && "Could not create thread for Idle process");      
         NOT_YET_IMPLEMENTED("PROCS: initproc_create");
         return initthr;
 }
@@ -260,8 +243,9 @@ static kthread_t *initproc_create(void)
  * @param arg1 the first argument (unused)
  * @param arg2 the second argument (unused)
  */
-void *get_sum(int arg1,void *arg2);
+void *get_sum1(int arg1,void *arg2);
 void *get_sum2(int arg1,void *arg2);
+void *get_mul(int arg1,void *arg2);
 static void *
 initproc_run(int arg1, void *arg2)
 {
@@ -271,54 +255,62 @@ initproc_run(int arg1, void *arg2)
         /* 1st child proc */
         proc_t *proc1 = proc_create("proc1");
         KASSERT(proc1 != NULL);
-        kthread_t *thread1 = kthread_create(proc1,get_sum,10,(void*)20);
+        kthread_t *thread1 = kthread_create(proc1,get_sum1,10,(void*)20);
         KASSERT(thread1 !=NULL);
-        dbg_print("\n initproc_run th1 calling sched make runnable \n");
-        sched_make_runnable(thread1);
-        dbg_print("\n initproc_run returned sched make runnable \n");
+     
 
         /* 2nd child proc */
         proc_t *proc2 = proc_create("proc2");
         KASSERT(proc2 != NULL);
         kthread_t *thread2 = kthread_create(proc2,get_sum2,40,(void*)20);
         KASSERT(thread2 !=NULL);
-        dbg_print("\n initproc_run th2 calling sched make runnable \n");
+       
+        sched_make_runnable(thread1);
         sched_make_runnable(thread2);
-                dbg_print("\n initproc_run returned sched make runnable \n");
-/*        dbg_print("\n initproc_run calling sched switch \n");
-        sched_switch();
-        dbg_print("\n initproc_run returning sched switch \n");*/
-        
+       
 	int status;
        while(!list_empty(&curproc->p_children))
         {
-                dbg_print("\n initproc run waintig for child in init\n");
                 pid_t child = do_waitpid(-1, 0, &status);
-                dbg(DBG_INIT, "Process %d cleaned successfully\n", child);
+                dbg_print("Process %d cleaned successfully\n", child);
         }
+
         NOT_YET_IMPLEMENTED("PROCS: initproc_run");
 
         return NULL;
 }
 
-void *get_sum(int arg1,void *arg2)
+void *get_sum1(int arg1,void *arg2)
 {
-/*dbg_print("\n get)sum calling sched make runnable \n");
-sched_make_runnable(curthr);
-dbg_print("\n get)sum returning sched make runnable \n");
-dbg_print("\n get sum calling sched switch \n");
-sched_switch();
-        dbg_print("\n get sum returning sched switch \n");*/
+
 int result = arg1 + (int)arg2;
 
-dbg_print("\n Sum is == %d\n",result);
+dbg_print("\n pid %d: Sum is == %d\n",curproc->p_pid,result);
 return NULL;
 }
 void *get_sum2(int arg1,void *arg2)
 {
 
 int result = arg1 + (int)arg2;
-dbg_print("\n Sum is == %d\n",result);
+dbg_print("\n pid %d:  Sum is == %d\n",curproc->p_pid,result);
+proc_t *proc3 = proc_create("proc3");
+        KASSERT(proc3 != NULL);
+        kthread_t *thread3 = kthread_create(proc3,get_mul,40,(void*)20);
+        KASSERT(thread3 !=NULL);
+          sched_make_runnable(thread3);
+          int status;
+       while(!list_empty(&curproc->p_children))
+        {
+                pid_t child = do_waitpid(-1, 0, &status);
+                dbg_print("Process %d cleaned successfully\n", child);
+        }
+return NULL;
+}
+void *get_mul(int arg1,void *arg2)
+{
+
+int result = arg1 * (int)arg2;
+dbg_print("\n pid %d:  Mul is == %d\n",curproc->p_pid,result);
 return NULL;
 }
 /**
