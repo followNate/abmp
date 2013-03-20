@@ -436,7 +436,7 @@ do_exit(int status)
 {
         proc_kill(curproc,status);
         /*NOT_YET_IMPLEMENTED("PROCS: do_exit");*/
-        sched_switch();/* exit from the current thread*/
+       /* sched_switch(); exit from the current thread*/
 }
 
 

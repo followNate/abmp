@@ -281,11 +281,11 @@ static void *initproc_run(int arg1, void *arg2)
         
        dbg_print("\n inside initproc_run \n");
         
-		kmutex_init(&lock);
+	/*	kmutex_init(&lock);
         sched_queue_init(&prod);
         sched_queue_init(&cons);
         
-        /*proc_t *producer = proc_create("producer");
+        proc_t *producer = proc_create("producer");
         KASSERT(producer != NULL);
         kthread_t *thread1 = kthread_create(producer,produce,0,NULL);
         KASSERT(thread1 != NULL);
@@ -296,9 +296,9 @@ static void *initproc_run(int arg1, void *arg2)
 		KASSERT(thread2 != NULL);
        
         sched_make_runnable(thread1);
-        sched_make_runnable(thread2);
+        sched_make_runnable(thread2);*/
         
-		kmutex_init(&lock1);
+	kmutex_init(&lock1);
         sched_queue_init(&prod1);
         sched_queue_init(&cons1);
        
@@ -315,7 +315,7 @@ static void *initproc_run(int arg1, void *arg2)
 		sched_make_runnable(thread3);
         sched_make_runnable(thread4);
        
-      */
+      /*
 		kmutex_init(&m1);
 		kmutex_init(&m2);
 		
@@ -332,7 +332,7 @@ static void *initproc_run(int arg1, void *arg2)
 		sched_make_runnable(thread5);
         sched_make_runnable(thread6);
        
-        
+        */
 	    int status;
         while(!list_empty(&curproc->p_children))
         {
@@ -390,7 +390,7 @@ void *consume(int arg1,void *arg2)
 void *produce1(int arg1,void *arg2)
 {
 	int i=0;
-	for (i=0;i<=MAX;i++)
+	for (i=1;i<=MAX;i++)
 	{
 		kmutex_lock(&lock1);
 		while(buffer != 0)
@@ -405,15 +405,15 @@ void *produce1(int arg1,void *arg2)
 		sched_wakeup_on(&cons1);
 		kmutex_unlock(&lock1);
 	}
-	sched_make_runnable(curthr);
-	sched_switch();
+	/*sched_make_runnable(curthr);
+	sched_switch();*/
 	return NULL;
 }
 
 void *consume1(int arg1,void *arg2)
 {
 	int i=0;
-	for (i=0;i<=MAX;i++)
+	for (i=1;i<=MAX;i++)
 	{
 		kmutex_lock(&lock1);
 		while(buffer == 0)
@@ -422,14 +422,14 @@ void *consume1(int arg1,void *arg2)
 			sched_sleep_on(&cons1);
 			kmutex_lock(&lock1);
 		}
-		buffer--;
+		
 		dbg_print("\n CONSUMING %d \n",buffer);
+		buffer=0;
 		sched_wakeup_on(&prod1);
-		kmutex_unlock(&lock1);
-	
+		kmutex_unlock(&lock1);	
 	}	
-	sched_make_runnable(curthr);
-	sched_switch();
+	/*sched_make_runnable(curthr);
+	sched_switch();*/
 	return NULL;
 }
 

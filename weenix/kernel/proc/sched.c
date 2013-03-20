@@ -111,7 +111,7 @@ void sched_sleep_on(ktqueue_t *q)
         KASSERT(q!=NULL&&curthr!=NULL);
         curthr->kt_state=KT_SLEEP;
         ktqueue_enqueue(q,curthr);
-        dbg(DBG_SCHED,"Current thread (thread of process %d) is put on sleep on a queue",curthr->kt_proc->p_pid);
+        dbg(DBG_SCHED,"Current thread (thread of process %d) is put on sleep on a queue\n",curthr->kt_proc->p_pid);
         sched_switch();
         /*NOT_YET_IMPLEMENTED("PROCS: sched_sleep_on");*/
 }
@@ -130,7 +130,7 @@ sched_cancellable_sleep_on(ktqueue_t *q)
         KASSERT(q!=NULL&&curthr!=NULL);
         curthr->kt_state=KT_SLEEP_CANCELLABLE;
         ktqueue_enqueue(q,curthr);
-        dbg(DBG_SCHED,"Current thread (thread of process %d) is put on cancellable sleep on a queue",curthr->kt_proc->p_pid);
+        dbg(DBG_SCHED,"Current thread (thread of process %d) is put on cancellable sleep on a queue\n",curthr->kt_proc->p_pid);
         sched_switch();
         switch(curthr->kt_cancelled)
         {

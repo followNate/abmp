@@ -100,6 +100,9 @@ kmutex_unlock(kmutex_t *mtx)
 		mtx->km_holder = sched_wakeup_on(&(mtx->km_waitq));
 		dbg(DBG_THR,"The thread of process no %d now holds the mutex\n",mtx->km_holder->kt_proc->p_pid);
 	}
-	dbg(DBG_THR,"No thread now holds the mutex\n");	
+	else
+	{
+	        dbg(DBG_THR,"No thread now holds the mutex\n");	
+	 }
         /*NOT_YET_IMPLEMENTED("PROCS: kmutex_unlock");*/
 }       
