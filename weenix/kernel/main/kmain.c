@@ -335,14 +335,14 @@ static void *initproc_run(int arg1, void *arg2)
         */
            dbg_print("\n inside initproc_run \n");
 
-        /* 1st child proc */
+        /* 1st child of init  */
         proc_t *proc3 = proc_create("proc3");
         KASSERT(proc3 != NULL);
         kthread_t *thread1 = kthread_create(proc3,get_sum1,10,(void*)20);
         KASSERT(thread1 !=NULL);
      
 
-        /* 2nd child proc */
+        /* 2nd child init */
         proc_t *proc4 = proc_create("proc4");
         KASSERT(proc4 != NULL);
         kthread_t *thread2 = kthread_create(proc4,get_sum2,40,(void*)20);
@@ -364,16 +364,6 @@ static void *initproc_run(int arg1, void *arg2)
 
 void *get_sum1(int arg1,void *arg2)
 {
-int x =1;
-kmutex_t lock;
-kmutex_init(&lock);
-kmutex_lock(&lock);
-x=x+1;
-
-kmutex_unlock(&lock);
-
-int result = arg1 + (int)arg2;
-dbg_print("\n pid %d: Sum is ==proc 3 == %d\n",curproc->p_pid,result);
 
 return NULL;
 }
