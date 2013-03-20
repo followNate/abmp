@@ -31,16 +31,15 @@ init_func(sched_init);
 static void
 ktqueue_enqueue(ktqueue_t *q, kthread_t *thr)
 {
-        /*dbg_print("\n In enque \n");*/
         KASSERT(!thr->kt_wchan);
-        /*dbg_print("\n In enque \n");*/
-        list_insert_head(&q->tq_list, &thr->kt_qlink);
-
-
-        /*dbg_print("\n In enque \n");*/
+       
+     /*   dbg_print("\n In  the enque \n");
+        dbg_print("\n in enqueethr going in is %d \n",(thr->kt_proc)->p_pid);*/
+        list_insert_head(&q->tq_list, &thr->kt_qlink);    
 
         thr->kt_wchan = q;
         q->tq_size++;
+              /*  dbg_print("\n in enqueue  Size of queue is %d\n",q->tq_size);*/
 }
 
 /**
@@ -58,13 +57,15 @@ static kthread_t *ktqueue_dequeue(ktqueue_t *q)
         if (list_empty(&q->tq_list))
                 return NULL;
 
+
         link = q->tq_list.l_prev;
         thr = list_item(link, kthread_t, kt_qlink);
+/*        dbg_print("\nin dequeue  thr going out is %d \n",(thr->kt_proc)->p_pid);*/
         list_remove(link);
         thr->kt_wchan = NULL;
 
         q->tq_size--;
-
+/*        dbg_print("\n size of current queue is %d\n",q->tq_size);*/
         return thr;
 }
 
@@ -77,6 +78,7 @@ static kthread_t *ktqueue_dequeue(ktqueue_t *q)
 static void
 ktqueue_remove(ktqueue_t *q, kthread_t *thr)
 {
+/*        dbg_print("\nin remove  thr from QUE is %d \n",(thr->kt_proc)->p_pid);*/
         KASSERT(thr->kt_qlink.l_next && thr->kt_qlink.l_prev);
         list_remove(&thr->kt_qlink);
         thr->kt_wchan = NULL;
@@ -146,6 +148,7 @@ sched_wakeup_on(ktqueue_t *q)
         kthread_t *thr=NULL;
         if(!sched_queue_empty(q))
         {
+
                 ii++;
                 thr=ktqueue_dequeue(q);
                 KASSERT((thr->kt_state == KT_SLEEP) || (thr->kt_state == KT_SLEEP_CANCELLABLE));
@@ -156,6 +159,7 @@ sched_wakeup_on(ktqueue_t *q)
      
         return thr;
         NOT_YET_IMPLEMENTED("PROCS: sched_wakeup_on");
+
 }
 
 void
@@ -241,7 +245,7 @@ sched_switch(void)
 {
         uint8_t interrupt_l=0;
         kthread_t *thr1;
-       /* dbg_print("\nIn sched switch %d\n",curproc->p_pid);*/
+  /*      dbg_print("\n inside switch-- curproc is %d \n",curproc->p_pid);*/
         interrupt_l= intr_getipl();
         intr_setipl(IPL_HIGH);
         if(!sched_queue_empty(&kt_runq))
@@ -249,27 +253,28 @@ sched_switch(void)
                 thr1=curthr;
                 curthr=ktqueue_dequeue(&kt_runq);
                 curproc=curthr->kt_proc;
-               /* dbg_print("\nIn sched switch %d to %d\n",thr1->kt_proc->p_pid,curproc->p_pid);*/
                 context_switch(&(thr1->kt_ctx), &(curthr->kt_ctx));
                 intr_setipl(interrupt_l);
          }
          else
          {
+         
                 while(sched_queue_empty(&kt_runq))
-                {
-                       /* dbg_print("\nIn sched switch %d\n",curproc->p_pid);*/
+                {         
                         intr_setipl(IPL_LOW);
                         intr_wait();
-                        intr_setipl(IPL_HIGH);
+                        intr_setipl(IPL_HIGH);         
                 }
                 thr1=curthr;
                 curthr=ktqueue_dequeue(&kt_runq);
                 curproc=curthr->kt_proc;
-                /*dbg_print("\nIn sched switch %d to %d\n",thr1->kt_proc->p_pid,curproc->p_pid);*/
+
                 context_switch(&(thr1->kt_ctx), &(curthr->kt_ctx));
                 intr_setipl(interrupt_l);
           }
-        /*dbg_print("\nIn sched switch %d to %d\n",thr1->kt_proc->p_pid,curproc->p_pid);*/
+
+       
+
           NOT_YET_IMPLEMENTED("PROCS: sched_switch");
 }
 
@@ -298,11 +303,12 @@ sched_make_runnable(kthread_t *thr)
         intr_setipl(IPL_HIGH);
 
         thr->kt_state=KT_RUN;
-        /*dbg_print("\n In sched \n");  */
+/*        dbg_print("\n In make runnable incoming thr is %d \n",(thr->kt_proc)->p_pid);*/
 
         ktqueue_enqueue(&kt_runq,thr);
-        /*dbg_print("\n In sched \n");  */
+  /*     dbg_print("\n in make runnable returned from enqueue \n"); 
+      dbg_print("\n in make runnable Size of run queue is %d\n",kt_runq.tq_size);*/
         intr_setipl(interrupt_l);
-        /*   dbg_print("\n In sched \n"); */
+
         NOT_YET_IMPLEMENTED("PROCS: sched_make_runnable");
 }

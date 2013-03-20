@@ -100,7 +100,6 @@ kmain()
         pagedir_t *bpdir = pt_get();
         KASSERT(NULL != bstack && "Ran out of memory while booting.");
         context_setup(&bootstrap_context, bootstrap, 0, NULL, bstack, PAGE_SIZE, bpdir);
-        dbg_print("\n context activate #1 \n");
         context_make_active(&bootstrap_context);
 
         panic("\nReturned to kmain()!!!\n");
@@ -122,27 +121,18 @@ kmain()
 static void *bootstrap(int arg1, void *arg2)
 {
         /* necessary to finalize page table information */
-
         pt_template_init();
-        /*proc_t *procc;*/
-        char name[4]="IDLE";
-        /*proc_init();*/
-        dbg_print("\n IDLE Process Creating \n");
-        
+        char name[4]="IDLE";                 
         curproc=proc_create(name);
-        KASSERT(curproc != NULL);
+       KASSERT(curproc != NULL && "Could not create Idle process"); /* make sure that the "idle" process has been created successfully */
         KASSERT(curproc->p_pid == PID_IDLE);
-        dbg_print("\n IDLE Process Created \n");
-        /*kthread_init();*/
-        
-        dbg_print("\n IDLE Thread Creating \n");
+        KASSERT(PID_IDLE == curproc->p_pid && "Process created is not Idle");        
+      
         curthr=kthread_create(curproc,idleproc_run,arg1,arg2);
-        dbg_print("\n IDLE Thread Created \n");     
-                dbg_print("\n context activate #1 \n");
-        context_make_active(&(curthr->kt_ctx));
-         dbg_print("IDLE created\n");
-        NOT_YET_IMPLEMENTED("PROCS: bootstrap");
+        KASSERT(curthr != NULL && "Could not create thread for Idle process");      
 
+        context_make_active(&(curthr->kt_ctx));
+        NOT_YET_IMPLEMENTED("PROCS: bootstrap");
         panic("weenix returned to bootstrap()!!! BAD!!!\n");
         return NULL;
 }
@@ -165,8 +155,7 @@ static void *idleproc_run(int arg1, void *arg2)
         pid_t child;
 
         /* create init proc */
-        kthread_t *initthr = initproc_create();
-        dbg_print("\n got the init thread \n");
+        kthread_t *initthr = initproc_create();        
         init_call_all();
         GDB_CALL_HOOK(initialized);
 
@@ -184,13 +173,14 @@ static void *idleproc_run(int arg1, void *arg2)
         /* Finally, enable interrupts (we want to make sure interrupts
          * are enabled AFTER all drivers are initialized) */
         intr_enable();
-        dbg_print("calling sched_make_runnable\n");
+        
         /* Run initproc */
         sched_make_runnable(initthr);
-        dbg_print("\n returned from sched_make_rinnable \n");
-        /* Now wait for it */
+/*        dbg_print("\nidleproc_run returned from sched_make_rinnable and calling do wait_pid \n");*/
+        /* Now wait for it */        
         child = do_waitpid(-1, 0, &status);
-        dbg_print("\n wait over for child die \n");
+        dbg_print("Process %d cleaned successfully\n", child);
+        dbg_print("\n idleproc_run wait over for child die \n");
         KASSERT(PID_INIT == child);
 
 #ifdef __MTP__
@@ -232,16 +222,12 @@ static kthread_t *initproc_create(void)
 {
         proc_t *procc;
         char name[4]="INIT";
-
         procc=proc_create(name);
-
+        KASSERT(NULL != procc);
+        KASSERT(PID_INIT == procc->p_pid);
         kthread_t *initthr;
-        initthr=kthread_create(procc,initproc_run,NULL,NULL);
-        dbg_print("\n init thread created \n");
-
-        /*context_make_active(&(initthr->kt_ctx)); Makes kernel halting cleanly*/
-
-       
+        initthr=kthread_create(procc,initproc_run,NULL,NULL);       
+        KASSERT(initthr != NULL && "Could not create thread for Idle process");      
         NOT_YET_IMPLEMENTED("PROCS: initproc_create");
         return initthr;
 }
@@ -271,29 +257,24 @@ initproc_run(int arg1, void *arg2)
         KASSERT(proc1 != NULL);
         kthread_t *thread1 = kthread_create(proc1,get_sum1,10,(void*)20);
         KASSERT(thread1 !=NULL);
-      /* dbg_print("\n pid %d",proc1->p_pid);*/
-        
+     
+
         /* 2nd child proc */
         proc_t *proc2 = proc_create("proc2");
         KASSERT(proc2 != NULL);
         kthread_t *thread2 = kthread_create(proc2,get_sum2,40,(void*)20);
         KASSERT(thread2 !=NULL);
-        /*dbg_print("\n pid %d",proc2->p_pid);*/
-        
-        
-        
        
         sched_make_runnable(thread1);
         sched_make_runnable(thread2);
-      
-        
+       
 	int status;
        while(!list_empty(&curproc->p_children))
         {
                 pid_t child = do_waitpid(-1, 0, &status);
                 dbg_print("Process %d cleaned successfully\n", child);
         }
-        dbg(DBG_INIT, "fgsggsgsgsgf\n");
+
         NOT_YET_IMPLEMENTED("PROCS: initproc_run");
 
         return NULL;
@@ -301,7 +282,6 @@ initproc_run(int arg1, void *arg2)
 
 void *get_sum1(int arg1,void *arg2)
 {
-dbg_print("\n switching in get_sum \n");
 
 int result = arg1 + (int)arg2;
 
