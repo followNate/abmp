@@ -73,6 +73,8 @@ free_stack(char *stack)
  */
 kthread_t *kthread_create(struct proc *p, kthread_func_t func, long arg1, void *arg2)
 {
+        KASSERT(NULL != p);
+        
         /* allocate a slab to a thread */
         kthread_t *new_kthread_t = slab_obj_alloc(kthread_allocator);
         KASSERT(new_kthread_t != NULL);
@@ -86,20 +88,19 @@ kthread_t *kthread_create(struct proc *p, kthread_func_t func, long arg1, void *
         
         /* thread's process */
         new_kthread_t->kt_proc = p;
-        KASSERT(NULL != p);
+       
         /* insert the thread link into process list */
         list_insert_head(&(p->p_threads),&(new_kthread_t->kt_plink));
 
 
         /* set the current state of new thread */
-         new_kthread_t->kt_wchan=NULL;
-         new_kthread_t->kt_state = KT_NO_STATE;
-
-         if(p->p_pid != 0){dbg_print("\nprocess->parent is %d\n",(p->p_pproc)->p_pid);}
-
+        new_kthread_t->kt_wchan=NULL;
+        new_kthread_t->kt_state = KT_NO_STATE;
+        
         context_setup(&(new_kthread_t->kt_ctx),func,arg1,arg2,(new_kthread_t->kt_kstack),DEFAULT_STACK_SIZE,(p->p_pagedir));          
-
-        NOT_YET_IMPLEMENTED("PROCS: kthread_create");
+        
+        dbg(DBG_PROC,"A thread is created for process %s (id=%d)",p->p_comm,p->p_pid);
+        /*NOT_YET_IMPLEMENTED("PROCS: kthread_create");*/
         return new_kthread_t;
 }
 
@@ -129,16 +130,17 @@ void kthread_cancel(kthread_t *kthr, void *retval)
 {
         KASSERT(NULL != kthr);
         if(kthr == curthr)
-          {
-                dbg_print("\n canceled \n");
+        {
+                dbg(DBG_THR,"Current thread (thread of process %d) is cancelled \n",kthr->kt_proc->p_pid);
                 kthread_exit(retval);             
-          }
+        }
         else 
-           {
+        {
                 kthr->kt_retval=retval;
                 sched_cancel(kthr);
-           }
-        NOT_YET_IMPLEMENTED("PROCS: kthread_cancel");
+                dbg(DBG_THR,"The thread of process %d is scheduled to be cancelled \n",kthr->kt_proc->p_pid);
+        }
+       /* NOT_YET_IMPLEMENTED("PROCS: kthread_cancel");*/
 }
 
 /*
@@ -158,10 +160,10 @@ void kthread_exit(void *retval)
         KASSERT(curthr->kt_proc == curproc);
         curthr->kt_retval = retval;
         curthr->kt_state = KT_EXITED;
-      dbg_print("\n exiting the thread \n");
+        dbg(DBG_THR,"Exiting Current thread (thread of process %d)\n",curthr->kt_proc->p_pid);
         proc_thread_exited(retval);
         
-        NOT_YET_IMPLEMENTED("PROCS: kthread_exit");
+       /* NOT_YET_IMPLEMENTED("PROCS: kthread_exit");*/
 }
 
 /*

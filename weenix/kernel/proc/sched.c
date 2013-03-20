@@ -111,8 +111,9 @@ void sched_sleep_on(ktqueue_t *q)
         KASSERT(q!=NULL&&curthr!=NULL);
         curthr->kt_state=KT_SLEEP;
         ktqueue_enqueue(q,curthr);
+        dbg(DBG_SCHED,"Current thread (thread of process %d) is put on sleep on a queue\n",curthr->kt_proc->p_pid);
         sched_switch();
-        NOT_YET_IMPLEMENTED("PROCS: sched_sleep_on");
+        /*NOT_YET_IMPLEMENTED("PROCS: sched_sleep_on");*/
 }
 
 
@@ -129,6 +130,7 @@ sched_cancellable_sleep_on(ktqueue_t *q)
         KASSERT(q!=NULL&&curthr!=NULL);
         curthr->kt_state=KT_SLEEP_CANCELLABLE;
         ktqueue_enqueue(q,curthr);
+        dbg(DBG_SCHED,"Current thread (thread of process %d) is put on cancellable sleep on a queue\n",curthr->kt_proc->p_pid);
         sched_switch();
         switch(curthr->kt_cancelled)
         {
@@ -137,28 +139,28 @@ sched_cancellable_sleep_on(ktqueue_t *q)
                 default: return 0;
         }
         
-        NOT_YET_IMPLEMENTED("PROCS: sched_cancellable_sleep_on");
+       /* NOT_YET_IMPLEMENTED("PROCS: sched_cancellable_sleep_on");*/
 }
 
 kthread_t *
 sched_wakeup_on(ktqueue_t *q)
 {
-         static int ii=0;
-         KASSERT(q!=NULL);
+        /*static int ii=0;*/
+        KASSERT(q!=NULL);
         kthread_t *thr=NULL;
         if(!sched_queue_empty(q))
         {
 
-                ii++;
+                /*ii++;*/
                 thr=ktqueue_dequeue(q);
                 KASSERT((thr->kt_state == KT_SLEEP) || (thr->kt_state == KT_SLEEP_CANCELLABLE));
-                 sched_make_runnable(thr);
+                sched_make_runnable(thr);
                 /*dbg_print("\nwake count %d\n",ii);*/
                 
         }
      
         return thr;
-        NOT_YET_IMPLEMENTED("PROCS: sched_wakeup_on");
+        /*NOT_YET_IMPLEMENTED("PROCS: sched_wakeup_on");*/
 
 }
 
@@ -173,7 +175,7 @@ sched_broadcast_on(ktqueue_t *q)
                 i--;
                 sched_wakeup_on(q);               
         }
-        NOT_YET_IMPLEMENTED("PROCS: sched_broadcast_on");
+       /* NOT_YET_IMPLEMENTED("PROCS: sched_broadcast_on");*/
 }
 
 /*
@@ -201,7 +203,7 @@ sched_cancel(struct kthread *kthr)
          {
                 kthr->kt_cancelled=1;
          }
-         NOT_YET_IMPLEMENTED("PROCS: sched_cancel");
+        /* NOT_YET_IMPLEMENTED("PROCS: sched_cancel");*/
 }
 
 /*
@@ -245,22 +247,23 @@ sched_switch(void)
 {
         uint8_t interrupt_l=0;
         kthread_t *thr1;
-  /*      dbg_print("\n inside switch-- curproc is %d \n",curproc->p_pid);*/
+        dbg(DBG_SCHED,"Before switch: current thread is the thread of process %s (PID= %d) \n",curproc->p_comm,curproc->p_pid);
         interrupt_l= intr_getipl();
         intr_setipl(IPL_HIGH);
+        
         if(!sched_queue_empty(&kt_runq))
         {
                 thr1=curthr;
                 curthr=ktqueue_dequeue(&kt_runq);
                 curproc=curthr->kt_proc;
                 context_switch(&(thr1->kt_ctx), &(curthr->kt_ctx));
-                intr_setipl(interrupt_l);
          }
          else
          {
          
                 while(sched_queue_empty(&kt_runq))
                 {         
+                        dbg(DBG_SCHED,"Run_queue is Empty\n");
                         intr_setipl(IPL_LOW);
                         intr_wait();
                         intr_setipl(IPL_HIGH);         
@@ -270,12 +273,13 @@ sched_switch(void)
                 curproc=curthr->kt_proc;
 
                 context_switch(&(thr1->kt_ctx), &(curthr->kt_ctx));
-                intr_setipl(interrupt_l);
           }
-
+           
+           intr_setipl(interrupt_l);
+           dbg(DBG_SCHED,"After switch: current thread is the thread of process %s (PID= %d) \n",curproc->p_comm,curproc->p_pid);
        
 
-          NOT_YET_IMPLEMENTED("PROCS: sched_switch");
+          /*NOT_YET_IMPLEMENTED("PROCS: sched_switch");*/
 }
 
 /*
@@ -309,6 +313,6 @@ sched_make_runnable(kthread_t *thr)
   /*     dbg_print("\n in make runnable returned from enqueue \n"); 
       dbg_print("\n in make runnable Size of run queue is %d\n",kt_runq.tq_size);*/
         intr_setipl(interrupt_l);
-
-        NOT_YET_IMPLEMENTED("PROCS: sched_make_runnable");
+        dbg(DBG_SCHED,"Thread of process %d is now runnable\n",thr->kt_proc->p_pid);
+        /*NOT_YET_IMPLEMENTED("PROCS: sched_make_runnable");*/
 }

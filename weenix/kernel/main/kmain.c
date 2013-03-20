@@ -122,7 +122,7 @@ static void *bootstrap(int arg1, void *arg2)
 {
         /* necessary to finalize page table information */
         pt_template_init();
-        char name[4]="IDLE";                 
+        char name[]="IDLE";                 
         curproc=proc_create(name);
        KASSERT(curproc != NULL && "Could not create Idle process"); /* make sure that the "idle" process has been created successfully */
         KASSERT(curproc->p_pid == PID_IDLE);
@@ -221,7 +221,7 @@ static void *idleproc_run(int arg1, void *arg2)
 static kthread_t *initproc_create(void)
 {
         proc_t *procc;
-        char name[4]="INIT";
+        char name[]="INIT";
         procc=proc_create(name);
         KASSERT(NULL != procc);
         KASSERT(PID_INIT == procc->p_pid);
@@ -246,11 +246,94 @@ static kthread_t *initproc_create(void)
 void *get_sum1(int arg1,void *arg2);
 void *get_sum2(int arg1,void *arg2);
 void *get_mul(int arg1,void *arg2);
-static void *
-initproc_run(int arg1, void *arg2)
+
+void *produce(int arg1,void *arg2);
+void *consume(int arg1,void *arg2);
+
+kmutex_t lock;
+ktqueue_t prod;
+ktqueue_t cons;
+int buffer_size = 10;/*EMPTY*/
+int buffer_index = 0;/*OCCUPID*/
+int next_in = 0;
+int next_out = 0;
+int buf[10];
+
+void *produce1(int arg1,void *arg2);
+void *consume1(int arg1,void *arg2);
+kmutex_t lock1;
+ktqueue_t prod1;
+ktqueue_t cons1;
+int MAX = 10;
+int buffer = 0;
+
+void *dead1(int arg1,void *arg2);
+void *dead2(int arg1,void *arg2);
+kmutex_t m1;
+kmutex_t m2;
+
+
+
+
+
+static void *initproc_run(int arg1, void *arg2)
 {
         
-        dbg_print("\n inside initproc_run \n");
+       dbg_print("\n inside initproc_run \n");
+        
+	/*	kmutex_init(&lock);
+        sched_queue_init(&prod);
+        sched_queue_init(&cons);
+        
+        proc_t *producer = proc_create("producer");
+        KASSERT(producer != NULL);
+        kthread_t *thread1 = kthread_create(producer,produce,0,NULL);
+        KASSERT(thread1 != NULL);
+        
+        proc_t *consumer = proc_create("consumer");
+        KASSERT(consumer != NULL);
+        kthread_t *thread2 = kthread_create(consumer,consume,0,NULL);
+		KASSERT(thread2 != NULL);
+       
+        sched_make_runnable(thread1);
+        sched_make_runnable(thread2);
+        
+	kmutex_init(&lock1);
+        sched_queue_init(&prod1);
+        sched_queue_init(&cons1);
+       
+        proc_t *producer1 = proc_create("producer1");
+        KASSERT(producer1 != NULL);
+        kthread_t *thread3 = kthread_create(producer1,produce1,0,NULL);
+        KASSERT(thread3 != NULL);
+        
+        proc_t *consumer1 = proc_create("consumer1");
+        KASSERT(consumer1 != NULL);
+        kthread_t *thread4 = kthread_create(consumer1,consume1,0,NULL);
+		KASSERT(thread4 != NULL);
+       
+		sched_make_runnable(thread3);
+        sched_make_runnable(thread4);
+       
+      
+		kmutex_init(&m1);
+		kmutex_init(&m2);
+		
+        proc_t *DEADLOCK1 = proc_create("DEADLOCK1");
+        KASSERT(DEADLOCK1 != NULL);
+        kthread_t *thread5 = kthread_create(DEADLOCK1,dead1,0,NULL);
+        KASSERT(thread5 != NULL);
+        
+        proc_t *DEADLOCK2 = proc_create("DEADLOCK2");
+        KASSERT(DEADLOCK2 != NULL);
+        kthread_t *thread6 = kthread_create(DEADLOCK2,dead2,0,NULL);
+		KASSERT(thread6 != NULL);
+       
+		sched_make_runnable(thread5);
+        sched_make_runnable(thread6);
+       
+        */
+           dbg_print("\n inside initproc_run \n");
 
         /* 1st child proc */
         proc_t *proc3 = proc_create("proc3");
@@ -267,13 +350,13 @@ initproc_run(int arg1, void *arg2)
        
         sched_make_runnable(thread1);
         sched_make_runnable(thread2);
-       
-	int status;
-       while(!list_empty(&curproc->p_children))
-        {                
+	    int status;
+        while(!list_empty(&curproc->p_children))
+        {
                 pid_t child = do_waitpid(-1, 0, &status);
                 dbg(DBG_INIT,"Process %d cleaned successfully\n", child);
-        }        
+        }
+
         NOT_YET_IMPLEMENTED("PROCS: initproc_run");
 
         return NULL;
@@ -321,11 +404,134 @@ void *get_mul(int arg1,void *arg2)
 {
 int result = arg1 * (int)arg2;
 
-/*proc_kill(proc_lookup(4),0);*/
+proc_kill(proc_lookup(4),0);
 dbg_print("\n pid %d:  Mul is = proc 5= %d\n",curproc->p_pid,result);
 dbg_print("\n current parent is -> %d\n",(curproc->p_pproc)->p_pid);
 return NULL;
 }
+/*
+void *produce(int arg1,void *arg2)
+{
+	int i=0;
+	for (i=0;i<=5;i++)
+	{
+		kmutex_lock(&lock);
+		if(buffer_index == buffer_size)
+		{
+			kmutex_unlock(&lock);
+			sched_sleep_on(&prod);
+			kmutex_lock(&lock);
+		}
+		buf[buffer_index++]=10;
+		dbg_print("\n PRODUCE %d \n",buffer_index);
+		kmutex_unlock(&lock);
+		sched_wakeup_on(&cons);
+		
+	}
+	return NULL;
+}
+
+void *consume(int arg1,void *arg2)
+{
+	int i=0;
+	for (i=0;i<=5;i++)
+	{
+		kmutex_lock(&lock);
+		if(buffer_index==-1)
+		{
+			kmutex_unlock(&lock);
+			sched_sleep_on(&cons);
+			kmutex_lock(&lock);
+		}
+		dbg_print("\n CONSUME %d \n",buffer_index--);
+		kmutex_unlock(&lock);
+		sched_wakeup_on(&prod);
+	}
+	return NULL;
+}
+
+
+void *produce1(int arg1,void *arg2)
+{
+	int i=0;
+	for (i=1;i<=MAX;i++)
+	{
+		kmutex_lock(&lock1);
+		while(buffer != 0)
+		{
+			kmutex_unlock(&lock1);
+			sched_sleep_on(&prod1);
+			kmutex_lock(&lock1);
+		}
+		buffer=i;
+		dbg_print("\n PRODUCING %d \n",buffer);
+		
+		sched_wakeup_on(&cons1);
+		kmutex_unlock(&lock1);
+	}
+	
+	return NULL;
+}
+
+void *consume1(int arg1,void *arg2)
+{
+	int i=0;
+	for (i=1;i<=MAX;i++)
+	{
+		kmutex_lock(&lock1);
+		while(buffer == 0)
+		{
+			kmutex_unlock(&lock1);
+			sched_sleep_on(&cons1);
+			kmutex_lock(&lock1);
+		}
+		
+		dbg_print("\n CONSUMING %d \n",buffer);
+		buffer=0;
+		sched_wakeup_on(&prod1);
+		kmutex_unlock(&lock1);	
+	}	
+	sched_make_runnable(curthr);
+	sched_switch();
+	return NULL;
+}
+
+void *dead1(int arg1,void *arg2)
+{
+	kmutex_lock(&m1);
+	dbg_print("\n MUTEX1 LOCKED BY DEAD1 \n");
+	sched_make_runnable(curthr);
+	sched_switch();
+	kmutex_lock(&m2);
+	dbg_print("\n DEADLOCK DONE BY DEAD 1 \n");
+	dbg_print("\n MUTEX2 LOCKED BY DEAD1 \n");
+	kmutex_unlock(&m2);
+	dbg_print("\n MUTEX2 LOCKED BY DEAD1 \n");
+	kmutex_unlock(&m1);
+	dbg_print("\n MUTEX1 LOCKED BY DEAD1 \n");
+	return NULL;
+}
+
+void *dead2(int arg1,void *arg2)
+{
+	kmutex_lock(&m2);
+	dbg_print("\n MUTEX2 LOCKED BY DEAD2 \n");
+	sched_make_runnable(curthr);
+	sched_switch();
+	dbg_print("\n DEADLOCK DONE BY DEAD 2 \n");
+	kmutex_lock(&m1);
+	dbg_print("\n MUTEX1 LOCKED BY DEAD2 \n");
+	kmutex_unlock(&m1);
+	dbg_print("\n MUTEX1 LOCKED BY DEAD2 \n");
+	kmutex_unlock(&m2);
+	dbg_print("\n MUTEX2 LOCKED BY DEAD2 \n");
+	return NULL;
+	
+}
+*/
+
+
+
 
 /**
  * Clears all interrupts and halts, meaning that we will never run
