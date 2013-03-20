@@ -371,7 +371,8 @@ kmutex_lock(&lock);
 x=x+1;
 
 kmutex_unlock(&lock);
-
+sched_make_runnable(curthr);
+sched_switch();  
 int result = arg1 + (int)arg2;
 dbg_print("\n pid %d: Sum is ==proc 3 == %d\n",curproc->p_pid,result);
 
@@ -389,7 +390,9 @@ proc_t *proc5 = proc_create("proc3");
         KASSERT(thread3 !=NULL);
           sched_make_runnable(thread3);
           dbg_print("\n Created proc 5 inside proc4 \n");
-          int status;
+          sched_make_runnable(curthr);
+	        sched_switch();
+	        int status;
         /*proc_kill(proc_lookup(3),0);*/
           dbg_print("\n Created proc 5 inside proc4 \n");
       /* while(1)*/
@@ -414,6 +417,7 @@ int result = arg1 * (int)arg2;
 
 /*proc_kill(proc_lookup(4),0);*/
 dbg_print("\n pid %d:  Mul is = proc 5= %d\n",curproc->p_pid,result);
+proc_kill_all();
 dbg_print("\n current parent is -> %d\n",(curproc->p_pproc)->p_pid);
 return NULL;
 }
