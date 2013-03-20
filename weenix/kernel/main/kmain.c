@@ -272,7 +272,7 @@ initproc_run(int arg1, void *arg2)
        while(!list_empty(&curproc->p_children))
         {
                 pid_t child = do_waitpid(-1, 0, &status);
-                dbg_print("Process %d cleaned successfully\n", child);
+                dbg(DBG_INIT,"Process %d cleaned successfully\n", child);
         }
 
         NOT_YET_IMPLEMENTED("PROCS: initproc_run");
