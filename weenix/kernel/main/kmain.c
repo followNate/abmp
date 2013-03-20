@@ -253,16 +253,16 @@ initproc_run(int arg1, void *arg2)
         dbg_print("\n inside initproc_run \n");
 
         /* 1st child proc */
-        proc_t *proc1 = proc_create("proc1");
-        KASSERT(proc1 != NULL);
-        kthread_t *thread1 = kthread_create(proc1,get_sum1,10,(void*)20);
+        proc_t *proc3 = proc_create("proc3");
+        KASSERT(proc3 != NULL);
+        kthread_t *thread1 = kthread_create(proc3,get_sum1,10,(void*)20);
         KASSERT(thread1 !=NULL);
      
 
         /* 2nd child proc */
-        proc_t *proc2 = proc_create("proc2");
-        KASSERT(proc2 != NULL);
-        kthread_t *thread2 = kthread_create(proc2,get_sum2,40,(void*)20);
+        proc_t *proc4 = proc_create("proc4");
+        KASSERT(proc4 != NULL);
+        kthread_t *thread2 = kthread_create(proc4,get_sum2,40,(void*)20);
         KASSERT(thread2 !=NULL);
        
         sched_make_runnable(thread1);
@@ -270,11 +270,10 @@ initproc_run(int arg1, void *arg2)
        
 	int status;
        while(!list_empty(&curproc->p_children))
-        {
+        {                
                 pid_t child = do_waitpid(-1, 0, &status);
                 dbg(DBG_INIT,"Process %d cleaned successfully\n", child);
-        }
-
+        }        
         NOT_YET_IMPLEMENTED("PROCS: initproc_run");
 
         return NULL;
@@ -287,37 +286,47 @@ kmutex_t lock;
 kmutex_init(&lock);
 kmutex_lock(&lock);
 x=x+1;
-kmutex_unlock(&lock);
-int result = arg1 + (int)arg2;
 
-dbg_print("\n pid %d: Sum is == %d\n",curproc->p_pid,result);
+kmutex_unlock(&lock);
+
+int result = arg1 + (int)arg2;
+dbg_print("\n pid %d: Sum is ==proc 3 == %d\n",curproc->p_pid,result);
+
 return NULL;
 }
 void *get_sum2(int arg1,void *arg2)
 {
 
+
 int result = arg1 + (int)arg2;
-dbg_print("\n pid %d:  Sum is == %d\n",curproc->p_pid,result);
-proc_t *proc3 = proc_create("proc3");
-        KASSERT(proc3 != NULL);
-        kthread_t *thread3 = kthread_create(proc3,get_mul,40,(void*)20);
+dbg_print("\n pid %d:  Sum is ==== proc 4 === %d\n",curproc->p_pid,result);
+proc_t *proc5 = proc_create("proc3");
+        KASSERT(proc5 != NULL);
+        kthread_t *thread3 = kthread_create(proc5,get_mul,40,(void*)20);
         KASSERT(thread3 !=NULL);
           sched_make_runnable(thread3);
+          dbg_print("\n Created proc 5 inside proc4 \n");
           int status;
-       while(!list_empty(&curproc->p_children))
+
+          dbg_print("\n Created proc 5 inside proc4 \n");
+    /* while(!list_empty(&curproc->p_children))
         {
-                pid_t child = do_waitpid(-1, 0, &status);
+           pid_t child = do_waitpid(-1, 0, &status);
                 dbg_print("Process %d cleaned successfully\n", child);
-        }
+        }*/
 return NULL;
 }
+
 void *get_mul(int arg1,void *arg2)
 {
-
 int result = arg1 * (int)arg2;
-dbg_print("\n pid %d:  Mul is == %d\n",curproc->p_pid,result);
+
+/*proc_kill(proc_lookup(4),0);*/
+dbg_print("\n pid %d:  Mul is = proc 5= %d\n",curproc->p_pid,result);
+dbg_print("\n current parent is -> %d\n",(curproc->p_pproc)->p_pid);
 return NULL;
 }
+
 /**
  * Clears all interrupts and halts, meaning that we will never run
  * again.

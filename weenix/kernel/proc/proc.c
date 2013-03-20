@@ -169,6 +169,9 @@ proc_cleanup(int status)
 	curproc->p_state = PROC_DEAD;
 	curproc->p_status = status;
         dbg(DBG_PROC,"Cleaning Process with PID=%d\n",curproc->p_pid);
+
+	/*dbg_print("\n inside proc_cleanup curproc->pid %d\n",curproc->p_pid); */
+
 	/*link any child of this process with the parent*/
 	/* TODO ensure that init process will also wait on newly added child procs */
 	
@@ -189,7 +192,9 @@ proc_cleanup(int status)
                  {
                         dbg(DBG_PROC,"Cleaning Init Process But It has childs alive\n");
                   }
+
 	}
+		
 	KASSERT(NULL != curproc->p_pproc);
 	sched_wakeup_on(&curproc->p_pproc->p_wait);
         dbg(DBG_PROC,"Cleaning Complete: Process with PID=%d\n",curproc->p_pid);
@@ -211,10 +216,12 @@ proc_kill(proc_t *p, int status)
         /*NOT_YET_IMPLEMENTED("PROCS: proc_kill");*/
 	/* Call proc_cleanup() here to clean the PCB and make it a Zombie*/
 	/*clean the PCB expect for p_pid and return value(or status code)*/
+
 	KASSERT(1 < p->p_pid);
 	p->p_state = PROC_DEAD;
 	p->p_status = status;
         dbg(DBG_PROC,"Killing Process with PID=%d\n",p->p_pid);
+
 	
 	/*link any child of this process with the parent*/
 	if(!list_empty(&p->p_children)){
@@ -329,10 +336,11 @@ pid_t do_waitpid(pid_t pid, int options, int *status)
         kthread_t *cur_proc_thd;
         KASSERT(options == 0);
         KASSERT(curproc!=NULL);
-       /* dbg_print("\n inside the do_waitpid curproc is %d \n",curproc->p_pid);*/
+/*        dbg_print("\n inside the do_waitpid curproc is %d  pid== %d\n",curproc->p_pid,pid);*/
+        
         if(list_empty(&(curproc->p_children)))
                { 
-  /*              dbg_print("\n in do_waitpid curproc= %d  child list empty\n",curproc->p_pid);*/
+          /*     dbg_print("\n in do_waitpid curproc= %d  child list empty\n",curproc->p_pid);*/
                 return -ECHILD;
                }
         else
