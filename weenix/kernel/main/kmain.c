@@ -272,7 +272,25 @@ void *dead2(int arg1,void *arg2);
 kmutex_t m1;
 kmutex_t m2;
 
+void *kshell_test(int a, void *b)
+{
+    /* Code copied from file kernel/api/syscall.c */
 
+    kshell_t *new_shell;
+    int       i;
+        
+    /* Create a kshell on tty */
+    while (1)
+    {
+        new_shell = kshell_create(0);
+        i = kshell_execute_next(new_shell);
+        if(i>0)
+        {        dbg(DBG_TERM,"Error Executing the command");
+        }
+        
+    }
+    return NULL;
+}
 
 
 
@@ -281,6 +299,10 @@ static void *initproc_run(int arg1, void *arg2)
         
        dbg_print("\n inside initproc_run \n");
         
+        proc_t* new_shell = proc_create("shell1");
+        kthread_t *new_shell_thread = kthread_create(new_shell, kshell_test, NULL, NULL);
+        sched_make_runnable(new_shell_thread);
+    
 	/*	kmutex_init(&lock);
         sched_queue_init(&prod);
         sched_queue_init(&cons);
@@ -332,7 +354,7 @@ static void *initproc_run(int arg1, void *arg2)
 		sched_make_runnable(thread5);
         sched_make_runnable(thread6);
        
-        */
+        
            dbg_print("\n inside initproc_run \n");
 
         
@@ -349,7 +371,7 @@ static void *initproc_run(int arg1, void *arg2)
         KASSERT(thread2 !=NULL);
        
         sched_make_runnable(thread2);
-        sched_make_runnable(thread1);
+        sched_make_runnable(thread1);*/
 	    int status;
         while(!list_empty(&curproc->p_children))
         {
