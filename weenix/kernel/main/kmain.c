@@ -122,7 +122,7 @@ static void *bootstrap(int arg1, void *arg2)
 {
         /* necessary to finalize page table information */
         pt_template_init();
-        char name[4]="IDLE";                 
+        char name[]="IDLE";                 
         curproc=proc_create(name);
        KASSERT(curproc != NULL && "Could not create Idle process"); /* make sure that the "idle" process has been created successfully */
         KASSERT(curproc->p_pid == PID_IDLE);
@@ -221,7 +221,7 @@ static void *idleproc_run(int arg1, void *arg2)
 static kthread_t *initproc_create(void)
 {
         proc_t *procc;
-        char name[4]="INIT";
+        char name[]="INIT";
         procc=proc_create(name);
         KASSERT(NULL != procc);
         KASSERT(PID_INIT == procc->p_pid);
