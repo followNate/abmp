@@ -52,7 +52,7 @@
 #define TEST_8 8        /*  Reader and writer problem */
 #define TEST_9 9        /*  kshell testing */
 
-static int curtest = TEST_6;
+static int curtest = TEST_3;
 
 GDB_DEFINE_HOOK(boot)
 GDB_DEFINE_HOOK(initialized)
@@ -260,11 +260,33 @@ void *produce1(int arg1,void *arg2);
 void *consume1(int arg1,void *arg2);
 void *dead1(int arg1,void *arg2);
 void *dead2(int arg1,void *arg2);
+void *prockill(int arg1, void *arg2);
+kmutex_t m1;
+kmutex_t m2;
+
+void *kshell_test(int a, void *b)
+{
+    kshell_t *new_shell;
+    int       i;
+    while (1)
+    {
+        new_shell = kshell_create(0);
+        i = kshell_execute_next(new_shell);
+        if(i>0)
+        {        dbg(DBG_TERM,"Error Executing the command\n");
+        }
+        
+        kshell_destroy(new_shell);
+        if(i==0)
+        {       break;
+        }
+    }
+    return NULL;
+}
 
 kmutex_t lock1;
 ktqueue_t prod1, cons1;
 int MAX = 10, buffer = 0;
-kmutex_t m1, m2;
 
 static void *initproc_run(int arg1, void *arg2)
 {
@@ -280,8 +302,15 @@ static void *initproc_run(int arg1, void *arg2)
         kthread_t *thread2 = kthread_create(proc4,init_child2,40,(void*)20);
         KASSERT(thread2 !=NULL);
         
-        sched_make_runnable(thread2);
         sched_make_runnable(thread1);
+        sched_make_runnable(thread2);
+        /* entering into kshell */
+        if(curtest == 9)
+        {
+        proc_t* new_shell = proc_create("shell1");
+        kthread_t *new_shell_thread = kthread_create(new_shell, kshell_test, NULL, NULL);
+        sched_make_runnable(new_shell_thread);
+        }
 	int status;
         while(!list_empty(&curproc->p_children))
         {
@@ -292,13 +321,15 @@ static void *initproc_run(int arg1, void *arg2)
         return NULL;
 }
 
-void *init_child1(int arg1,void *arg2)
+void *init_child1(int arg1,void *arg2) /* proc3 */
 {
 
         kmutex_init(&lock1);
         sched_queue_init(&prod1);
         sched_queue_init(&cons1);
-       
+
+   if(curtest == 6 || curtest == 1 || curtest == 2 || curtest==3)
+     {
         proc_t *producer1 = proc_create("producer1");
         KASSERT(producer1 != NULL);
         kthread_t *thread3 = kthread_create(producer1,produce1,0,NULL);
@@ -308,24 +339,26 @@ void *init_child1(int arg1,void *arg2)
         KASSERT(consumer1 != NULL);
         kthread_t *thread4 = kthread_create(consumer1,consume1,0,NULL);
         KASSERT(thread4 != NULL);
-       
+         
 	sched_make_runnable(thread3);
         sched_make_runnable(thread4);
         
+     }  
         int status;
         while(!list_empty(&curproc->p_children))
         {
                 pid_t child = do_waitpid(-1, 0, &status);
                 dbg(DBG_INIT,"Process %d cleaned successfully\n", child);
         }
-       
+       	proc_kill_all();
 return NULL;
 }
 
 
-void *init_child2(int arg1,void *arg2)
+void *init_child2(int arg1,void *arg2)  /* proc4 */
 {
-        
+     if(curtest ==7 || curtest == 1 )
+     {
         kmutex_init(&m1);
 	kmutex_init(&m2);
         proc_t *DEADLOCK1 = proc_create("DEADLOCK1");
@@ -336,22 +369,25 @@ void *init_child2(int arg1,void *arg2)
         proc_t *DEADLOCK2 = proc_create("DEADLOCK2");
         KASSERT(DEADLOCK2 != NULL);
         kthread_t *thread6 = kthread_create(DEADLOCK2,dead2,0,NULL);
-		KASSERT(thread6 != NULL);
+	KASSERT(thread6 != NULL);
        
-		sched_make_runnable(thread5);
+	sched_make_runnable(thread5);
         sched_make_runnable(thread6);
-        
-        int status;
+     }
+      
+	    int status;
+
         while(!list_empty(&curproc->p_children))
         {
                 pid_t child = do_waitpid(-1, 0, &status);
                 dbg(DBG_INIT,"Process %d cleaned successfully\n", child);
         }
-return NULL;
+        /*NOT_YET_IMPLEMENTED("PROCS: initproc_run");
+        */
+        return NULL;
 }
 
-
-void *produce1(int arg1,void *arg2)
+void *produce1(int arg1,void *arg2) /* proc5 */
 {
   if(curtest == 6)
      {
@@ -365,24 +401,32 @@ void *produce1(int arg1,void *arg2)
 			sched_sleep_on(&prod1);
 			kmutex_lock(&lock1);
 		}
-		buffer=i;
+		buffer++;
 		dbg_print("\n PRODUCING %d \n",buffer);
 		
 		sched_wakeup_on(&cons1);
 		kmutex_unlock(&lock1);
 	}
      }
+     else if(curtest ==1 || curtest ==2 || curtest == 3)
+        {             
+             proc_t *kill_test= proc_create("killtest");
+             KASSERT(kill_test != NULL);
+             kthread_t *kill_thr = kthread_create(kill_test,prockill,0,NULL);
+             KASSERT(kill_thr != NULL);
+             sched_make_runnable(kill_thr);
+        }
 	int status;
         while(!list_empty(&curproc->p_children))
         {
                 pid_t child = do_waitpid(-1, 0, &status);
                 dbg(DBG_INIT,"Process %d cleaned successfully\n", child);
         }
-	
+
 	return NULL;
 }
 
-void *consume1(int arg1,void *arg2)
+void *consume1(int arg1,void *arg2) /* proc6 */
 {     
   
   if(curtest == 6)
@@ -397,9 +441,9 @@ void *consume1(int arg1,void *arg2)
 			sched_sleep_on(&cons1);
 			kmutex_lock(&lock1);
 		}
-		
+		buffer--;
 		dbg_print("\n CONSUMING %d \n",buffer);
-		buffer=0;
+		
 		sched_wakeup_on(&prod1);
 		kmutex_unlock(&lock1);	
 	}	
@@ -416,7 +460,7 @@ void *consume1(int arg1,void *arg2)
 	return NULL;
 }
 
-void *dead1(int arg1,void *arg2)
+void *dead1(int arg1,void *arg2) /* proc3 / proc7 */
 {
    if(curtest == 7)
      {
@@ -442,7 +486,7 @@ void *dead1(int arg1,void *arg2)
 	return NULL;
 }
 
-void *dead2(int arg1,void *arg2)
+void *dead2(int arg1,void *arg2) /* proc4 / proc8 */
 {
    if(curtest == 7)
      {
@@ -467,6 +511,22 @@ void *dead2(int arg1,void *arg2)
         
 	return NULL;
 	
+}
+
+void *prockill(int arg1, void *arg2)
+{
+
+if(curtest == 2)
+ {
+   proc_t *proc = proc_lookup(6);
+   proc_kill(proc,0);
+ } 
+else if(curtest == 3)
+  {
+        proc_kill_all();
+  }
+
+return NULL;
 }
 
 
