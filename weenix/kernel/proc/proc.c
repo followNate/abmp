@@ -250,6 +250,8 @@ proc_kill(proc_t *p, int status)
 	
 	p->p_state = PROC_DEAD;
 	p->p_status = status;
+	sched_wakeup_on(&p->p_wait);/*As Now it has no child left*/
+	dbg(DBG_PROC,"Killing Process with PID=%d Complete\n",p->p_pid);
 }
 
 /*
@@ -362,6 +364,9 @@ pid_t do_waitpid(pid_t pid, int options, int *status)
                 if(pid==-1)
                 {
                 wait_to_die1:
+                        /*dbg_print("\naa in %d\n",curproc->p_pid);*/
+                        if(list_empty(&(curproc->p_children)))
+                                goto END;
                         list_iterate_begin(&(curproc->p_children), p,proc_t,p_child_link)
                         {
                                 KASSERT(p!=NULL);
@@ -374,7 +379,8 @@ pid_t do_waitpid(pid_t pid, int options, int *status)
                                         list_remove(&(p->p_list_link));
                                         list_iterate_begin(&(p->p_threads), cur_proc_thd, kthread_t, kt_plink)
                                         {
-                                                KASSERT(KT_EXITED == cur_proc_thd->kt_state);
+                                               /*dbg_print("\n in do_waitpid %d\n",cur_proc_thd->kt_proc ->p_pid);*/
+                                               KASSERT(KT_EXITED == cur_proc_thd->kt_state);
 						kthread_destroy(cur_proc_thd);
                                         } list_iterate_end();
 					KASSERT(NULL != p->p_pagedir);
@@ -387,6 +393,7 @@ pid_t do_waitpid(pid_t pid, int options, int *status)
                         if(i==0)
                         {
                     /*     dbg_print("\nin do_wait pid=-1 p_state calling sched sleep on \n");*/
+                                /*dbg_print("\naa in %d\n",curproc->p_pid);*/
                                 sched_sleep_on(&(curproc->p_wait));
                       /*       dbg_print("\n in do_wait pid>=-1  returned from sleep on \n");*/
                                 goto wait_to_die1;
