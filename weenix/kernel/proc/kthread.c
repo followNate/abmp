@@ -99,7 +99,7 @@ kthread_t *kthread_create(struct proc *p, kthread_func_t func, long arg1, void *
         
         context_setup(&(new_kthread_t->kt_ctx),func,arg1,arg2,(new_kthread_t->kt_kstack),DEFAULT_STACK_SIZE,(p->p_pagedir));          
         
-        dbg(DBG_PROC,"A thread is created for process %s (id=%d)",p->p_comm,p->p_pid);
+        dbg(DBG_THR,"A thread is created for process %s (PID=%d)\n",p->p_comm,p->p_pid);
         /*NOT_YET_IMPLEMENTED("PROCS: kthread_create");*/
         return new_kthread_t;
 }

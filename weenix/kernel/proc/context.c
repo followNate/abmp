@@ -6,7 +6,6 @@
 #include "main/apic.h"
 #include "main/interrupt.h"
 #include "main/gdt.h"
-#include "globals.h" /* need to remove this header added by bikram */
 #include "mm/page.h"
 #include "mm/pagetable.h"
 

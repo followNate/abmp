@@ -39,8 +39,20 @@
 #include "fs/vfs_syscall.h"
 #include "fs/fcntl.h"
 #include "fs/stat.h"
-
 #include "test/kshell/kshell.h"
+
+#define NO_TEST 0
+#define TEST_1 1        /* Processes will be createad and wil exit normaly */ 
+#define TEST_2 2        /* "proc_kill()" in multiple processes to terminate bunch of processes */
+#define TEST_3 3        /* "proc_kill_all()" Terminate all the processes*/
+#define TEST_4 4        /* "kthread_cancel()" Cancel the specific thread */
+#define TEST_5 5        /* "kthread_exit()" Exit the current thread */
+#define TEST_6 6        /*  Producer  Consumer test */
+#define TEST_7 7        /*  Deadlock check */
+#define TEST_8 8        /*  Reader and writer problem */
+#define TEST_9 9        /*  kshell testing */
+
+static int curtest = TEST_6;
 
 GDB_DEFINE_HOOK(boot)
 GDB_DEFINE_HOOK(initialized)
@@ -179,8 +191,7 @@ static void *idleproc_run(int arg1, void *arg2)
 /*        dbg_print("\nidleproc_run returned from sched_make_rinnable and calling do wait_pid \n");*/
         /* Now wait for it */        
         child = do_waitpid(-1, 0, &status);
-        dbg_print("Process %d cleaned successfully\n", child);
-        dbg_print("\n idleproc_run wait over for child die \n");
+        dbg(DBG_INIT,"Process %d cleaned successfully\n", child);
         KASSERT(PID_INIT == child);
 
 #ifdef __MTP__
@@ -228,7 +239,6 @@ static kthread_t *initproc_create(void)
         kthread_t *initthr;
         initthr=kthread_create(procc,initproc_run,NULL,NULL);       
         KASSERT(initthr != NULL && "Could not create thread for Idle process");      
-        NOT_YET_IMPLEMENTED("PROCS: initproc_create");
         return initthr;
 }
 
@@ -243,62 +253,49 @@ static kthread_t *initproc_create(void)
  * @param arg1 the first argument (unused)
  * @param arg2 the second argument (unused)
  */
-void *get_sum1(int arg1,void *arg2);
-void *get_sum2(int arg1,void *arg2);
+void *init_child1(int arg1,void *arg2);
+void *init_child2(int arg1,void *arg2);
 void *get_mul(int arg1,void *arg2);
-
-void *produce(int arg1,void *arg2);
-void *consume(int arg1,void *arg2);
-
-kmutex_t lock;
-ktqueue_t prod;
-ktqueue_t cons;
-int buffer_size = 10;/*EMPTY*/
-int buffer_index = 0;/*OCCUPID*/
-int next_in = 0;
-int next_out = 0;
-int buf[10];
-
 void *produce1(int arg1,void *arg2);
 void *consume1(int arg1,void *arg2);
-kmutex_t lock1;
-ktqueue_t prod1;
-ktqueue_t cons1;
-int MAX = 10;
-int buffer = 0;
-
 void *dead1(int arg1,void *arg2);
 void *dead2(int arg1,void *arg2);
-kmutex_t m1;
-kmutex_t m2;
 
-
-
-
+kmutex_t lock1;
+ktqueue_t prod1, cons1;
+int MAX = 10, buffer = 0;
+kmutex_t m1, m2;
 
 static void *initproc_run(int arg1, void *arg2)
 {
+        /* 1st child of init  */
+        proc_t *proc3 = proc_create("proc3");
+        KASSERT(proc3 != NULL);
+        kthread_t *thread1 = kthread_create(proc3,init_child1,10,(void*)20);
+        KASSERT(thread1 !=NULL);
+
+        /* 2nd child init */
+        proc_t *proc4 = proc_create("proc4");
+        KASSERT(proc4 != NULL);
+        kthread_t *thread2 = kthread_create(proc4,init_child2,40,(void*)20);
+        KASSERT(thread2 !=NULL);
         
-       dbg_print("\n inside initproc_run \n");
-        
-	/*	kmutex_init(&lock);
-        sched_queue_init(&prod);
-        sched_queue_init(&cons);
-        
-        proc_t *producer = proc_create("producer");
-        KASSERT(producer != NULL);
-        kthread_t *thread1 = kthread_create(producer,produce,0,NULL);
-        KASSERT(thread1 != NULL);
-        
-        proc_t *consumer = proc_create("consumer");
-        KASSERT(consumer != NULL);
-        kthread_t *thread2 = kthread_create(consumer,consume,0,NULL);
-		KASSERT(thread2 != NULL);
-       
-        sched_make_runnable(thread1);
         sched_make_runnable(thread2);
+        sched_make_runnable(thread1);
+	int status;
+        while(!list_empty(&curproc->p_children))
+        {
+                pid_t child = do_waitpid(-1, 0, &status);
+                dbg(DBG_INIT,"Process %d cleaned successfully\n", child);
+        }
         
-	kmutex_init(&lock1);
+        return NULL;
+}
+
+void *init_child1(int arg1,void *arg2)
+{
+
+        kmutex_init(&lock1);
         sched_queue_init(&prod1);
         sched_queue_init(&cons1);
        
@@ -310,15 +307,27 @@ static void *initproc_run(int arg1, void *arg2)
         proc_t *consumer1 = proc_create("consumer1");
         KASSERT(consumer1 != NULL);
         kthread_t *thread4 = kthread_create(consumer1,consume1,0,NULL);
-		KASSERT(thread4 != NULL);
+        KASSERT(thread4 != NULL);
        
-		sched_make_runnable(thread3);
+	sched_make_runnable(thread3);
         sched_make_runnable(thread4);
+        
+        int status;
+        while(!list_empty(&curproc->p_children))
+        {
+                pid_t child = do_waitpid(-1, 0, &status);
+                dbg(DBG_INIT,"Process %d cleaned successfully\n", child);
+        }
        
-      
-		kmutex_init(&m1);
-		kmutex_init(&m2);
-		
+return NULL;
+}
+
+
+void *init_child2(int arg1,void *arg2)
+{
+        
+        kmutex_init(&m1);
+	kmutex_init(&m2);
         proc_t *DEADLOCK1 = proc_create("DEADLOCK1");
         KASSERT(DEADLOCK1 != NULL);
         kthread_t *thread5 = kthread_create(DEADLOCK1,dead1,0,NULL);
@@ -331,118 +340,21 @@ static void *initproc_run(int arg1, void *arg2)
        
 		sched_make_runnable(thread5);
         sched_make_runnable(thread6);
-       
-        */
-           dbg_print("\n inside initproc_run \n");
-
-        /* 1st child of init  */
-        proc_t *proc3 = proc_create("proc3");
-        KASSERT(proc3 != NULL);
-        kthread_t *thread1 = kthread_create(proc3,get_sum1,10,(void*)20);
-        KASSERT(thread1 !=NULL);
-     
-
-        /* 2nd child init */
-        proc_t *proc4 = proc_create("proc4");
-        KASSERT(proc4 != NULL);
-        kthread_t *thread2 = kthread_create(proc4,get_sum2,40,(void*)20);
-        KASSERT(thread2 !=NULL);
-       
-        sched_make_runnable(thread1);
-        sched_make_runnable(thread2);
-	    int status;
+        
+        int status;
         while(!list_empty(&curproc->p_children))
         {
                 pid_t child = do_waitpid(-1, 0, &status);
                 dbg(DBG_INIT,"Process %d cleaned successfully\n", child);
         }
-
-        NOT_YET_IMPLEMENTED("PROCS: initproc_run");
-
-        return NULL;
-}
-
-void *get_sum1(int arg1,void *arg2)
-{
-
 return NULL;
-}
-void *get_sum2(int arg1,void *arg2)
-{
-
-
-int result = arg1 + (int)arg2;
-dbg_print("\n pid %d:  Sum is ==== proc 4 === %d\n",curproc->p_pid,result);
-proc_t *proc5 = proc_create("proc3");
-        KASSERT(proc5 != NULL);
-        kthread_t *thread3 = kthread_create(proc5,get_mul,40,(void*)20);
-        KASSERT(thread3 !=NULL);
-          sched_make_runnable(thread3);
-          dbg_print("\n Created proc 5 inside proc4 \n");
-          int status;
-
-          dbg_print("\n Created proc 5 inside proc4 \n");
-/*     while(!list_empty(&curproc->p_children))
-        {
-           pid_t child = do_waitpid(-1, 0, &status);
-                dbg_print("Process %d cleaned successfully\n", child);
-        }*/
-return NULL;
-}
-
-void *get_mul(int arg1,void *arg2)
-{
-int result = arg1 * (int)arg2;
-
-proc_kill(proc_lookup(4),0);
-dbg_print("\n pid %d:  Mul is = proc 5= %d\n",curproc->p_pid,result);
-dbg_print("\n current parent is -> %d\n",(curproc->p_pproc)->p_pid);
-return NULL;
-}
-/*
-void *produce(int arg1,void *arg2)
-{
-	int i=0;
-	for (i=0;i<=5;i++)
-	{
-		kmutex_lock(&lock);
-		if(buffer_index == buffer_size)
-		{
-			kmutex_unlock(&lock);
-			sched_sleep_on(&prod);
-			kmutex_lock(&lock);
-		}
-		buf[buffer_index++]=10;
-		dbg_print("\n PRODUCE %d \n",buffer_index);
-		kmutex_unlock(&lock);
-		sched_wakeup_on(&cons);
-		
-	}
-	return NULL;
-}
-
-void *consume(int arg1,void *arg2)
-{
-	int i=0;
-	for (i=0;i<=5;i++)
-	{
-		kmutex_lock(&lock);
-		if(buffer_index==-1)
-		{
-			kmutex_unlock(&lock);
-			sched_sleep_on(&cons);
-			kmutex_lock(&lock);
-		}
-		dbg_print("\n CONSUME %d \n",buffer_index--);
-		kmutex_unlock(&lock);
-		sched_wakeup_on(&prod);
-	}
-	return NULL;
 }
 
 
 void *produce1(int arg1,void *arg2)
 {
+  if(curtest == 6)
+     {
 	int i=0;
 	for (i=1;i<=MAX;i++)
 	{
@@ -459,12 +371,22 @@ void *produce1(int arg1,void *arg2)
 		sched_wakeup_on(&cons1);
 		kmutex_unlock(&lock1);
 	}
+     }
+	int status;
+        while(!list_empty(&curproc->p_children))
+        {
+                pid_t child = do_waitpid(-1, 0, &status);
+                dbg(DBG_INIT,"Process %d cleaned successfully\n", child);
+        }
 	
 	return NULL;
 }
 
 void *consume1(int arg1,void *arg2)
-{
+{     
+  
+  if(curtest == 6)
+     {
 	int i=0;
 	for (i=1;i<=MAX;i++)
 	{
@@ -483,11 +405,21 @@ void *consume1(int arg1,void *arg2)
 	}	
 	sched_make_runnable(curthr);
 	sched_switch();
+     }	
+	int status;
+        while(!list_empty(&curproc->p_children))
+        {
+                pid_t child = do_waitpid(-1, 0, &status);
+                dbg(DBG_INIT,"Process %d cleaned successfully\n", child);
+        }
+        
 	return NULL;
 }
 
 void *dead1(int arg1,void *arg2)
 {
+   if(curtest == 7)
+     {
 	kmutex_lock(&m1);
 	dbg_print("\n MUTEX1 LOCKED BY DEAD1 \n");
 	sched_make_runnable(curthr);
@@ -499,11 +431,21 @@ void *dead1(int arg1,void *arg2)
 	dbg_print("\n MUTEX2 LOCKED BY DEAD1 \n");
 	kmutex_unlock(&m1);
 	dbg_print("\n MUTEX1 LOCKED BY DEAD1 \n");
+     }
+	int status;
+        while(!list_empty(&curproc->p_children))
+        {
+                pid_t child = do_waitpid(-1, 0, &status);
+                dbg(DBG_INIT,"Process %d cleaned successfully\n", child);
+        }
+        
 	return NULL;
 }
 
 void *dead2(int arg1,void *arg2)
 {
+   if(curtest == 7)
+     {
 	kmutex_lock(&m2);
 	dbg_print("\n MUTEX2 LOCKED BY DEAD2 \n");
 	sched_make_runnable(curthr);
@@ -515,12 +457,17 @@ void *dead2(int arg1,void *arg2)
 	dbg_print("\n MUTEX1 LOCKED BY DEAD2 \n");
 	kmutex_unlock(&m2);
 	dbg_print("\n MUTEX2 LOCKED BY DEAD2 \n");
+     }
+	int status;
+        while(!list_empty(&curproc->p_children))
+        {
+                pid_t child = do_waitpid(-1, 0, &status);
+                dbg(DBG_INIT,"Process %d cleaned successfully\n", child);
+        }
+        
 	return NULL;
 	
 }
-*/
-
-
 
 
 /**

@@ -128,8 +128,11 @@ proc_create(char *name)
         
          /*dbg_print("\n Child\n");*/
         list_insert_tail(&(curproc->p_children),&(new_proc_t->p_child_link));/*link on curproc list of children */
-         } 
-        dbg(DBG_FORK,"Process %s (PID=%d) is Created\n",new_proc_t->p_comm,new_proc_t->p_pid);
+         }
+         if(new_proc_t->p_pid == 0)
+         dbg(DBG_FORK,"Process %s (PID=%d) is Created\n",new_proc_t->p_comm,new_proc_t->p_pid);
+         else
+dbg(DBG_FORK,"Process %s (PID=%d) is Created and parent process is \"%s\" (PID=%d) \n",new_proc_t->p_comm,new_proc_t->p_pid,curproc->p_comm,curproc->p_pid);
         /*NOT_YET_IMPLEMENTED("PROCS: proc_create");*/
         return new_proc_t;      
 }
@@ -218,8 +221,7 @@ proc_kill(proc_t *p, int status)
 	/*clean the PCB expect for p_pid and return value(or status code)*/
 
 	KASSERT(1 < p->p_pid);
-	p->p_state = PROC_DEAD;
-	p->p_status = status;
+	
         dbg(DBG_PROC,"Killing Process with PID=%d\n",p->p_pid);
 
 	
@@ -238,12 +240,19 @@ proc_kill(proc_t *p, int status)
 	/* signalling waiting parent process*/
 	KASSERT(NULL != p->p_pproc);
 	sched_wakeup_on(&p->p_pproc->p_wait);
-	
 	kthread_t *kthr;
 	list_iterate_begin(&(p->p_threads), kthr, kthread_t, kt_plink)
         {
-           kthread_cancel(kthr,(void*)status);
+               /* while(KT_EXITED !=kthr->kt_state)*/
+                {
+                        kthread_cancel(kthr,(void*)status);
+                        sched_make_runnable(curthr);
+        	        sched_switch();
+                }
         }list_iterate_end();
+	
+	p->p_state = PROC_DEAD;
+	p->p_status = status;
 }
 
 /*
@@ -336,6 +345,7 @@ pid_t do_waitpid(pid_t pid, int options, int *status)
         kthread_t *cur_proc_thd;
         KASSERT(options == 0);
         KASSERT(curproc!=NULL);
+        dbg(DBG_PROC,"Wait in Process with PID=%d\n",curproc->p_pid);
 /*        dbg_print("\n inside the do_waitpid curproc is %d  pid== %d\n",curproc->p_pid,pid);*/
         
         if(list_empty(&(curproc->p_children)))
