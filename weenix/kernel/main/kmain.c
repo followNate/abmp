@@ -443,8 +443,10 @@ void *produce1(int arg1,void *arg2) /* proc5 */
 	int status;
         while(!list_empty(&curproc->p_children))
         {
+                dbg_print("\nddff\n");
                 pid_t child = do_waitpid(-1, 0, &status);
                 dbg(DBG_INIT,"Process %d cleaned successfully\n", child);
+                 dbg_print("\nddff\n");
         }
 
 	return NULL;

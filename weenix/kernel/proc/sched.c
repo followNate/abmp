@@ -156,9 +156,10 @@ sched_wakeup_on(ktqueue_t *q)
                 KASSERT((thr->kt_state == KT_SLEEP) || (thr->kt_state == KT_SLEEP_CANCELLABLE));
                 sched_make_runnable(thr);
                 /*dbg_print("\nwake count %d\n",ii);*/
+                 dbg(DBG_SCHED,"The thread of process %d is awakened from sleep\n",thr->kt_proc->p_pid);
                 
         }
-     
+       
         return thr;
         /*NOT_YET_IMPLEMENTED("PROCS: sched_wakeup_on");*/
 
