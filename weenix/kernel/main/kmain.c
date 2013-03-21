@@ -47,12 +47,13 @@
 #define TEST_3 3        /* "proc_kill_all()" Terminate all the processes*/
 #define TEST_4 4        /* "kthread_cancel()" Cancel the specific thread */
 #define TEST_5 5        /* "kthread_exit()" Exit the current thread */
-#define TEST_6 6        /*  Producer  Consumer test */
-#define TEST_7 7        /*  Deadlock check */
-#define TEST_8 8        /*  Reader and writer problem */
-#define TEST_9 9        /*  kshell testing */
-
-static int curtest = TEST_3;
+#define TEST_6 6        
+#define TEST_7 7       
+#define TEST_8 8         /*  Producer  Consumer test */     
+#define TEST_9 9         /*  Deadlock check */       
+#define TEST_10 10       /*  Reader and writer problem */
+#define TEST_11 11       /*  kshell testing */
+static int curtest = TEST_11;
 
 GDB_DEFINE_HOOK(boot)
 GDB_DEFINE_HOOK(initialized)
@@ -279,12 +280,12 @@ ktqueue_t special_q;
 int MAX = 10, buffer = 0;
 
 kmutex_t tala;
-ktqueue_t rw_q;
+ktqueue_t rq,wq;
 int reader=0, writer=0, active_writer=0;
 
 static void *initproc_run(int arg1, void *arg2)
 {
-	switch(10)
+	switch(curtest)
 	{
 		case 1:	
 		case 2:
@@ -353,7 +354,7 @@ void producer_consumer()
         kmutex_init(&lock);
         sched_queue_init(&special_q);
 
-		proc_t *producer = proc_create("producer");
+	proc_t *producer = proc_create("producer");
         KASSERT(producer != NULL);
         kthread_t *produce_thread = kthread_create(producer,produce,0,NULL);
         KASSERT(produce_thread != NULL);
@@ -415,31 +416,51 @@ void *consume(int arg1,void *arg2)
 	sched_switch();   
 	return NULL;
 }
-
+#define MAX_WRITER 2
+#define MAX_READER 5
 void reader_writer()
 {
-	    kmutex_init(&tala);
-        sched_queue_init(&rw_q);
-       
-        proc_t *reader = proc_create("reader");
-        KASSERT(reader != NULL);
-        kthread_t *thrr = kthread_create(reader,readers,0,NULL);
-        KASSERT(thrr != NULL);
-        
-        proc_t *writer = proc_create("writer");
-        KASSERT(writer != NULL);
-        kthread_t *thrw = kthread_create(writer,writers,0,NULL);
-		KASSERT(thrw != NULL);
-        
-        sched_make_runnable(thrr);
-        sched_make_runnable(thrw);
-        
-        int status;
-        while(!list_empty(&curproc->p_children))
+	kmutex_init(&tala);
+        sched_queue_init(&rq);
+        sched_queue_init(&wq);
+        int i=0;
+        proc_t *reader[MAX_READER];
+        /* = proc_create("reader1");*/
+       /* KASSERT(reader1 != NULL);*/
+        kthread_t *thrr[MAX_READER];/* = kthread_create(reader1,readers,0,NULL);*/
+        /*KASSERT(thrr1 != NULL);*/
+        for(i=0;i<MAX_READER;i++)
         {
-                pid_t child = do_waitpid(-1, 0, &status);
-                dbg(DBG_INIT,"Process %d cleaned successfully\n", child);
+                dbg_print("\ngg\n");
+                reader[i]=proc_create("reader");
+                KASSERT(reader[i] != NULL);
+                thrr[i]=kthread_create(reader[i],readers,0,NULL);
+                KASSERT(thrr[i] != NULL);
+                sched_make_runnable(thrr[i]);
         }
+       
+        sched_make_runnable(curthr);
+	sched_switch();
+        proc_t *writer[MAX_WRITER];/* = proc_create("writer");
+        KASSERT(writer != NULL);*/
+        kthread_t *thrw[MAX_WRITER];/* = kthread_create(writer,writers,0,NULL);
+		KASSERT(thrw != NULL);*/
+         for(i=0;i<MAX_WRITER;i++)
+        {
+                dbg_print("\ngg\n");
+                writer[i]=proc_create("writer");
+                KASSERT(writer[i] != NULL);
+                thrw[i]=kthread_create(writer[i],writers,0,NULL);
+                KASSERT(thrw[i] != NULL);
+                sched_make_runnable(thrw[i]);
+                sched_make_runnable(curthr);
+        	sched_switch();
+        }
+        /*sched_make_runnable(thrr1);
+        sched_make_runnable(thrr2);
+        sched_make_runnable(thrr3)
+        sched_make_runnable(thrw);*/
+        
 }
 
 void *readers(int arg1,void *arg2)
@@ -451,24 +472,27 @@ void *readers(int arg1,void *arg2)
 	while(!(writer==0))
 	{
 		kmutex_unlock(&tala);
-		sched_sleep_on(&rw_q);
+		sched_sleep_on(&rq);
 		kmutex_lock(&tala);
 	}
 	reader++;
 	dbg_print("\n THE VALUE OF READER PLUS is %d \n",reader);
 	kmutex_unlock(&tala);
+	sched_make_runnable(curthr);
+	sched_switch();
 	kmutex_lock(&tala);
 	reader--;
 	dbg_print("\n THE VALUE OF READER MINUS is %d \n",reader);
 	if(reader==0)
 	{
-		sched_wakeup_on(&rw_q);
+		sched_wakeup_on(&rq);
+		sched_wakeup_on(&wq);
 	}
 	kmutex_unlock(&tala);
 
 	sched_make_runnable(curthr);
 	sched_switch();
-}
+        }
 	return NULL;
 }
 
@@ -483,23 +507,25 @@ void *writers(int arg1,void *arg2)
 	while(!((reader==0)&&(active_writer==0)))
 	{
 		kmutex_unlock(&tala);
-		sched_sleep_on(&rw_q);
+		sched_sleep_on(&wq);
 		kmutex_lock(&tala);
 	}
 	active_writer++;
 	dbg_print("\n THE VALUE OF ACTIVE WRITER BEFORE is %d \n",active_writer);
 	kmutex_unlock(&tala);
+	sched_make_runnable(curthr);
+	sched_switch();
 	kmutex_lock(&tala);
 	active_writer--;
 	dbg_print("\n THE VALUE OF ACTIVE WRITER AFTER is %d \n",active_writer);
 	writer--;
 	if(writer==0)
 	{
-		sched_broadcast_on(&rw_q);
+		sched_broadcast_on(&rq);
 	}
 	else
 	{
-		sched_wakeup_on(&rw_q);
+		sched_wakeup_on(&wq);
 	}
 	kmutex_unlock(&tala);
 
