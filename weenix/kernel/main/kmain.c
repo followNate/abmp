@@ -274,12 +274,8 @@ kmutex_t m2;
 
 void *kshell_test(int a, void *b)
 {
-    /* Code copied from file kernel/api/syscall.c */
-
     kshell_t *new_shell;
     int       i;
-        
-    /* Create a kshell on tty */
     while (1)
     {
         new_shell = kshell_create(0);
@@ -288,6 +284,10 @@ void *kshell_test(int a, void *b)
         {        dbg(DBG_TERM,"Error Executing the command");
         }
         
+        kshell_destroy(new_shell);
+        if(i==0)
+        {       break;
+        }
     }
     return NULL;
 }
