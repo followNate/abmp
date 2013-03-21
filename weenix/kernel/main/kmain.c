@@ -261,6 +261,8 @@ void *consume1(int arg1,void *arg2);
 void *dead1(int arg1,void *arg2);
 void *dead2(int arg1,void *arg2);
 void *prockill(int arg1, void *arg2);
+void shellTest();
+void processSetUp();
 kmutex_t m1;
 kmutex_t m2;
 
@@ -290,7 +292,44 @@ int MAX = 10, buffer = 0;
 
 static void *initproc_run(int arg1, void *arg2)
 {
-        /* 1st child of init  */
+	switch(curtest){
+		case 1:	
+		case 2:
+		case 3:
+		case 4:
+		case 5:
+		case 6:
+		case 7: processSetUp();
+			break;
+		case 8:
+			break;
+		case 9:	shellTest();
+			break;
+	}
+        
+        
+	int status;
+        while(!list_empty(&curproc->p_children))
+        {
+                pid_t child = do_waitpid(-1, 0, &status);
+                dbg(DBG_INIT,"Process %d cleaned successfully\n", child);
+        }
+        
+        return NULL;
+}
+
+void shellTest(){
+	/* entering into kshell */
+        if(curtest == 9)
+        {
+        proc_t* new_shell = proc_create("shell1");
+        kthread_t *new_shell_thread = kthread_create(new_shell, kshell_test, NULL, NULL);
+        sched_make_runnable(new_shell_thread);
+        }
+}
+
+void processSetUp(){
+	/* 1st child of init  */
         proc_t *proc3 = proc_create("proc3");
         KASSERT(proc3 != NULL);
         kthread_t *thread1 = kthread_create(proc3,init_child1,10,(void*)20);
@@ -301,24 +340,9 @@ static void *initproc_run(int arg1, void *arg2)
         KASSERT(proc4 != NULL);
         kthread_t *thread2 = kthread_create(proc4,init_child2,40,(void*)20);
         KASSERT(thread2 !=NULL);
-        
-        sched_make_runnable(thread1);
+	
+	sched_make_runnable(thread1);
         sched_make_runnable(thread2);
-        /* entering into kshell */
-        if(curtest == 9)
-        {
-        proc_t* new_shell = proc_create("shell1");
-        kthread_t *new_shell_thread = kthread_create(new_shell, kshell_test, NULL, NULL);
-        sched_make_runnable(new_shell_thread);
-        }
-	int status;
-        while(!list_empty(&curproc->p_children))
-        {
-                pid_t child = do_waitpid(-1, 0, &status);
-                dbg(DBG_INIT,"Process %d cleaned successfully\n", child);
-        }
-        
-        return NULL;
 }
 
 void *init_child1(int arg1,void *arg2) /* proc3 */
