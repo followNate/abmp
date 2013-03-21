@@ -261,9 +261,11 @@ void *consume1(int arg1,void *arg2);
 void *dead1(int arg1,void *arg2);
 void *dead2(int arg1,void *arg2);
 void *prockill(int arg1, void *arg2);
+void shellTest();
+void processSetUp();
 kmutex_t m1;
 kmutex_t m2;
-
+void test_cancel();
 void *kshell_test(int a, void *b)
 {
     kshell_t *new_shell;
@@ -290,7 +292,45 @@ int MAX = 10, buffer = 0;
 
 static void *initproc_run(int arg1, void *arg2)
 {
-        /* 1st child of init  */
+	switch(curtest){
+		case 1:	
+		case 2:
+		case 3:
+		case 4:
+		case 5:
+		case 6: processSetUp();
+		        break;
+		case 7: processSetUp();
+			break;
+		case 8:
+			break;
+		case 9:	shellTest();
+			break;
+	}
+        
+        
+	int status;
+        while(!list_empty(&curproc->p_children))
+        {
+                pid_t child = do_waitpid(-1, 0, &status);
+                dbg(DBG_INIT,"Process %d cleaned successfully\n", child);
+        }
+        
+        return NULL;
+}
+
+void shellTest(){
+	/* entering into kshell */
+        if(curtest == 9)
+        {
+        proc_t* new_shell = proc_create("shell1");
+        kthread_t *new_shell_thread = kthread_create(new_shell, kshell_test, NULL, NULL);
+        sched_make_runnable(new_shell_thread);
+        }
+}
+
+void processSetUp(){
+	/* 1st child of init  */
         proc_t *proc3 = proc_create("proc3");
         KASSERT(proc3 != NULL);
         kthread_t *thread1 = kthread_create(proc3,init_child1,10,(void*)20);
@@ -301,24 +341,9 @@ static void *initproc_run(int arg1, void *arg2)
         KASSERT(proc4 != NULL);
         kthread_t *thread2 = kthread_create(proc4,init_child2,40,(void*)20);
         KASSERT(thread2 !=NULL);
-        
-        sched_make_runnable(thread1);
+	
+	sched_make_runnable(thread1);
         sched_make_runnable(thread2);
-        /* entering into kshell */
-        if(curtest == 9)
-        {
-        proc_t* new_shell = proc_create("shell1");
-        kthread_t *new_shell_thread = kthread_create(new_shell, kshell_test, NULL, NULL);
-        sched_make_runnable(new_shell_thread);
-        }
-	int status;
-        while(!list_empty(&curproc->p_children))
-        {
-                pid_t child = do_waitpid(-1, 0, &status);
-                dbg(DBG_INIT,"Process %d cleaned successfully\n", child);
-        }
-        
-        return NULL;
 }
 
 void *init_child1(int arg1,void *arg2) /* proc3 */
@@ -347,6 +372,7 @@ void *init_child1(int arg1,void *arg2) /* proc3 */
         int status;
         while(!list_empty(&curproc->p_children))
         {
+                        test_cancel();
                 pid_t child = do_waitpid(-1, 0, &status);
                 dbg(DBG_INIT,"Process %d cleaned successfully\n", child);
         }
@@ -357,6 +383,7 @@ return NULL;
 
 void *init_child2(int arg1,void *arg2)  /* proc4 */
 {
+
      if(curtest ==7 || curtest == 1 )
      {
         kmutex_init(&m1);
@@ -376,9 +403,9 @@ void *init_child2(int arg1,void *arg2)  /* proc4 */
      }
       
 	    int status;
-
+        
         while(!list_empty(&curproc->p_children))
-        {
+        {        test_cancel();
                 pid_t child = do_waitpid(-1, 0, &status);
                 dbg(DBG_INIT,"Process %d cleaned successfully\n", child);
         }
@@ -389,6 +416,7 @@ void *init_child2(int arg1,void *arg2)  /* proc4 */
 
 void *produce1(int arg1,void *arg2) /* proc5 */
 {
+
   if(curtest == 6)
      {
 	int i=0;
@@ -399,11 +427,11 @@ void *produce1(int arg1,void *arg2) /* proc5 */
 		{
 			kmutex_unlock(&lock1);
 			sched_sleep_on(&prod1);
+                         test_cancel();
 			kmutex_lock(&lock1);
 		}
 		buffer++;
 		dbg_print("\n PRODUCING %d \n",buffer);
-		
 		sched_wakeup_on(&cons1);
 		kmutex_unlock(&lock1);
 	}
@@ -419,6 +447,7 @@ void *produce1(int arg1,void *arg2) /* proc5 */
 	int status;
         while(!list_empty(&curproc->p_children))
         {
+                test_cancel();
                 pid_t child = do_waitpid(-1, 0, &status);
                 dbg(DBG_INIT,"Process %d cleaned successfully\n", child);
         }
@@ -428,7 +457,7 @@ void *produce1(int arg1,void *arg2) /* proc5 */
 
 void *consume1(int arg1,void *arg2) /* proc6 */
 {     
-  
+          test_cancel();
   if(curtest == 6)
      {
 	int i=0;
@@ -453,6 +482,7 @@ void *consume1(int arg1,void *arg2) /* proc6 */
 	int status;
         while(!list_empty(&curproc->p_children))
         {
+                test_cancel();
                 pid_t child = do_waitpid(-1, 0, &status);
                 dbg(DBG_INIT,"Process %d cleaned successfully\n", child);
         }
@@ -462,6 +492,7 @@ void *consume1(int arg1,void *arg2) /* proc6 */
 
 void *dead1(int arg1,void *arg2) /* proc3 / proc7 */
 {
+
    if(curtest == 7)
      {
 	kmutex_lock(&m1);
@@ -479,6 +510,7 @@ void *dead1(int arg1,void *arg2) /* proc3 / proc7 */
 	int status;
         while(!list_empty(&curproc->p_children))
         {
+                test_cancel();
                 pid_t child = do_waitpid(-1, 0, &status);
                 dbg(DBG_INIT,"Process %d cleaned successfully\n", child);
         }
@@ -488,6 +520,7 @@ void *dead1(int arg1,void *arg2) /* proc3 / proc7 */
 
 void *dead2(int arg1,void *arg2) /* proc4 / proc8 */
 {
+
    if(curtest == 7)
      {
 	kmutex_lock(&m2);
@@ -505,6 +538,7 @@ void *dead2(int arg1,void *arg2) /* proc4 / proc8 */
 	int status;
         while(!list_empty(&curproc->p_children))
         {
+                 test_cancel();
                 pid_t child = do_waitpid(-1, 0, &status);
                 dbg(DBG_INIT,"Process %d cleaned successfully\n", child);
         }
@@ -518,17 +552,28 @@ void *prockill(int arg1, void *arg2)
 
 if(curtest == 2)
  {
-   proc_t *proc = proc_lookup(6);
+   proc_t *proc = proc_lookup(3);
    proc_kill(proc,0);
  } 
 else if(curtest == 3)
   {
+       
         proc_kill_all();
   }
 
 return NULL;
 }
 
+void test_cancel()
+{
+
+	if(curthr->kt_cancelled == 1)
+	        {
+        		dbg(DBG_TEST, "cancellation point reached for process %d's thread\n", curproc->p_pid);	        
+        
+	        	kthread_exit(0);	        
+	        }
+}
 
 /**
  * Clears all interrupts and halts, meaning that we will never run
@@ -542,3 +587,4 @@ hard_shutdown()
 #endif
         __asm__ volatile("cli; hlt");
 }
+

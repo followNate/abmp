@@ -277,13 +277,7 @@ sched_switch(void)
            
            intr_setipl(interrupt_l);
            dbg(DBG_SCHED,"After switch: current thread is the thread of process %s (PID= %d) \n",curproc->p_comm,curproc->p_pid);
-          if(curthr->kt_cancelled==1)
-          {
-                kthread_exit((void *)curthr->kt_retval);
-                sched_switch();
-          }
-
-          /*NOT_YET_IMPLEMENTED("PROCS: sched_switch");*/
+           /*NOT_YET_IMPLEMENTED("PROCS: sched_switch");*/
 }
 
 /*
