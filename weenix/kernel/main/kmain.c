@@ -372,11 +372,10 @@ void *init_child1(int arg1,void *arg2) /* proc3 */
         int status;
         while(!list_empty(&curproc->p_children))
         {
-                        test_cancel();
                 pid_t child = do_waitpid(-1, 0, &status);
                 dbg(DBG_INIT,"Process %d cleaned successfully\n", child);
         }
-       	proc_kill_all();
+
 return NULL;
 }
 
@@ -405,7 +404,7 @@ void *init_child2(int arg1,void *arg2)  /* proc4 */
 	    int status;
         
         while(!list_empty(&curproc->p_children))
-        {        test_cancel();
+        {
                 pid_t child = do_waitpid(-1, 0, &status);
                 dbg(DBG_INIT,"Process %d cleaned successfully\n", child);
         }
@@ -427,7 +426,7 @@ void *produce1(int arg1,void *arg2) /* proc5 */
 		{
 			kmutex_unlock(&lock1);
 			sched_sleep_on(&prod1);
-                         test_cancel();
+
 			kmutex_lock(&lock1);
 		}
 		buffer++;
@@ -447,7 +446,7 @@ void *produce1(int arg1,void *arg2) /* proc5 */
 	int status;
         while(!list_empty(&curproc->p_children))
         {
-                test_cancel();
+
                 pid_t child = do_waitpid(-1, 0, &status);
                 dbg(DBG_INIT,"Process %d cleaned successfully\n", child);
         }
@@ -457,7 +456,7 @@ void *produce1(int arg1,void *arg2) /* proc5 */
 
 void *consume1(int arg1,void *arg2) /* proc6 */
 {     
-          test_cancel();
+
   if(curtest == 6)
      {
 	int i=0;
@@ -482,7 +481,7 @@ void *consume1(int arg1,void *arg2) /* proc6 */
 	int status;
         while(!list_empty(&curproc->p_children))
         {
-                test_cancel();
+
                 pid_t child = do_waitpid(-1, 0, &status);
                 dbg(DBG_INIT,"Process %d cleaned successfully\n", child);
         }
@@ -510,7 +509,7 @@ void *dead1(int arg1,void *arg2) /* proc3 / proc7 */
 	int status;
         while(!list_empty(&curproc->p_children))
         {
-                test_cancel();
+
                 pid_t child = do_waitpid(-1, 0, &status);
                 dbg(DBG_INIT,"Process %d cleaned successfully\n", child);
         }
@@ -538,7 +537,7 @@ void *dead2(int arg1,void *arg2) /* proc4 / proc8 */
 	int status;
         while(!list_empty(&curproc->p_children))
         {
-                 test_cancel();
+
                 pid_t child = do_waitpid(-1, 0, &status);
                 dbg(DBG_INIT,"Process %d cleaned successfully\n", child);
         }
@@ -556,8 +555,7 @@ if(curtest == 2)
    proc_kill(proc,0);
  } 
 else if(curtest == 3)
-  {
-       
+  {       
         proc_kill_all();
   }
 
@@ -587,4 +585,3 @@ hard_shutdown()
 #endif
         __asm__ volatile("cli; hlt");
 }
-
