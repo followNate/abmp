@@ -53,7 +53,7 @@
 #define TEST_8 8        /*  Reader and writer problem */
 #define TEST_9 9        /*  kshell testing */
 
-static int curtest = TEST_4;
+static int curtest = TEST_2;
 
 GDB_DEFINE_HOOK(boot)
 GDB_DEFINE_HOOK(initialized)
@@ -276,8 +276,9 @@ void shellTest();
 kmutex_t m1;
 kmutex_t m2;
 kmutex_t lock;
-ktqueue_t special_q;
-int MAX = 10, buffer = 0;
+ktqueue_t prod;
+ktqueue_t cons;
+int MAX = 5, buffer = 0;
 
 kmutex_t tala;
 ktqueue_t rq,wq;
@@ -470,7 +471,8 @@ void *kshell_test(int a, void *b)
 void producer_consumer()
 {
         kmutex_init(&lock);
-        sched_queue_init(&special_q);
+        sched_queue_init(&prod);
+        sched_queue_init(&cons);
 
 		proc_t *producer = proc_create("producer");
         KASSERT(producer != NULL);
@@ -496,19 +498,25 @@ void producer_consumer()
 void *produce(int arg1,void *arg2) 
 {
 	int i=0;
-	for (i=1;i<=MAX;i++)
+	for (i=1;i<=10*MAX;i++)
 	{
 		kmutex_lock(&lock);
-		while(buffer != 0)
+		while(buffer == MAX)
 		{
 			kmutex_unlock(&lock);
-			sched_sleep_on(&special_q);
+			dbg_print("\n THE BUFFER IS CURRENTLY FULL \n",buffer);
+			sched_sleep_on(&prod);
 			kmutex_lock(&lock);
 		}
 		buffer++;
-		dbg_print("\n PRODUCER THREAD PRODUCE %d ITEM IN THE BUFFER \n",buffer);
-		sched_wakeup_on(&special_q);
+		dbg_print("\n PRODUCER THREAD PRODUCE 1 ITEM, THERE ARE %d ITEM IN THE BUFFER \n",buffer);
+		sched_wakeup_on(&cons);
 		kmutex_unlock(&lock);
+		if(i%3==0)
+		{
+		sched_make_runnable(curthr);
+		sched_switch();
+		}
 	}
 	return NULL;
 }
@@ -516,22 +524,27 @@ void *produce(int arg1,void *arg2)
 void *consume(int arg1,void *arg2) 
 {     
 	int i=0;
-	for(i=1;i<=MAX;i++)
+	for(i=1;i<=10*MAX;i++)
 	{
 		kmutex_lock(&lock);
 		while(buffer == 0)
 		{
 			kmutex_unlock(&lock);
-			sched_sleep_on(&special_q);
+			dbg_print("\n THE BUFFER IS CURRENTLY EMPTY \n",buffer);
+			sched_sleep_on(&cons);
 			kmutex_lock(&lock);
 		}
 		buffer--;
 		dbg_print("\n CONSUMER THREAD CONSUME 1 ITEM, THERE ARE %d ITEM IN THE BUFFER\n",buffer);
-		sched_wakeup_on(&special_q);
-		kmutex_unlock(&lock);	
+		sched_wakeup_on(&prod);
+		kmutex_unlock(&lock);
+		if (i%2 == 0)
+		{
+		sched_make_runnable(curthr);
+		sched_switch();		
+		}	
 	}	
-	sched_make_runnable(curthr);
-	sched_switch();   
+	 
 	return NULL;
 }
 
