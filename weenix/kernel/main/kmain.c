@@ -506,12 +506,12 @@ void *produce(int arg1,void *arg2)
 		while(buffer == MAX)
 		{
 			kmutex_unlock(&lock);
-			dbg_print("\n THE BUFFER IS CURRENTLY FULL \n");
+			dbg(DBG_INIT," THE BUFFER IS CURRENTLY FULL \n");
 			sched_sleep_on(&prod);
 			kmutex_lock(&lock);
 		}
 		buffer++;
-		dbg_print("\n PRODUCER THREAD PRODUCE 1 ITEM, THERE ARE %d ITEM IN THE BUFFER \n",buffer);
+		dbg(DBG_INIT," PRODUCER THREAD PRODUCE 1 ITEM, NOW THERE ARE %d ITEM IN THE BUFFER \n",buffer);
 		sched_wakeup_on(&cons);
 		kmutex_unlock(&lock);
 		if(i%3==0)
@@ -532,12 +532,12 @@ void *consume(int arg1,void *arg2)
 		while(buffer == 0)
 		{
 			kmutex_unlock(&lock);
-			dbg_print("\n THE BUFFER IS CURRENTLY EMPTY \n");
+			dbg(DBG_INIT," THE BUFFER IS CURRENTLY EMPTY \n");
 			sched_sleep_on(&cons);
 			kmutex_lock(&lock);
 		}
 		buffer--;
-		dbg_print("\n CONSUMER THREAD CONSUME 1 ITEM, THERE ARE %d ITEM IN THE BUFFER\n",buffer);
+		dbg(DBG_INIT," CONSUMER THREAD CONSUME 1 ITEM, NOW THERE ARE %d ITEM IN THE BUFFER\n",buffer);
 		sched_wakeup_on(&prod);
 		kmutex_unlock(&lock);
 		if (i%2 == 0)
@@ -594,11 +594,7 @@ void reader_writer()
         	sched_switch();
         	goto reader;
         }
-        /*sched_make_runnable(thrr1);
-        sched_make_runnable(thrr2);
-        sched_make_runnable(thrr3)
-        sched_make_runnable(thrw);*/
-        
+                
 }
 
 void *readers(int arg1,void *arg2)
@@ -610,18 +606,18 @@ void *readers(int arg1,void *arg2)
 	while(!(writer==0))
 	{
 		kmutex_unlock(&tala);
-		dbg_print("\n NEW READER ARRIVED AND SOME WRITER IS WRITING \n");
+		dbg(DBG_INIT," NEW READER ARRIVED AND SOME WRITER IS WRITING \n");
 		sched_sleep_on(&rq);
 		kmutex_lock(&tala);
 	}
 	reader++;
-	dbg_print("\n (BEFORE READ) NUMBER OF READERS = %d NUMBER OF WAITING WRITERS = %d\n",reader,writer);
+	dbg(DBG_INIT," (BEFORE READ) NUMBER OF ACTIVE READERS = %d NUMBER OF WAITING WRITERS = %d\n",reader,writer);
 	kmutex_unlock(&tala);
 	sched_make_runnable(curthr);
 	sched_switch();
 	kmutex_lock(&tala);
 	reader--;
-	dbg_print("\n (AFTER READ) NUMBER OF READERS = %d NUMBER OF WAITING WRITERS = %d\n",reader,writer);
+	dbg(DBG_INIT," (AFTER READ) NUMBER OF ACTIVE READERS = %d NUMBER OF WAITING WRITERS = %d\n",reader,writer);
 	if(reader==0)
 	{
 		sched_wakeup_on(&rq);
@@ -642,7 +638,7 @@ void *writers(int arg1,void *arg2)
 	{
 	kmutex_lock(&tala);
 	writer++;
-	dbg_print("\n NUMBER OF READERS = %d NEW WRITER ARRIVED, CURRENT NUMBER OF WRITERS = %d\n",reader,writer);
+	dbg(DBG_INIT," NUMBER OF READERS = %d NEW WRITER ARRIVED, CURRENT NUMBER OF WRITERS = %d\n",reader,writer);
 	while(!((reader==0)&&(active_writer==0)))
 	{
 		kmutex_unlock(&tala);
@@ -650,14 +646,14 @@ void *writers(int arg1,void *arg2)
 		kmutex_lock(&tala);
 	}
 	active_writer++;
-	dbg_print("\n (BEFORE WRITE) THE VALUE OF ACTIVE WRITER = %d AND TOTAL NO OF WRITERS = %d \n",active_writer,writer);
+	dbg(DBG_INIT," (BEFORE WRITE) THE VALUE OF ACTIVE WRITER = %d AND TOTAL NO OF WRITERS = %d \n",active_writer,writer);
 	kmutex_unlock(&tala);
 	sched_make_runnable(curthr);
 	sched_switch();
 	kmutex_lock(&tala);
 	active_writer--;
 	writer--;
-	dbg_print("\n (AFTER WRITE) THE VALUE OF ACTIVE WRITER = %d AND TOTAL NO OF WRITERS = %d \n",active_writer,writer);
+	dbg(DBG_INIT," (AFTER WRITE) THE VALUE OF ACTIVE WRITER = %d AND TOTAL NO OF WRITERS = %d \n",active_writer,writer);
 	if(writer==0)
 	{
 		sched_broadcast_on(&rq);
@@ -702,7 +698,7 @@ void deadlock()
 void *dead1(int arg1,void *arg2) 
 {
 	kmutex_lock(&m1);
-	dbg_print("\n MUTEX m1 LOCKED BY A THREAD WITH PROCESS PID = %d\n",(curthr->kt_proc)->p_pid);
+	dbg(DBG_INIT," MUTEX m1 LOCKED BY A THREAD WITH PROCESS PID = %d\n",(curthr->kt_proc)->p_pid);
 	sched_make_runnable(curthr);
 	sched_switch();
 	kmutex_lock(&m2);
@@ -714,10 +710,10 @@ void *dead1(int arg1,void *arg2)
 void *dead2(int arg1,void *arg2) 
 {   
 	kmutex_lock(&m2);
-	dbg_print("\n MUTEX m2 LOCKED BY A THREAD WITH PROCESS PID = %d\n",(curthr->kt_proc)->p_pid);
+	dbg(DBG_INIT," MUTEX m2 LOCKED BY A THREAD WITH PROCESS PID = %d\n",(curthr->kt_proc)->p_pid);
 	sched_make_runnable(curthr);
 	sched_switch();
-	dbg_print("\n DEADLOCK CREATED BY A THREAD WITH PROCESS PID = %d\n",(curthr->kt_proc)->p_pid);
+	dbg(DBG_INIT," DEADLOCK CREATED BY A THREAD WITH PROCESS PID = %d\n",(curthr->kt_proc)->p_pid);
 	kmutex_lock(&m1);
 	kmutex_unlock(&m1);
 	kmutex_unlock(&m2); 
@@ -746,9 +742,9 @@ void dead_own()
 }
 void *deadlock_own(int arg1, void *arg2)
 {
-dbg_print("\n MUTEX LOCKED BY A THREAD WITH PROCESS PID = %d\n",(curthr->kt_proc)->p_pid);
+dbg(DBG_INIT," MUTEX LOCKED BY A THREAD WITH PROCESS PID = %d\n",(curthr->kt_proc)->p_pid);
 kmutex_lock(&self);
-dbg_print("\n THREAD WITH PROCESS PID = %d TRYING TO LOCK THE MUTEX AGAIN \n",(curthr->kt_proc)->p_pid);
+dbg(DBG_INIT," THREAD WITH PROCESS PID = %d TRYING TO LOCK THE MUTEX AGAIN \n",(curthr->kt_proc)->p_pid);
 kmutex_lock(&self);
 return NULL;
 }
