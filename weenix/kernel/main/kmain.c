@@ -53,7 +53,7 @@
 #define TEST_8 8        /*  Reader and writer problem */
 #define TEST_9 9        /*  kshell testing */
 #define TEST_10 10      /*  Deadlock check when same thread again trying to lock the same mutex */
-static int curtest = TEST_10;
+static int curtest = TEST_0;
 
 GDB_DEFINE_HOOK(boot)
 GDB_DEFINE_HOOK(initialized)
