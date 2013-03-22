@@ -49,11 +49,11 @@
 #define TEST_4 4        /* "kthread_cancel()" Cancel the specific thread */
 #define TEST_5 5        /* "kthread_exit()" Exit the current thread */
 #define TEST_6 6        /*  Producer  Consumer test */
-#define TEST_7 7        /*  Deadlock check */
+#define TEST_7 7        /*  Deadlock check when two threads competing for the mutex */
 #define TEST_8 8        /*  Reader and writer problem */
 #define TEST_9 9        /*  kshell testing */
-
-static int curtest = TEST_4;
+#define TEST_10 10      /*  Deadlock check when same thread again trying to lock the same mutex */
+static int curtest = TEST_10;
 
 GDB_DEFINE_HOOK(boot)
 GDB_DEFINE_HOOK(initialized)
@@ -266,20 +266,22 @@ void *consume(int arg1,void *arg2);
 void *readers(int arg1,void *arg2);
 void *writers(int arg1,void *arg2);
 void *kshell_test(int arg1, void *arg2);
-
+void *deadlock_own(int arg1, void *arg2);
 void processSetUp();
 void deadlock();
 void producer_consumer();
 void reader_writer();
+void dead_own();
 void shellTest();
 
 kmutex_t m1;
 kmutex_t m2;
 kmutex_t lock;
-ktqueue_t special_q;
-int MAX = 10, buffer = 0;
+ktqueue_t prod;
+ktqueue_t cons;
+int MAX = 5, buffer = 0;
 
-kmutex_t tala;
+kmutex_t tala, self;
 ktqueue_t rq,wq;
 int reader=0, writer=0, active_writer=0;
 
@@ -297,6 +299,7 @@ static void *initproc_run(int arg1, void *arg2)
 		case 7: deadlock();break;
 		case 8: reader_writer();break;
 		case 9: shellTest();break;
+		case 10: dead_own(); break;
 	}
                 
 	   int status;
@@ -470,7 +473,8 @@ void *kshell_test(int a, void *b)
 void producer_consumer()
 {
         kmutex_init(&lock);
-        sched_queue_init(&special_q);
+        sched_queue_init(&prod);
+        sched_queue_init(&cons);
 
 		proc_t *producer = proc_create("producer");
         KASSERT(producer != NULL);
@@ -496,19 +500,25 @@ void producer_consumer()
 void *produce(int arg1,void *arg2) 
 {
 	int i=0;
-	for (i=1;i<=MAX;i++)
+	for (i=1;i<=10*MAX;i++)
 	{
 		kmutex_lock(&lock);
-		while(buffer != 0)
+		while(buffer == MAX)
 		{
 			kmutex_unlock(&lock);
-			sched_sleep_on(&special_q);
+			dbg_print("\n THE BUFFER IS CURRENTLY FULL \n");
+			sched_sleep_on(&prod);
 			kmutex_lock(&lock);
 		}
 		buffer++;
-		dbg_print("\n PRODUCER THREAD PRODUCE %d ITEM IN THE BUFFER \n",buffer);
-		sched_wakeup_on(&special_q);
+		dbg_print("\n PRODUCER THREAD PRODUCE 1 ITEM, THERE ARE %d ITEM IN THE BUFFER \n",buffer);
+		sched_wakeup_on(&cons);
 		kmutex_unlock(&lock);
+		if(i%3==0)
+		{
+		sched_make_runnable(curthr);
+		sched_switch();
+		}
 	}
 	return NULL;
 }
@@ -516,22 +526,27 @@ void *produce(int arg1,void *arg2)
 void *consume(int arg1,void *arg2) 
 {     
 	int i=0;
-	for(i=1;i<=MAX;i++)
+	for(i=1;i<=10*MAX;i++)
 	{
 		kmutex_lock(&lock);
 		while(buffer == 0)
 		{
 			kmutex_unlock(&lock);
-			sched_sleep_on(&special_q);
+			dbg_print("\n THE BUFFER IS CURRENTLY EMPTY \n");
+			sched_sleep_on(&cons);
 			kmutex_lock(&lock);
 		}
 		buffer--;
 		dbg_print("\n CONSUMER THREAD CONSUME 1 ITEM, THERE ARE %d ITEM IN THE BUFFER\n",buffer);
-		sched_wakeup_on(&special_q);
-		kmutex_unlock(&lock);	
+		sched_wakeup_on(&prod);
+		kmutex_unlock(&lock);
+		if (i%2 == 0)
+		{
+		sched_make_runnable(curthr);
+		sched_switch();		
+		}	
 	}	
-	sched_make_runnable(curthr);
-	sched_switch();   
+	 
 	return NULL;
 }
 
@@ -709,7 +724,34 @@ void *dead2(int arg1,void *arg2)
 	return NULL;
 	
 }
+void dead_own()
+{
 
+
+       	kmutex_init(&self);
+        proc_t *BLOCK = proc_create("SELF_BLOCK");
+        KASSERT(BLOCK != NULL);
+        kthread_t *BLOCK1 = kthread_create(BLOCK,deadlock_own,0,NULL);
+        KASSERT(BLOCK1 != NULL);
+        
+        sched_make_runnable(BLOCK1);
+     
+        int status;
+        while(!list_empty(&curproc->p_children))
+        {
+                pid_t child = do_waitpid(-1, 0, &status);
+                dbg(DBG_INIT,"Process %d cleaned successfully\n", child);
+        }
+
+}
+void *deadlock_own(int arg1, void *arg2)
+{
+dbg_print("\n MUTEX LOCKED BY A THREAD WITH PROCESS PID = %d\n",(curthr->kt_proc)->p_pid);
+kmutex_lock(&self);
+dbg_print("\n THREAD WITH PROCESS PID = %d TRYING TO LOCK THE MUTEX AGAIN \n",(curthr->kt_proc)->p_pid);
+kmutex_lock(&self);
+return NULL;
+}
 
 /**
  * Clears all interrupts and halts, meaning that we will never run

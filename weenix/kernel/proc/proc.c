@@ -189,6 +189,7 @@ proc_cleanup(int status)
         			list_remove(&(child->p_child_link));
         			list_insert_tail(&(proc_initproc->p_children),&(child->p_child_link));
         			child->p_pproc=proc_initproc;
+        			dbg(DBG_PROC,"The process with PID %d is now reparented under INIT PROCESS \n",child->p_pid);
                         }list_iterate_end();
                  }
                  else
@@ -234,6 +235,7 @@ proc_kill(proc_t *p, int status)
         	        list_remove(&(child->p_child_link));
         		list_insert_tail(&(proc_initproc->p_children),&(child->p_child_link));
         		child->p_pproc=proc_initproc;
+        		dbg(DBG_PROC,"The process with PID %d is now reparented under INIT PROCESS \n",child->p_pid);
                 }list_iterate_end();               	
 	}
 	
