@@ -99,7 +99,7 @@ kthread_t *kthread_create(struct proc *p, kthread_func_t func, long arg1, void *
         
         context_setup(&(new_kthread_t->kt_ctx),func,arg1,arg2,(new_kthread_t->kt_kstack),DEFAULT_STACK_SIZE,(p->p_pagedir));          
         
-        dbg(DBG_PROC,"A thread is created for process %s (id=%d)",p->p_comm,p->p_pid);
+        dbg(DBG_THR,"A thread is created for process %s (id=%d)",p->p_comm,p->p_pid);
         /*NOT_YET_IMPLEMENTED("PROCS: kthread_create");*/
         return new_kthread_t;
 }
@@ -108,11 +108,12 @@ void
 kthread_destroy(kthread_t *t)
 {
         KASSERT(t && t->kt_kstack);
+        dbg(DBG_THR,"The thread of process %s (id=%d) is destroyed",t->kt_proc->p_comm,t->kt_proc->p_pid);
         free_stack(t->kt_kstack);
         if (list_link_is_linked(&t->kt_plink))
                 list_remove(&t->kt_plink);
-
-        slab_obj_free(kthread_allocator, t);
+        
+        slab_obj_free(kthread_allocator, t);     
 }
 
 /*

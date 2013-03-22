@@ -278,11 +278,12 @@ sched_switch(void)
            
            intr_setipl(interrupt_l);
            dbg(DBG_SCHED,"After switch: current thread is the thread of process %s (PID= %d) \n",curproc->p_comm,curproc->p_pid);
-          if(curthr->kt_cancelled==1)
+         /* if(curthr->kt_cancelled==1)
           {
                 kthread_exit((void *)curthr->kt_retval);
                 sched_switch();
           }
+          */
 
           /*NOT_YET_IMPLEMENTED("PROCS: sched_switch");*/
 }
@@ -310,13 +311,8 @@ sched_make_runnable(kthread_t *thr)
         uint8_t interrupt_l=0;
         interrupt_l= intr_getipl();
         intr_setipl(IPL_HIGH);
-
         thr->kt_state=KT_RUN;
-/*        dbg_print("\n In make runnable incoming thr is %d \n",(thr->kt_proc)->p_pid);*/
-
         ktqueue_enqueue(&kt_runq,thr);
-  /*     dbg_print("\n in make runnable returned from enqueue \n"); 
-      dbg_print("\n in make runnable Size of run queue is %d\n",kt_runq.tq_size);*/
         intr_setipl(interrupt_l);
         dbg(DBG_SCHED,"Thread of process %d is now runnable\n",thr->kt_proc->p_pid);
         /*NOT_YET_IMPLEMENTED("PROCS: sched_make_runnable");*/

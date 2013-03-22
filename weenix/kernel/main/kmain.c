@@ -53,7 +53,7 @@
 #define TEST_9 9         /*  Deadlock check */       
 #define TEST_10 10       /*  Reader and writer problem */
 #define TEST_11 11       /*  kshell testing */
-static int curtest = TEST_11;
+static int curtest = TEST_10;
 
 GDB_DEFINE_HOOK(boot)
 GDB_DEFINE_HOOK(initialized)
