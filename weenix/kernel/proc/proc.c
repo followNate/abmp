@@ -354,7 +354,7 @@ pid_t do_waitpid(pid_t pid, int options, int *status)
         kthread_t *cur_proc_thd;
         KASSERT(options == 0);
         KASSERT(curproc!=NULL);
-        dbg(DBG_PROC,"Wait in Process with PID=%d\n",curproc->p_pid);
+        dbg(DBG_PROC,"Process with PID=%d waiting for childs to die\n",curproc->p_pid);
 /*        dbg_print("\n inside the do_waitpid curproc is %d  pid== %d\n",curproc->p_pid,pid);*/
         
         if(list_empty(&(curproc->p_children)))
