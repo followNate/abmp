@@ -108,11 +108,12 @@ void
 kthread_destroy(kthread_t *t)
 {
         KASSERT(t && t->kt_kstack);
+        dbg(DBG_THR,"The thread of process %s (PID=%d) is destroyed\n",t->kt_proc->p_comm,t->kt_proc->p_pid);
         free_stack(t->kt_kstack);
         if (list_link_is_linked(&t->kt_plink))
                 list_remove(&t->kt_plink);
-
-        slab_obj_free(kthread_allocator, t);
+        
+        slab_obj_free(kthread_allocator, t);     
 }
 
 /*

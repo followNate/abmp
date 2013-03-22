@@ -35,7 +35,7 @@ kmutex_init(kmutex_t *mtx)
 void
 kmutex_lock(kmutex_t *mtx)
 {
-       KASSERT(curthr && (curthr != mtx->km_holder) && "Current thread and mutex lock holder are same");
+       KASSERT(curthr && (curthr != mtx->km_holder));
        if(mtx->km_holder != 0)
         {
 		dbg(DBG_THR,"The thread of process no %d holds the mutex, So the thread of process no %d is added to mutex queue\n",mtx->km_holder->kt_proc->p_pid,curthr->kt_proc->p_pid);

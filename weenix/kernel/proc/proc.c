@@ -345,9 +345,6 @@ proc_thread_exited(void *retval)
  */
 pid_t do_waitpid(pid_t pid, int options, int *status)
 {
-       /* static int ii=0;
-         ii++;
-         dbg_print("\nwait count %d\n",ii);*/
         int i=0;
         int closed_pid=-ECHILD;
         proc_t *p;
@@ -355,19 +352,16 @@ pid_t do_waitpid(pid_t pid, int options, int *status)
         KASSERT(options == 0);
         KASSERT(curproc!=NULL);
         dbg(DBG_PROC,"Process with PID=%d waiting for childs to die\n",curproc->p_pid);
-/*        dbg_print("\n inside the do_waitpid curproc is %d  pid== %d\n",curproc->p_pid,pid);*/
-        
+       
         if(list_empty(&(curproc->p_children)))
-               { 
-          /*     dbg_print("\n in do_waitpid curproc= %d  child list empty\n",curproc->p_pid);*/
+        { 
                 return -ECHILD;
-               }
+        }
         else
         {
                 if(pid==-1)
                 {
                 wait_to_die1:
-                        /*dbg_print("\naa in %d\n",curproc->p_pid);*/
                         if(list_empty(&(curproc->p_children)))
                                 goto END;
                         list_iterate_begin(&(curproc->p_children), p,proc_t,p_child_link)
@@ -382,8 +376,7 @@ pid_t do_waitpid(pid_t pid, int options, int *status)
                                         list_remove(&(p->p_list_link));
                                         list_iterate_begin(&(p->p_threads), cur_proc_thd, kthread_t, kt_plink)
                                         {
-                                               /*dbg_print("\n in do_waitpid %d\n",cur_proc_thd->kt_proc ->p_pid);*/
-                                               KASSERT(KT_EXITED == cur_proc_thd->kt_state);
+                                                KASSERT(KT_EXITED == cur_proc_thd->kt_state);
 						kthread_destroy(cur_proc_thd);
                                         } list_iterate_end();
 					KASSERT(NULL != p->p_pagedir);
@@ -395,11 +388,8 @@ pid_t do_waitpid(pid_t pid, int options, int *status)
                         }list_iterate_end();
                         if(i==0)
                         {
-                    /*     dbg_print("\nin do_wait pid=-1 p_state calling sched sleep on \n");*/
-                                /*dbg_print("\naa in %d\n",curproc->p_pid);*/
-                                sched_sleep_on(&(curproc->p_wait));
-                      /*       dbg_print("\n in do_wait pid>=-1  returned from sleep on \n");*/
-                                goto wait_to_die1;
+                               sched_sleep_on(&(curproc->p_wait));
+                               goto wait_to_die1;
                         }
                 }
                 else if(pid>0)
@@ -407,7 +397,7 @@ pid_t do_waitpid(pid_t pid, int options, int *status)
                        list_iterate_begin(&(curproc->p_children), p,proc_t,p_child_link)
                        {
                                 KASSERT(p!=NULL);
-                                if(p->p_pid==pid) /* doubt */
+                                if(p->p_pid==pid) 
                                 {       
                                         i=1;
                                 
@@ -431,9 +421,7 @@ pid_t do_waitpid(pid_t pid, int options, int *status)
                                         }
                                         else
                                         {
-/*                                           dbg_print("\nin do_wait pid>0 p_state is nor PROC_DEAD and calling sched sleep on \n");*/
                                                 sched_sleep_on(&(curproc->p_wait));
-/*                                                dbg_print("\n in do_wait pid>0  returned from sleep on \n");*/
                                                 goto wait_to_die2;
                                         }
                                 }
@@ -459,8 +447,8 @@ void
 do_exit(int status)
 {
         proc_kill(curproc,status);
-        /*NOT_YET_IMPLEMENTED("PROCS: do_exit");*/
-       /* sched_switch(); exit from the current thread*/
+        /*NOT_YET_IMPLEMENTED("PROCS: do_exit");
+        exit from the current thread*/
 }
 
 
