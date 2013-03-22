@@ -310,14 +310,16 @@ static void *initproc_run(int arg1, void *arg2)
 
 void *init_child10(int arg1,void *arg2) 
 {
+ while(curthr->kt_cancelled != 1){
  sched_make_runnable(curthr);
- sched_switch(); 
+ sched_switch();}
 return NULL;
 }
 void *init_child9(int arg1,void *arg2) 
 {
+ while(curthr->kt_cancelled != 1){
  sched_make_runnable(curthr);
- sched_switch(); 
+ sched_switch(); }
 return NULL;
 }
 void *init_child8(int arg1,void *arg2) 
@@ -367,7 +369,7 @@ void *init_child4(int arg1,void *arg2)
 	int status;
         while(!list_empty(&curproc->p_children))
         {       pid_t child = do_waitpid(-1, 0, &status);
-                dbg(DBG_INIT,"Process %d cleaned successfully\n", child);
+        if(child>0)      dbg(DBG_INIT,"Process %d cleaned successfully\n", child);
         }
 return NULL;
 }
@@ -383,7 +385,7 @@ void *init_child3(int arg1,void *arg2)
 	int status;
         while(!list_empty(&curproc->p_children))
         {       pid_t child = do_waitpid(-1, 0, &status);
-                dbg(DBG_INIT,"Process %d cleaned successfully\n", child);
+        if(child>0)     dbg(DBG_INIT,"Process %d cleaned successfully\n", child);
         }
 return NULL;
 }
@@ -399,7 +401,7 @@ void *init_child2(int arg1,void *arg2)
 	int status;
         while(!list_empty(&curproc->p_children))
         {       pid_t child = do_waitpid(-1, 0, &status);
-                dbg(DBG_INIT,"Process %d cleaned successfully\n", child);
+        if(child>0)     dbg(DBG_INIT,"Process %d cleaned successfully\n", child);
         }
 return NULL;
 }
@@ -413,9 +415,10 @@ void *init_child1(int arg1,void *arg2)
         kthread_t *thread6 = kthread_create(proc6,init_child4,40,(void*)20);KASSERT(thread6 !=NULL);	
 	sched_make_runnable(thread5); sched_make_runnable(thread6);
 	int status;
+	
         while(!list_empty(&curproc->p_children))
         {       pid_t child = do_waitpid(-1, 0, &status);
-                dbg(DBG_INIT,"Process %d cleaned successfully\n", child);
+        if(child>0) dbg(DBG_INIT,"Process %d cleaned successfully\n", child);
         }
 return NULL;
 }
