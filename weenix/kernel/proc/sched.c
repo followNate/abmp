@@ -257,7 +257,6 @@ sched_switch(void)
                 thr1=curthr;
                 curthr=ktqueue_dequeue(&kt_runq);
                 curproc=curthr->kt_proc;
-                intr_setipl(interrupt_l);
                 dbg(DBG_SCHED,"After switch: current thread is the thread of process %s (PID= %d) \n",curproc->p_comm,curproc->p_pid);
                 context_switch(&(thr1->kt_ctx), &(curthr->kt_ctx));
          }
@@ -274,11 +273,11 @@ sched_switch(void)
                 thr1=curthr;
                 curthr=ktqueue_dequeue(&kt_runq);
                 curproc=curthr->kt_proc;
-                intr_setipl(interrupt_l);
+               
                 dbg(DBG_SCHED,"After switch: current thread is the thread of process %s (PID= %d) \n",curproc->p_comm,curproc->p_pid);
                 context_switch(&(thr1->kt_ctx), &(curthr->kt_ctx));
           }
-           
+          intr_setipl(interrupt_l);
            /*NOT_YET_IMPLEMENTED("PROCS: sched_switch");*/
 }
 
