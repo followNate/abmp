@@ -133,6 +133,25 @@ proc_create(char *name)
          dbg(DBG_FORK,"Process %s (PID=%d) is Created\n",new_proc_t->p_comm,new_proc_t->p_pid);
          else
 dbg(DBG_FORK,"Process %s (PID=%d) is Created and parent process is \"%s\" (PID=%d) \n",new_proc_t->p_comm,new_proc_t->p_pid,curproc->p_comm,curproc->p_pid);
+
+        int i=0;
+        for(i=0;i<NFILES;i++)
+        {
+                new_proc_t->p_files[i]=NULL;
+        }
+        
+        if(curproc!=NULL)
+        {
+                new_proc_t->p_cwd=curproc->p_cwd;
+                if(curproc->p_cwd!=NULL)
+                {
+                        vref(curproc->p_cwd);
+                }
+        }
+        else
+        {
+                new_proc_t->p_cwd=NULL;
+        }         
         /*NOT_YET_IMPLEMENTED("PROCS: proc_create");*/
         return new_proc_t;      
 }
@@ -177,7 +196,19 @@ proc_cleanup(int status)
 
 	/*link any child of this process with the parent*/
 	/* TODO ensure that init process will also wait on newly added child procs */
-	
+	if(curproc->p_cwd!=NULL)
+	{
+	        vput(curproc->p_cwd);
+	}
+	int i=0;
+	for(i=0;i<NFILES;i++)
+	{
+	      if(curproc->p_files[i]!=NULL)
+	      {
+	         int fd=do_close(i);
+	         KASSERT(fd!=-1);
+	      }
+	}
 	if(!list_empty(&curproc->p_children))
 	{
 		KASSERT(NULL != proc_initproc);
