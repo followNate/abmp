@@ -184,7 +184,18 @@ dbg(DBG_FORK,"Process %s (PID=%d) is Created and parent process is \"%s\" (PID=%
 void
 proc_cleanup(int status)
 {
-	/*TODO Code for VFS and VM */
+	/*TODO Code for VM */
+
+	/*closing all open files. This is acheived by fetching each file_t object referred
+	by elements of p_file[] and decrementing its f_refcount by one. And then setting
+	the reference to NULL*/
+	int fd = 0;
+	file_t *file;
+	while((file=curproc->p_files[fd]) != NULL){
+		fput(file);
+		file = NULL;
+		fd++;
+	}
 	
 	/*clean the PCB expect for p_pid and return value(or status code)*/
 	KASSERT(1 <= curproc->p_pid);
