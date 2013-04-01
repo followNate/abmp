@@ -41,8 +41,39 @@
 int
 do_read(int fd, void *buf, size_t nbytes)
 {
+        if(fd<0||fd>=NFILES)
+        {
+                return -EBADF;       
+        }
+        file_t *open_file=fget(fd);
+        if(open_file==NULL)
+        {
+                return -EBADF;       
+        }
+        
+        if(!((open_file->f_mode)  & FMODE_READ))
+        {
+                 fput(open_file);
+                 return -EBADF;       
+        }
+               
+        if(S_ISDIR(open_file->f_vnode->vn_mode))
+        {
+                fput(open_file);
+                return -EISDIR;
+        }
+         
+        int i=(open_file->f_vnode->vn_ops->read)(open_file->f_vnode,open_file->f_pos,buf,nbytes);
+        if(i<0)
+        {
+                 fput(open_file);
+                 return i;
+        }
+        
+        open_file->f_pos=open_file->f_pos+i;
+        fput(open_file);
         NOT_YET_IMPLEMENTED("VFS: do_read");
-        return -1;
+        return i;
 }
 
 /* Very similar to do_read.  Check f_mode to be sure the file is writable.  If
@@ -53,11 +84,48 @@ do_read(int fd, void *buf, size_t nbytes)
  *      o EBADF
  *        fd is not a valid file descriptor or is not open for writing.
  */
+ 
+ 
 int
 do_write(int fd, const void *buf, size_t nbytes)
 {
+        if(fd<0||fd>=NFILES)
+        {
+                return -EBADF;       
+        }
+        file_t *open_file=fget(fd);
+       
+        if(open_file==NULL)
+        {
+                return -EBADF;       
+        }
+
+        if(!((open_file->f_mode) & FMODE_WRITE))
+        {
+                 fput(open_file);
+                 return -EBADF;       
+        }
+        
+        if((open_file->f_mode) & FMODE_APPEND)
+        { 
+                int j=do_lseek(fd,NULL,SEEK_END);
+                if(j<0)
+                {
+                         fput(open_file);
+                         return j;
+                }
+        }
+        int i=(open_file->f_vnode->vn_ops->write)(open_file->f_vnode,open_file->f_pos,buf,nbytes);
+        if(i<0)
+        {
+                 fput(open_file);
+                 return i;
+        }
+        
+        open_file->f_pos=open_file->f_pos+i;
+        fput(open_file);
         NOT_YET_IMPLEMENTED("VFS: do_write");
-        return -1;
+        return i;
 }
 
 /*
@@ -70,8 +138,27 @@ do_write(int fd, const void *buf, size_t nbytes)
 int
 do_close(int fd)
 {
-        NOT_YET_IMPLEMENTED("VFS: do_close");
-        return -1;
+        if(fd<0||fd>=NFILES)
+        {
+                return -EBADF;       
+        }
+        KASSERT(curproc!=NULL);
+       
+        file_t *open_file=fget(fd);
+       
+        if(open_file==NULL)
+        {
+                return -EBADF;       
+        }
+        
+        fput(open_file);
+        
+        curproc->p_files[fd]=NULL;
+        
+        fput(open_file);
+         
+         NOT_YET_IMPLEMENTED("VFS: do_close");
+        return 0;
 }
 
 /* To dup a file:
