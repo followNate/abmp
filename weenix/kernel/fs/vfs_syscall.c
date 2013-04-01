@@ -214,8 +214,29 @@ do_dup(int fd)
 int
 do_dup2(int ofd, int nfd)
 {
+        KASSERT(curproc!=NULL);
+        
+        if(ofd<0||ofd>=NFILES||(curproc->p_files[ofd]==NULL))
+        {
+                return -EBADF;       
+        }
+        if(nfd<0||nfd>=NFILES)
+        {
+                return -EBADF;       
+        }
+        KASSERT(ofd!=nfd);   
+        if(curproc->p_files[nfd]!=NULL)
+        {
+                do_close(nfd);
+        }
+                 
+        file_t *open_file=fget(ofd);
+        KASSERT(open_file!=NULL);
+        
+        curproc->p_files[nfd]=open_file;
+        
         NOT_YET_IMPLEMENTED("VFS: do_dup2");
-        return -1;
+        return nfd;
 }
 
 /*
