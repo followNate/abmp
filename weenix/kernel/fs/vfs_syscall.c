@@ -41,16 +41,17 @@
 int
 do_read(int fd, void *buf, size_t nbytes)
 {
-        if(fd<0||fd>=NFILES)
-        {
-                return -EBADF;       
-        }
-        file_t *open_file=fget(fd);
-        if(open_file==NULL)
+        KASSERT(curproc!=NULL);
+        
+        if(fd<0||fd>=NFILES||(curproc->p_files[fd]==NULL))
         {
                 return -EBADF;       
         }
         
+        file_t *open_file=fget(fd);
+        
+        KASSERT(open_file!=NULL);
+       
         if(!((open_file->f_mode)  & FMODE_READ))
         {
                  fput(open_file);
@@ -89,16 +90,16 @@ do_read(int fd, void *buf, size_t nbytes)
 int
 do_write(int fd, const void *buf, size_t nbytes)
 {
-        if(fd<0||fd>=NFILES)
+        KASSERT(curproc!=NULL);
+        
+        if(fd<0||fd>=NFILES||(curproc->p_files[fd]==NULL))
         {
                 return -EBADF;       
         }
+        
         file_t *open_file=fget(fd);
        
-        if(open_file==NULL)
-        {
-                return -EBADF;       
-        }
+        KASSERT(open_file!=NULL);
 
         if(!((open_file->f_mode) & FMODE_WRITE))
         {
@@ -138,18 +139,16 @@ do_write(int fd, const void *buf, size_t nbytes)
 int
 do_close(int fd)
 {
-        if(fd<0||fd>=NFILES)
+        KASSERT(curproc!=NULL);
+        
+        if(fd<0||fd>=NFILES||(curproc->p_files[fd]==NULL))
         {
                 return -EBADF;       
         }
-        KASSERT(curproc!=NULL);
        
         file_t *open_file=fget(fd);
        
-        if(open_file==NULL)
-        {
-                return -EBADF;       
-        }
+        KASSERT(open_file!=NULL);
         
         fput(open_file);
         
@@ -180,8 +179,27 @@ do_close(int fd)
 int
 do_dup(int fd)
 {
+        KASSERT(curproc!=NULL);
+        
+        if(fd<0||fd>=NFILES||(curproc->p_files[fd]==NULL))
+        {
+                return -EBADF;       
+        }
+              
+        file_t *open_file=fget(fd);
+        KASSERT(open_file!=NULL);
+        
+        int dup_fd=get_empty_fd(curproc);
+        if(!dup_fd)
+        {
+               return dup_fd; 
+        }
+        
+        curproc->p_files[dup_fd]=open_file;
+        
+        
         NOT_YET_IMPLEMENTED("VFS: do_dup");
-        return -1;
+        return dup_fd; 
 }
 
 /* Same as do_dup, but insted of using get_empty_fd() to get the new fd,
