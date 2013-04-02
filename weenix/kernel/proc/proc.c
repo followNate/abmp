@@ -196,6 +196,7 @@ proc_cleanup(int status)
 		file = NULL;
 		fd++;
 	}
+	curproc->p_cwd = NULL;
 	
 	/*clean the PCB expect for p_pid and return value(or status code)*/
 	KASSERT(1 <= curproc->p_pid);
