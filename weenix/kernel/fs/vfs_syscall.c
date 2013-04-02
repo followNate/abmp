@@ -267,8 +267,46 @@ do_dup2(int ofd, int nfd)
 int
 do_mknod(const char *path, int mode, unsigned devid)
 {
-        NOT_YET_IMPLEMENTED("VFS: do_mknod");
-        return -1;
+        if(mode!=S_IFCHR&&mode!=S_IFCHR)
+        {
+                return -EINVAL;
+        }
+        size_t namelen=0;
+        const char *name=NULL;
+        vnode_t *res_vnode;
+        vnode_t *result;
+        int i=dir_namev(path, &namelen,&name,NULL,&res_vnode);
+        if(i<0)
+        {
+                return i;
+        }
+        if(res_vnode==NULL)
+        {
+                return -ENOENT;
+        }
+        else 
+        {
+                if(!S_ISDIR(res_vnode->vn_mode))
+                {
+                        vput(res_vnode);
+                        return -ENOTDIR;
+                }
+        }     
+        
+        if(name!=NULL)
+        {
+                int j=lookup(res_vnode,name,namelen,&result);
+                         
+                if(j==0)
+                {
+                        vput(result);
+                        return -EEXIST;
+                }
+        }
+
+        i=(res_vnode->vn_ops->mknod)(res_vnode,name,namelen,mode,devid);
+           NOT_YET_IMPLEMENTED("VFS: do_mknod");
+        return i;
 }
 
 /* Use dir_namev() to find the vnode of the dir we want to make the new
@@ -288,8 +326,46 @@ do_mknod(const char *path, int mode, unsigned devid)
 int
 do_mkdir(const char *path)
 {
+        size_t namelen=0;
+        const char *name=NULL;
+        vnode_t *res_vnode;
+        vnode_t *result;
+        KASSERT(path != NULL);
+        int i=dir_namev(path, &namelen,&name,NULL,&res_vnode);
+        if(i<0)
+        {
+                return i;
+        }
+        if(res_vnode==NULL)
+        {
+                return -ENOENT;
+        }
+        else 
+        {
+                if(!S_ISDIR(res_vnode->vn_mode))
+                {
+                        vput(res_vnode);
+                        return -ENOTDIR;
+                }
+        }     
+        
+        if(name!=NULL)
+        {
+                int j=lookup(res_vnode,name,namelen,&result);
+                         
+                if(j==0)
+                {
+                        vput(result);
+                        return -EEXIST;
+                }
+        }
+
+        i=(res_vnode->vn_ops->mkdir)(res_vnode,name,namelen);
+        
         NOT_YET_IMPLEMENTED("VFS: do_mkdir");
-        return -1;
+        return i;
+       
+ 
 }
 
 /* Use dir_namev() to find the vnode of the directory containing the dir to be
@@ -313,8 +389,52 @@ do_mkdir(const char *path)
 int
 do_rmdir(const char *path)
 {
+        size_t namelen=0;
+        const char *name=NULL;
+        vnode_t *res_vnode;
+        vnode_t *result;
+        KASSERT(path != NULL);
+        int i=dir_namev(path, &namelen,&name,NULL,&res_vnode);
+        if(i<0)
+        {
+                return i;
+        }
+        if(res_vnode==NULL)
+        {
+                return -ENOENT;
+        }
+        else 
+        {
+                if(!S_ISDIR(res_vnode->vn_mode))
+                {
+                        vput(res_vnode);
+                        return -ENOTDIR;
+                }
+        }     
+        if(strcmp(name,".")==0)
+        {
+                vput(res_vnode);
+                return -EINVAL;
+        }
+        if(strcmp(name,"..")==0)
+        {
+                vput(res_vnode);
+                return -ENOTEMPTY;
+        }
+        if(name!=NULL)
+        {
+                int j=lookup(res_vnode,name,namelen,&result);     
+                if(j!=0)
+                {
+                        return j;
+                }
+        }
+        
+        vput(result);
+        i=(res_vnode->vn_ops->rmdir)(res_vnode,name,namelen);
+        
         NOT_YET_IMPLEMENTED("VFS: do_rmdir");
-        return -1;
+        return i;
 }
 
 /*

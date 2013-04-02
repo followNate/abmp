@@ -188,7 +188,7 @@ proc_cleanup(int status)
 
 	/*closing all open files. This is acheived by fetching each file_t object referred
 	by elements of p_file[] and decrementing its f_refcount by one. And then setting
-	the reference to NULL*/
+	the reference to NULL
 	int fd = 0;
 	file_t *file;
 	while((file=curproc->p_files[fd]) != NULL){
@@ -196,7 +196,7 @@ proc_cleanup(int status)
 		file = NULL;
 		fd++;
 	}
-	curproc->p_cwd = NULL;
+	curproc->p_cwd = NULL;*/
 	
 	/*clean the PCB expect for p_pid and return value(or status code)*/
 	KASSERT(1 <= curproc->p_pid);
