@@ -303,7 +303,12 @@ do_mknod(const char *path, int mode, unsigned devid)
                         return -EEXIST;
                 }
         }
-
+        
+        if(result==NULL)
+        {
+                vput(res_vnode);
+                return -ENOTEMPTY;
+        }
         i=(res_vnode->vn_ops->mknod)(res_vnode,name,namelen,mode,devid);
            NOT_YET_IMPLEMENTED("VFS: do_mknod");
         return i;
@@ -359,7 +364,12 @@ do_mkdir(const char *path)
                         return -EEXIST;
                 }
         }
-
+        
+        if(result==NULL)
+        {
+                vput(res_vnode);
+                return -ENOTEMPTY;
+        }                
         i=(res_vnode->vn_ops->mkdir)(res_vnode,name,namelen);
         
         NOT_YET_IMPLEMENTED("VFS: do_mkdir");
@@ -429,7 +439,11 @@ do_rmdir(const char *path)
                         return j;
                 }
         }
-        
+        if(result==NULL)
+        {
+                vput(res_vnode);
+                return -ENOTEMPTY;
+        }
         vput(result);
         i=(res_vnode->vn_ops->rmdir)(res_vnode,name,namelen);
         
@@ -453,8 +467,63 @@ do_rmdir(const char *path)
 int
 do_unlink(const char *path)
 {
+        size_t namelen=0;
+        const char *name=NULL;
+        vnode_t *res_vnode;
+        vnode_t *result;
+        KASSERT(path != NULL);
+        int i=dir_namev(path, &namelen,&name,NULL,&res_vnode);
+        if(i<0)
+        {
+                return i;
+        }
+        if(res_vnode==NULL)
+        {
+                return -ENOENT;
+        }
+        else 
+        {
+                if(!S_ISDIR(res_vnode->vn_mode))
+                {
+                        vput(res_vnode);
+                        return -ENOTDIR;
+                }
+        }     
+        if(strcmp(name,".")==0)
+        {
+                vput(res_vnode);
+                return -EINVAL;
+        }
+        if(strcmp(name,"..")==0)
+        {
+                vput(res_vnode);
+                return -ENOTEMPTY;
+        }
+        if(name!=NULL)
+        {
+                int j=lookup(res_vnode,name,namelen,&result);     
+                if(j!=0)
+                {
+                        return j;
+                }
+        }
+        if(result==NULL)
+        {
+                vput(result);
+                return -ENOENT;
+        }
+        
+        if(S_ISDIR(result->vn_mode))
+        {
+                vput(result);
+                return -EISDIR;
+        }
+        
+        vput(result);
+        i=(res_vnode->vn_ops->unlink)(res_vnode,name,namelen);
+        
         NOT_YET_IMPLEMENTED("VFS: do_unlink");
-        return -1;
+        return i;
 }
 
 /* To link:
@@ -479,6 +548,17 @@ do_unlink(const char *path)
 int
 do_link(const char *from, const char *to)
 {
+        /*KASSERT(from!=NULL&&to!=NULL);
+        size_t namelen=0;
+        const char *name=NULL;
+        vnode_t *node1;
+        vnode_t *node2;
+        KASSERT(path != NULL);
+        int i=0,j=0;
+        j=open_namev(from,NULL,&node1,NULL);
+        i=dir_namev(to, &namelen,&name,NULL,&node2);
+        */
+        
         NOT_YET_IMPLEMENTED("VFS: do_link");
         return -1;
 }
