@@ -186,18 +186,6 @@ proc_cleanup(int status)
 {
 	/*TODO Code for VM */
 
-	/*closing all open files. This is acheived by fetching each file_t object referred
-	by elements of p_file[] and decrementing its f_refcount by one. And then setting
-	the reference to NULL
-	int fd = 0;
-	file_t *file;
-	while((file=curproc->p_files[fd]) != NULL){
-		fput(file);
-		file = NULL;
-		fd++;
-	}
-	curproc->p_cwd = NULL;*/
-	
 	/*clean the PCB expect for p_pid and return value(or status code)*/
 	KASSERT(1 <= curproc->p_pid);
 	curproc->p_state = PROC_DEAD;
@@ -267,7 +255,17 @@ proc_kill(proc_t *p, int status)
 	KASSERT(1 < p->p_pid);
 	
         dbg(DBG_PROC,"Killing Process with PID=%d\n",p->p_pid);
-
+	
+	/*remove the files*/
+	int i;
+	for(i=0;i<NFILES;i++)
+        {
+              if(p->p_files[i]!=NULL)
+              {
+                 int fd=do_close(i);
+                 KASSERT(fd!=-1);
+              }
+        }
 	
 	/*link any child of this process with the parent*/
 	if(!list_empty(&p->p_children)){
