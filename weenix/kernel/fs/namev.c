@@ -25,8 +25,26 @@
 int
 lookup(vnode_t *dir, const char *name, size_t len, vnode_t **result)
 {
+        int i = dir->vn_ops->lookup(dir,name,len,result);       /*Calling lookup for the vnode dir*/
+        if(i<0)                                                 /* Return ENOTDIR if lookup fails*/
+        {
+                return -ENOTDIR;
+        }
+        vref(*result);                                           /* Increment the refcount */
+        
+        if(strcmp(name,".")==0)          						/*           Special Case . */                 
+        {
+                vput(*result);
+                return -EINVAL;
+        }
+        if(strcmp(name,"..")==0)                                  /* special case .. */
+        {
+                vput(*result);
+                return -ENOTEMPTY;
+        }
+
         NOT_YET_IMPLEMENTED("VFS: lookup");
-        return 0;
+        return 0;                                               /* return 0 if succesful */
 }
 
 
