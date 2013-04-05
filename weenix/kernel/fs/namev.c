@@ -32,12 +32,11 @@ lookup(vnode_t *dir, const char *name, size_t len, vnode_t **result)
         }
         vref(*result);                                          /* Increment the refcount */
         
-        if(strcmp(name,".")==0)          						/*           Special Case . */                 
-        {
+        if(name_match(".",name,strlen(name))==0)          						/*           Special Case . */                        {
                 vput(*result);
                 return -EINVAL;
         }
-        if(strcmp(name,"..")==0)                                  /* special case .. */
+        if(name_match("..",name,strlen(name))==0)                                  /* special case .. */
         {
                 vput(*result);
                 return -ENOTEMPTY;
@@ -70,22 +69,6 @@ int
 dir_namev(const char *pathname, size_t *namelen, const char **name,
           vnode_t *base, vnode_t **res_vnode)
 {
-	
-	/*
-Case 1	Given Pathname:- /usr/bin/local and Base:- bin 
-		So pathname[0] == '/' hence ignore base bin
-		Start lookup() in root vfs_root_vn
-		
-Case 2  Given Pathname:- usr/bin/local and Base:- NULL
-		So pathname[0] != '/' hence ignore base since NULL
-		Start lookup() in root curproc->p_cwd
-		
-Case 3	Given Pathname:- usr/bin/local and Base:- bin
-		So pathname[0] != '/' hence consider base bin
-		Start lookup() in bin
-	 
-*/
-
 	vnode_t *dir_vnode;
         vnode_t *ret_result;
         if(strcmp(pathname[0],"/")==0)
@@ -111,7 +94,8 @@ Case 3	Given Pathname:- usr/bin/local and Base:- bin
                 
          }
        
-	 NOT_YET_IMPLEMENTED("VFS: dir_namev");
+	vget(*res_vnode);  /*increment the vnode_refcount on successfull completion of this operation*/
+	NOT_YET_IMPLEMENTED("VFS: dir_namev");
         return 0;
 }
 
@@ -130,23 +114,26 @@ open_namev(const char *pathname, int flag, vnode_t **res_vnode, vnode_t *base)
         size_t namelen=0;
         const char *name=NULL;
         int i = dir_namev(pathname,0, NULL,base,res_vnode);
-		if(i<0)
+	if(i<0)
         {
                 return i;
         }
         vnode_t *result =  NULL;
-		int j=lookup(*res_vnode,name,namelen,&result);     
+	int j=lookup(*res_vnode,name,namelen,&result);     
         if(j<0)
         {
-				return j;
+		return j;
         }
         vnode_t *result1 =  NULL;
         vnode_t *dir= NULL;
         if((flag == 256 || flag == 257 || flag == 258) && j<0)
         {
-			 int k=dir->vn_ops->create(*res_vnode,0,NULL, &result1);
+		 int k=dir->vn_ops->create(*res_vnode,0,NULL, &result1);
+		if(k<0){
+			return k;
 		}
-        NOT_YET_IMPLEMENTED("VFS: open_namev");
+	}
+       /* NOT_YET_IMPLEMENTED("VFS: open_namev");*/
         return 0;
 }
 
