@@ -36,7 +36,7 @@ get_empty_fd(proc_t *p)
 
 /*
  * There a number of steps to opening a file:
- *      1. Get the next empty file descriptor.
+ *      1. Get the next empty f  descriptor.
  *      2. Call fget to get a fresh file_t.
  *      3. Save the file_t in curproc's file descriptor table.
  *      4. Set file_t->f_mode to OR of FMODE_(READ|WRITE|APPEND) based on
@@ -73,6 +73,13 @@ get_empty_fd(proc_t *p)
 int
 do_open(const char *filename, int oflags)
 {
+
+        int new_fd = get_empty_fd(curproc)
+                /*KASSERT( "ERROR: get_empty_fd: out of file descriptors for pid %d\n", curproc->p_pid);  if new_fd not available */
+        /* get fresh file_t for current process */
+        file_t *file_ptr = fget(-1);       
+        curproc->p_files[new_fd]=file_ptr;
+        file-ptr->f_mode = oflags;
         NOT_YET_IMPLEMENTED("VFS: do_open");
         return -1;
 }
