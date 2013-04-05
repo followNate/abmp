@@ -100,7 +100,26 @@ Case 3	Given Pathname:- usr/bin/local and Base:- bin
 int
 open_namev(const char *pathname, int flag, vnode_t **res_vnode, vnode_t *base)
 {
-        
+        KASSERT(pathname != NULL);
+        size_t namelen=0;
+        const char *name=NULL;
+        int i = dir_namev(pathname,0, NULL,base,res_vnode);
+		if(i<0)
+        {
+                return i;
+        }
+        vnode_t *result =  NULL;
+		int j=lookup(*res_vnode,name,namelen,&result);     
+        if(j<0)
+        {
+				return j;
+        }
+        vnode_t *result1 =  NULL;
+        vnode_t *dir= NULL;
+        if(flag == O_CREAT && j<0)
+        {
+			 int k=dir->vn_ops->create(*res_vnode,0,NULL, &result1);
+		}
         NOT_YET_IMPLEMENTED("VFS: open_namev");
         return 0;
 }

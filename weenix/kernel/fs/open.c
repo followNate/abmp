@@ -73,6 +73,10 @@ get_empty_fd(proc_t *p)
 int
 do_open(const char *filename, int oflags)
 {
+        int file_descriptor = get_empty_fd(curproc);
+        struct file fresh_file;
+        fresh_file = *fget(file_descriptor);
+        
         NOT_YET_IMPLEMENTED("VFS: do_open");
         return -1;
 }
