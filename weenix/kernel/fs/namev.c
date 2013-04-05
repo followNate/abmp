@@ -30,7 +30,7 @@ lookup(vnode_t *dir, const char *name, size_t len, vnode_t **result)
         {
                 return -ENOTDIR;
         }
-        vref(*result);                                           /* Increment the refcount */
+        vref(*result);                                          /* Increment the refcount */
         
         if(strcmp(name,".")==0)          						/*           Special Case . */                 
         {
@@ -70,6 +70,21 @@ int
 dir_namev(const char *pathname, size_t *namelen, const char **name,
           vnode_t *base, vnode_t **res_vnode)
 {
+	
+	/*
+Case 1	Given Pathname:- /usr/bin/local and Base:- bin 
+		So pathname[0] == '/' hence ignore base bin
+		Start lookup() in root vfs_root_vn
+		
+Case 2  Given Pathname:- usr/bin/local and Base:- NULL
+		So pathname[0] != '/' hence ignore base since NULL
+		Start lookup() in root curproc->p_cwd
+		
+Case 3	Given Pathname:- usr/bin/local and Base:- bin
+		So pathname[0] != '/' hence consider base bin
+		Start lookup() in bin
+	 
+*/	
         NOT_YET_IMPLEMENTED("VFS: dir_namev");
         return 0;
 }
@@ -85,9 +100,13 @@ dir_namev(const char *pathname, size_t *namelen, const char **name,
 int
 open_namev(const char *pathname, int flag, vnode_t **res_vnode, vnode_t *base)
 {
+        
         NOT_YET_IMPLEMENTED("VFS: open_namev");
         return 0;
 }
+
+
+
 
 #ifdef __GETCWD__
 /* Finds the name of 'entry' in the directory 'dir'. The name is writen
