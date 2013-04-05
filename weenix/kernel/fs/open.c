@@ -74,9 +74,115 @@ int
 do_open(const char *filename, int oflags)
 {
         int file_descriptor = get_empty_fd(curproc);
-        struct file fresh_file;
-        fresh_file = *fget(file_descriptor);
-        
+        file_t *fresh_file = fget(file_descriptor);
+        curproc->p_files[file_descriptor] = fresh_file;
+/*      The oflags is OR'ed one
+		There are 12 cases
+		Read - 0
+		Write - 1
+		ReadWrite - 2
+		Read OR Create - 256
+		Read OR Trun - 512
+		Read OR Append - 1024
+		Write OR Create - 257
+		Write OR Trun - 513
+		Write OR Append - 1025
+		Readwrite OR Create - 258
+		ReadWrite OR Trun - 514
+		ReadWrite OR Append - 1026
+*/
+		vnode_t *base = NULL;
+		vnode_t *res_vnode;
+        switch(oflags)
+        {
+			case 0 : {
+						fresh_file->f_mode = FMODE_READ;
+						open_namev(filename,0, &res_vnode,base);
+						fresh_file->f_vnode=res_vnode;
+						
+						fref(fresh_file);
+						break;
+					 }
+			case 1 : {
+						fresh_file->f_mode = FMODE_WRITE;
+						open_namev(filename,1, &res_vnode,base);
+						fresh_file->f_vnode=res_vnode;
+						fref(fresh_file);
+						break;
+					 }
+			case 2 : {
+						fresh_file->f_mode = (FMODE_READ || FMODE_WRITE);
+						open_namev(filename,2, &res_vnode,base);
+						fresh_file->f_vnode=res_vnode;
+						fref(fresh_file);
+						break;
+					 }
+			case 256 : {
+							fresh_file->f_mode = FMODE_READ;
+							open_namev(filename,256, &res_vnode,base);
+							fresh_file->f_vnode=res_vnode;
+							fref(fresh_file);
+							break;
+					   }
+			case 512 : {
+							fresh_file->f_mode = FMODE_READ;
+							open_namev(filename,512, &res_vnode,base);
+							fresh_file->f_vnode=res_vnode;
+							fref(fresh_file);
+							break;
+					   }
+			
+			case 1024 : {
+							fresh_file->f_mode = (FMODE_READ || FMODE_APPEND);
+							open_namev(filename,1024, &res_vnode,base);
+							fresh_file->f_vnode=res_vnode;
+							fref(fresh_file);
+							break;
+						}
+			case 257 : {
+							fresh_file->f_mode = FMODE_WRITE;
+							open_namev(filename,257, &res_vnode,base);
+							fresh_file->f_vnode=res_vnode;
+							fref(fresh_file);
+							break;
+					   }
+			case 513 : {
+							fresh_file->f_mode = FMODE_WRITE;
+							open_namev(filename,513, &res_vnode,base);
+							fresh_file->f_vnode=res_vnode;
+							fref(fresh_file);
+							break;
+					   }
+			case 1025 : {
+							fresh_file->f_mode = (FMODE_WRITE || FMODE_APPEND);
+							open_namev(filename,1025, &res_vnode,base);
+							fresh_file->f_vnode=res_vnode;
+							fref(fresh_file);
+							break;
+						}
+			case 258 : {
+							fresh_file->f_mode = (FMODE_READ || FMODE_WRITE);
+							open_namev(filename,258, &res_vnode,base);
+							fresh_file->f_vnode=res_vnode;
+							fref(fresh_file);
+							break;
+						}
+			case 514 : {
+							fresh_file->f_mode = (FMODE_READ || FMODE_WRITE);
+							open_namev(filename,514, &res_vnode,base);
+							fresh_file->f_vnode=res_vnode;
+							fref(fresh_file);
+							break;
+						}
+			case 1026 : {	fresh_file->f_mode = (FMODE_READ || FMODE_WRITE || FMODE_APPEND);
+							open_namev(filename,1026, &res_vnode,base);
+							fresh_file->f_vnode=res_vnode;
+							fref(fresh_file);
+							break;
+						}
+			default : return EINVAL;
+		}
+		
         NOT_YET_IMPLEMENTED("VFS: do_open");
-        return -1;
+        return file_descriptor;
 }

@@ -6,7 +6,7 @@
 
 /* Kernel and user header (via symlink) */
 
-/* File access modes for open(). */
+/* File  modes for open(). */
 #define O_RDONLY        0
 #define O_WRONLY        1
 #define O_RDWR          2
