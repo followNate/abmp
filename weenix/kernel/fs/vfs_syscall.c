@@ -868,7 +868,7 @@ do_stat(const char *path, struct stat *buf)
         vput(res_vnode);
         vput(result);
         
-        NOT_YET_IMPLEMENTED("VFS: do_stat");
+        /*NOT_YET_IMPLEMENTED("VFS: do_stat");*/
         return i;
 }
 
