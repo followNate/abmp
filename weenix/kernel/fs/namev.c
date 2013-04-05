@@ -43,7 +43,7 @@ lookup(vnode_t *dir, const char *name, size_t len, vnode_t **result)
                 return -ENOTEMPTY;
         }
 
-        NOT_YET_IMPLEMENTED("VFS: lookup");
+        /*NOT_YET_IMPLEMENTED("VFS: lookup");*/
         return 0;                                               /* return 0 if succesful */
 }
 
@@ -84,8 +84,34 @@ Case 3	Given Pathname:- usr/bin/local and Base:- bin
 		So pathname[0] != '/' hence consider base bin
 		Start lookup() in bin
 	 
-*/	
-        NOT_YET_IMPLEMENTED("VFS: dir_namev");
+*/
+
+	vnode_t *dir_vnode;
+        vnode_t *ret_result;
+        if(strcmp(pathname[0],"/")==0)
+         {
+              int i = lookup(vfs_root_vn,"/",1,&dir_vnode);
+                if(strlen(pathname) > 1)
+                 {
+                  char *file_name = strtok(pathname,"/");  
+                  size_t len = strlen(file_name);
+
+                  resolve_vnode:
+                        ret_result = dir_vnode;                        
+                        i = lookup(dir_vnode,file_name,len,&ret_result);
+                        dir_vnode = ret_result;
+                        file_name = strtok(NULL,"/");
+                        len = strlen(file_name);
+                        
+                        if(file_name != NULL)
+                          {
+                               goto resolve_vnode;
+                          }                       
+                 }
+                
+         }
+       
+	 NOT_YET_IMPLEMENTED("VFS: dir_namev");
         return 0;
 }
 
