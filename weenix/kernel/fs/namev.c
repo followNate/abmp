@@ -69,7 +69,7 @@ int
 dir_namev(const char *pathname, size_t *namelen, const char **name,
           vnode_t *base, vnode_t **res_vnode)
 {
-	vnode_t *dir_vnode;
+	/*vnode_t *dir_vnode;
         vnode_t *ret_result;
         if(strcmp(pathname[0],"/")==0)
          {
@@ -93,7 +93,7 @@ dir_namev(const char *pathname, size_t *namelen, const char **name,
                  }
                 
          }
-       
+       */
 	NOT_YET_IMPLEMENTED("VFS: dir_namev");
         return 0;
 }
