@@ -32,11 +32,11 @@ lookup(vnode_t *dir, const char *name, size_t len, vnode_t **result)
         }
         vref(*result);                                          /* Increment the refcount */
         
-        if(name_match(".",name,strlen(name))==0)          						/*           Special Case . */                        {
+        if(name_match(".",name,len)==0)          						/*           Special Case . */                        {
                 vput(*result);
                 return -EINVAL;
         }
-        if(name_match("..",name,strlen(name))==0)                                  /* special case .. */
+        if(name_match("..",name,len)==0)                                  /* special case .. */
         {
                 vput(*result);
                 return -ENOTEMPTY;
@@ -69,10 +69,10 @@ int
 dir_namev(const char *pathname, size_t *namelen, const char **name,
           vnode_t *base, vnode_t **res_vnode)
 {
-	vnode_t *dir_vnode;
-        vnode_t *ret_result;
-        if(strcmp(pathname[0],"/")==0)
-         {
+	vnode_t *dir_vnode = NULL;
+        vnode_t *ret_result = NULL;
+        if(pathname[0]=='/')
+        {
               int i = lookup(vfs_root_vn,"/",1,&dir_vnode);
                 if(strlen(pathname) > 1)
                  {
@@ -92,7 +92,11 @@ dir_namev(const char *pathname, size_t *namelen, const char **name,
                           }                       
                  }
                 
-         }
+        }else if(base == NULL){
+		
+	}else{
+		
+	}
        
 	NOT_YET_IMPLEMENTED("VFS: dir_namev");
         return 0;
