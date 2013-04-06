@@ -444,7 +444,7 @@ special_file_read(vnode_t *file, off_t offset, void *buf, size_t count)
 	}else {
 		return -ENOTSUP;
 	}
-	NOT_YET_IMPLEMENTED("VFS: special_file_read");
+	/*NOT_YET_IMPLEMENTED("VFS: special_file_read");*/
         return 0;
 }
 
@@ -467,7 +467,7 @@ special_file_write(vnode_t *file, off_t offset, const void *buf, size_t count)
 		return -ENOTSUP;
 	}
 	
-	NOT_YET_IMPLEMENTED("VFS: special_file_write");
+	/*NOT_YET_IMPLEMENTED("VFS: special_file_write");*/
         return 0;
 }
 

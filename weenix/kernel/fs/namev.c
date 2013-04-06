@@ -25,9 +25,27 @@
 int
 lookup(vnode_t *dir, const char *name, size_t len, vnode_t **result)
 {
+
+        int i = dir->vn_ops->lookup(dir,name,len,result);       /*Calling lookup for the vnode dir*/
+        if(i<0)                                                 /* Return ENOTDIR if lookup fails*/
+        {
+                return -ENOTDIR;
+        }
+        vref(*result);                                          /* Increment the refcount */
         
-        NOT_YET_IMPLEMENTED("VFS: lookup");
-        return 0;
+        if(name_match(".",name,strlen(name))==0)          						/*           Special Case . */                        {
+                vput(*result);
+                return -EINVAL;
+        }
+        if(name_match("..",name,strlen(name))==0)                                  /* special case .. */
+        {
+                vput(*result);
+                return -ENOTEMPTY;
+        }
+
+        /*NOT_YET_IMPLEMENTED("VFS: lookup");*/
+        return 0;                                               /* return 0 if succesful */
+
 }
 /* When successful this function returns data in the following "out"-arguments:
  *  o res_vnode: the vnode of the parent directory of "name"
@@ -50,21 +68,23 @@ lookup(vnode_t *dir, const char *name, size_t len, vnode_t **result)
 int
 dir_namev(const char *pathname, size_t *namelen, const char **name,vnode_t *base, vnode_t **res_vnode)
 {
-        vnode_t *dir_vnode;
+
+	vnode_t *dir_vnode;
         vnode_t *ret_result;
-        if(strcmp(pathname[0],"/")==0)
+        char *file_name=NULL;
+        if(pathname[0]=='/')
          {
               int i = lookup(vfs_root_vn,"/",1,&dir_vnode);
                 if(strlen(pathname) > 1)
                  {
-                  char *file_name = strtok(pathname,"/");  
+                  //file_name = strtok(pathname,"/"); 
                   size_t len = strlen(file_name);
 
                   resolve_vnode:
                         ret_result = dir_vnode;                        
                         i = lookup(dir_vnode,file_name,len,&ret_result);
                         dir_vnode = ret_result;
-                        file_name = strtok(NULL,"/");
+                         file_name = strtok(NULL,"/");
                         len = strlen(file_name);
                         
                         if(file_name != NULL)
@@ -74,7 +94,9 @@ dir_namev(const char *pathname, size_t *namelen, const char **name,vnode_t *base
                  }
                 
          }
-        NOT_YET_IMPLEMENTED("VFS: dir_namev");
+       
+	vget(*res_vnode);  /*increment the vnode_refcount on successfull completion of this operation*/
+	NOT_YET_IMPLEMENTED("VFS: dir_namev");
         return 0;
 }
 
@@ -89,9 +111,35 @@ dir_namev(const char *pathname, size_t *namelen, const char **name,vnode_t *base
 int
 open_namev(const char *pathname, int flag, vnode_t **res_vnode, vnode_t *base)
 {
-        NOT_YET_IMPLEMENTED("VFS: open_namev");
+        KASSERT(pathname != NULL);
+        size_t namelen=0;
+        const char *name=NULL;
+        int i = dir_namev(pathname,0, NULL,base,res_vnode);
+	if(i<0)
+        {
+                return i;
+        }
+        vnode_t *result =  NULL;
+	int j=lookup(*res_vnode,name,namelen,&result);     
+        if(j<0)
+        {
+		return j;
+        }
+        vnode_t *result1 =  NULL;
+        vnode_t *dir= NULL;
+        if(flag == O_CREAT && j<0)
+        {
+		 int k=dir->vn_ops->create(*res_vnode,0,NULL, &result1);
+		if(k<0){
+			return k;
+		}
+	}
+       /* NOT_YET_IMPLEMENTED("VFS: open_namev");*/
         return 0;
 }
+
+
+
 
 #ifdef __GETCWD__
 /* Finds the name of 'entry' in the directory 'dir'. The name is writen

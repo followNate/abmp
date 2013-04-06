@@ -73,6 +73,7 @@ get_empty_fd(proc_t *p)
 int
 do_open(const char *filename, int oflags)
 {
+<<<<<<< HEAD
 
         int new_fd = get_empty_fd(curproc)
                 /*KASSERT( "ERROR: get_empty_fd: out of file descriptors for pid %d\n", curproc->p_pid);  if new_fd not available */
@@ -80,6 +81,12 @@ do_open(const char *filename, int oflags)
         file_t *file_ptr = fget(-1);       
         curproc->p_files[new_fd]=file_ptr;
         file-ptr->f_mode = oflags;
+=======
+        int file_descriptor = get_empty_fd(curproc);
+        struct file fresh_file;
+        fresh_file = *fget(file_descriptor);
+        
+>>>>>>> cf18550a8697ec8f039d09009b1d711759455d97
         NOT_YET_IMPLEMENTED("VFS: do_open");
         return -1;
 }
