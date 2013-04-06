@@ -80,14 +80,16 @@ do_open(const char *filename, int oflags)
 		return -EMFILE;
 	}
 	
-        file_t *fresh_file = fget(file_descriptor);
+        file_t *fresh_file = fget(-1);
 	if(fresh_file == NULL){
 		dbg(DBG_ERROR | DBG_VFS,"Unable to get the file-%s as kernel memory is insufficient.",filename);
+		fput(fresh_file);
 		return -ENOMEM;
 	}
 
-	if(strlen(filename)>34){
+	if(strlen(filename)>NAME_LEN){
 		dbg(DBG_ERROR | DBG_VFS, "The file name= %s is too long",filename);
+		fput(fresh_file);
 		return -ENAMETOOLONG;
 	}
 	
@@ -106,9 +108,11 @@ do_open(const char *filename, int oflags)
 		case O_RDWR|O_TRUNC:
 		case O_RDWR|O_CREAT:	fresh_file->f_mode = FMODE_WRITE|FMODE_READ;
 					break;
-		case O_RDONLY|O_APPEND:
-		case O_WRONLY|O_APPEND:
-		case O_RDWR|O_APPEND:	fresh_file->f_mode = FMODE_APPEND;
+		case O_RDONLY|O_APPEND: fresh_file->f_mode = FMODE_READ|FMODE_APPEND;
+		                        break;
+		case O_WRONLY|O_APPEND: fresh_file->f_mode = FMODE_WRITE|FMODE_APPEND;
+		                        break;
+		case O_RDWR|O_APPEND:	fresh_file->f_mode = FMODE_WRITE|FMODE_READ|FMODE_APPEND;
 					break;
 		default:		dbg(DBG_ERROR | DBG_VFS,"Not a valid flag for file=%s, in process pid=%d",filename,curproc->p_pid); 
 					return -EINVAL;
@@ -119,17 +123,23 @@ do_open(const char *filename, int oflags)
 	int doExist = open_namev(filename,oflags, &res_vnode,base);
 	if(doExist!=0){
 		dbg(DBG_ERROR | DBG_VFS,"The file with name= %s, doesn't exist.",filename);
+		fput(fresh_file);
 		return -ENOENT;
 	}
 
 	if(S_ISDIR(res_vnode->vn_mode) && ((oflags & 3)==O_WRONLY || (oflags & 3)==O_RDWR)){
 		dbg(DBG_ERROR | DBG_VFS,"The given filename= %s is a directory. No writing operations are allowed on directory.",filename);
+		
+		fput(fresh_file);
+		vput(res_vnode);
 		return -EISDIR;
 	}
 
 
-	if(res_vnode->vn_devid!=0 && (bytedev_lookup(res_vnode->vn_devid)==NULL) && (blockdev_lookup(res_vnode->vn_devid)==NULL)){
+	if((S_ISCHR(res_vnode->vn_mode)&& (bytedev_lookup(res_vnode->vn_devid)==NULL)) ||(S_ISBLK(res_vnode->vn_mode)&&(blockdev_lookup(res_vnode->vn_devid)==NULL))){
 		dbg(DBG_ERROR | DBG_VFS,"The device (id=%d) associated with filename=%s is unavailable.",res_vnode->vn_devid,filename);
+		fput(fresh_file);
+		vput(res_vnode);
 		return -ENXIO;
 	}	
 	
