@@ -92,7 +92,6 @@ do_open(const char *filename, int oflags)
 	}
 	
 	
-	vnode_t *res_vnode;
         switch(oflags)
         {
 		case O_RDONLY:
@@ -115,13 +114,15 @@ do_open(const char *filename, int oflags)
 					return -EINVAL;
 	}
 
+	vnode_t *base = NULL;
+	vnode_t *res_vnode; 
 	int doExist = open_namev(filename,oflags, &res_vnode,base);
 	if(doExist!=0){
 		dbg(DBG_ERROR | DBG_VFS,"The file with name= %s, doesn't exist.",filename);
 		return -ENOENT;
 	}
 
-	if(S_ISDIR(res_vnode->vn_mode) && (oflags&3==O_WRONLY || oflags&3==O_RDWR)){
+	if(S_ISDIR(res_vnode->vn_mode) && ((oflags & 3)==O_WRONLY || (oflags & 3)==O_RDWR)){
 		dbg(DBG_ERROR | DBG_VFS,"The given filename= %s is a directory. No writing operations are allowed on directory.",filename);
 		return -EISDIR;
 	}
