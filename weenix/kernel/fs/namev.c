@@ -81,7 +81,7 @@ dir_namev(const char *pathname, size_t *namelen, const char **name,
         vnode_t *ret_result;
         if(strcmp(pathname[0],"/")==0)
          {
-              int i = lookup(vfs_root_vn,"/",1,&dir_vnode);
+                int i = lookup(vfs_root_vn,"/",1,&dir_vnode);
                 if(strlen(pathname) > 1)
                  {
                   char *file_name = strtok(pathname,"/");  
@@ -119,28 +119,40 @@ open_namev(const char *pathname, int flag, vnode_t **res_vnode, vnode_t *base)
 {
         KASSERT(pathname != NULL);
         size_t namelen=0;
+        vnode_t *res_vnode1;
         const char *name=NULL;
-        int i = dir_namev(pathname,0, NULL,base,res_vnode);
+        int i = dir_namev(pathname,&namelen,&name,base,&res_vnode1);
 	if(i<0)
         {
                 return i;
         }
-        vnode_t *result =  NULL;
-	int j=lookup(*res_vnode,name,namelen,&result);     
+        if (!S_ISDIR(res_vnode1->vn_mode))
+        {
+                /* Entry is not a directory */
+                vput(res_vnode1);
+                return -ENOTDIR;
+        }
+        int j=lookup(res_vnode1,name,namelen,res_vnode);     
         if(j<0)
         {
-		return j;
-        }
-        vnode_t *result1 =  NULL;
-        vnode_t *dir= NULL;
-        if((flag&-4)==O_CREAT && j<0)
-        {
-		 int k=dir->vn_ops->create(*res_vnode,0,NULL, &result1);
-		if(k<0){
-			return k;
-		}
-	}
+		if(flag&O_CREAT)
+                {
+        		KASSERT(res_vnode1->vn_ops->create!=NULL);
+        		int k=(res_vnode1->vn_ops->create)(res_vnode1,0,NULL,res_vnode);
+        		if(k<0)
+        		{
+        			vput(res_vnode1);
+        			return k;
+        		}
+        	}
+        	else
+        	{
+        	        vput(res_vnode1);
+        	        return j;
+        	}		
+        }        
        /* NOT_YET_IMPLEMENTED("VFS: open_namev");*/
+        vput(res_vnode1);
         return 0;
 }
 
