@@ -126,7 +126,7 @@ open_namev(const char *pathname, int flag, vnode_t **res_vnode, vnode_t *base)
         }
         vnode_t *result1 =  NULL;
         vnode_t *dir= NULL;
-        if((flag == 256 || flag == 257 || flag == 258) && j<0)
+        if((flag&-4)==O_CREAT && j<0)
         {
 		 int k=dir->vn_ops->create(*res_vnode,0,NULL, &result1);
 		if(k<0){
