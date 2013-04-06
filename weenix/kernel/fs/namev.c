@@ -94,7 +94,6 @@ dir_namev(const char *pathname, size_t *namelen, const char **name,
                 
          }
        
-	vget(*res_vnode);  /*increment the vnode_refcount on successfull completion of this operation*/
 	NOT_YET_IMPLEMENTED("VFS: dir_namev");
         return 0;
 }
