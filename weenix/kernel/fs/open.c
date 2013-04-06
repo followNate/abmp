@@ -76,19 +76,19 @@ do_open(const char *filename, int oflags)
         int file_descriptor = get_empty_fd(curproc);
 	
 	if(file_descriptor == -EMFILE){
-		dbg(DBG_ERROR | DBG_VFS,"The current process pid= %d exceeds the maximum permissible number of files.",curproc->p_pid);
+		dbg(DBG_ERROR | DBG_VFS,"ERROR: do_open(): The current process pid= %d exceeds the maximum permissible number of files.",curproc->p_pid);
 		return -EMFILE;
 	}
 	
         file_t *fresh_file = fget(-1);
 	if(fresh_file == NULL){
-		dbg(DBG_ERROR | DBG_VFS,"Unable to get the file-%s as kernel memory is insufficient.",filename);
+		dbg(DBG_ERROR | DBG_VFS,"ERROR: do_open(): Unable to get the file-%s as kernel memory is insufficient.",filename);
 		fput(fresh_file);
 		return -ENOMEM;
 	}
 
 	if(strlen(filename)>NAME_LEN){
-		dbg(DBG_ERROR | DBG_VFS, "The file name= %s is too long",filename);
+		dbg(DBG_ERROR | DBG_VFS, "ERROR: do_open(): The file name= %s is too long",filename);
 		fput(fresh_file);
 		return -ENAMETOOLONG;
 	}
@@ -114,7 +114,7 @@ do_open(const char *filename, int oflags)
 		                        break;
 		case O_RDWR|O_APPEND:	fresh_file->f_mode = FMODE_WRITE|FMODE_READ|FMODE_APPEND;
 					break;
-		default:		dbg(DBG_ERROR | DBG_VFS,"Not a valid flag for file=%s, in process pid=%d",filename,curproc->p_pid);                                fput(fresh_file);
+		default:		dbg(DBG_ERROR | DBG_VFS,"ERROR: do_open(): Not a valid flag for file=%s, in process pid=%d",filename,curproc->p_pid);                                fput(fresh_file);
 					return -EINVAL;
 	}
 
@@ -122,13 +122,13 @@ do_open(const char *filename, int oflags)
 	vnode_t *res_vnode; 
 	int doExist = open_namev(filename,oflags, &res_vnode,base);
 	if(doExist!=0){
-		dbg(DBG_ERROR | DBG_VFS,"The file with name= %s, doesn't exist.",filename);
+		dbg(DBG_ERROR | DBG_VFS,"ERROR: do_open(): The file with name= %s, doesn't exist.",filename);
 		fput(fresh_file);
 		return -ENOENT;
 	}
 
 	if(S_ISDIR(res_vnode->vn_mode) && ((oflags & 3)==O_WRONLY || (oflags & 3)==O_RDWR)){
-		dbg(DBG_ERROR | DBG_VFS,"The given filename= %s is a directory. No writing operations are allowed on directory.",filename);
+		dbg(DBG_ERROR | DBG_VFS,"ERROR: do_open(): The given filename= %s is a directory. No writing operations are allowed on directory.",filename);
 		
 		fput(fresh_file);
 		vput(res_vnode);
@@ -137,7 +137,7 @@ do_open(const char *filename, int oflags)
 
 
 	if((S_ISCHR(res_vnode->vn_mode)&& (bytedev_lookup(res_vnode->vn_devid)==NULL)) ||(S_ISBLK(res_vnode->vn_mode)&&(blockdev_lookup(res_vnode->vn_devid)==NULL))){
-		dbg(DBG_ERROR | DBG_VFS,"The device (id=%d) associated with filename=%s is unavailable.",res_vnode->vn_devid,filename);
+		dbg(DBG_ERROR | DBG_VFS,"ERROR: do_open(): The device (id=%d) associated with filename=%s is unavailable.",res_vnode->vn_devid,filename);
 		fput(fresh_file);
 		vput(res_vnode);
 		return -ENXIO;
