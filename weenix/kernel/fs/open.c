@@ -74,115 +74,68 @@ int
 do_open(const char *filename, int oflags)
 {
         int file_descriptor = get_empty_fd(curproc);
+	
+	if(file_descriptor == -EMFILE){
+		dbg(DBG_ERROR | DBG_VFS,"The current process pid= %d exceeds the maximum permissible number of files.",curproc->p_pid);
+		return -EMFILE;
+	}
+	
         file_t *fresh_file = fget(file_descriptor);
-        curproc->p_files[file_descriptor] = fresh_file;
-/*      The oflags is OR'ed one
-		There are 12 cases
-		Read - 0
-		Write - 1
-		ReadWrite - 2
-		Read OR Create - 256
-		Read OR Trun - 512
-		Read OR Append - 1024
-		Write OR Create - 257
-		Write OR Trun - 513
-		Write OR Append - 1025
-		Readwrite OR Create - 258
-		ReadWrite OR Trun - 514
-		ReadWrite OR Append - 1026
-*/
-		vnode_t *base = NULL;
-		vnode_t *res_vnode;
+	if(fresh_file == NULL){
+		dbg(DBG_ERROR | DBG_VFS,"Unable to get the file-%s as kernel memory is insufficient.",filename);
+		return -ENOMEM;
+	}
+
+	if(strlen(filename)>34){
+		dbg(DBG_ERROR | DBG_VFS, "The file name= %s is too long",filename);
+		return -ENAMETOOLONG;
+	}
+	
+	
+	vnode_t *res_vnode;
         switch(oflags)
         {
-			case 0 : {
-						fresh_file->f_mode = FMODE_READ;
-						open_namev(filename,0, &res_vnode,base);
-						fresh_file->f_vnode=res_vnode;
-						
-						fref(fresh_file);
-						break;
-					 }
-			case 1 : {
-						fresh_file->f_mode = FMODE_WRITE;
-						open_namev(filename,1, &res_vnode,base);
-						fresh_file->f_vnode=res_vnode;
-						fref(fresh_file);
-						break;
-					 }
-			case 2 : {
-						fresh_file->f_mode = (FMODE_READ || FMODE_WRITE);
-						open_namev(filename,2, &res_vnode,base);
-						fresh_file->f_vnode=res_vnode;
-						fref(fresh_file);
-						break;
-					 }
-			case 256 : {
-							fresh_file->f_mode = FMODE_READ;
-							open_namev(filename,256, &res_vnode,base);
-							fresh_file->f_vnode=res_vnode;
-							fref(fresh_file);
-							break;
-					   }
-			case 512 : {
-							fresh_file->f_mode = FMODE_READ;
-							open_namev(filename,512, &res_vnode,base);
-							fresh_file->f_vnode=res_vnode;
-							fref(fresh_file);
-							break;
-					   }
-			
-			case 1024 : {
-							fresh_file->f_mode = (FMODE_READ || FMODE_APPEND);
-							open_namev(filename,1024, &res_vnode,base);
-							fresh_file->f_vnode=res_vnode;
-							fref(fresh_file);
-							break;
-						}
-			case 257 : {
-							fresh_file->f_mode = FMODE_WRITE;
-							open_namev(filename,257, &res_vnode,base);
-							fresh_file->f_vnode=res_vnode;
-							fref(fresh_file);
-							break;
-					   }
-			case 513 : {
-							fresh_file->f_mode = FMODE_WRITE;
-							open_namev(filename,513, &res_vnode,base);
-							fresh_file->f_vnode=res_vnode;
-							fref(fresh_file);
-							break;
-					   }
-			case 1025 : {
-							fresh_file->f_mode = (FMODE_WRITE || FMODE_APPEND);
-							open_namev(filename,1025, &res_vnode,base);
-							fresh_file->f_vnode=res_vnode;
-							fref(fresh_file);
-							break;
-						}
-			case 258 : {
-							fresh_file->f_mode = (FMODE_READ || FMODE_WRITE);
-							open_namev(filename,258, &res_vnode,base);
-							fresh_file->f_vnode=res_vnode;
-							fref(fresh_file);
-							break;
-						}
-			case 514 : {
-							fresh_file->f_mode = (FMODE_READ || FMODE_WRITE);
-							open_namev(filename,514, &res_vnode,base);
-							fresh_file->f_vnode=res_vnode;
-							fref(fresh_file);
-							break;
-						}
-			case 1026 : {	fresh_file->f_mode = (FMODE_READ || FMODE_WRITE || FMODE_APPEND);
-							open_namev(filename,1026, &res_vnode,base);
-							fresh_file->f_vnode=res_vnode;
-							fref(fresh_file);
-							break;
-						}
-			default : return EINVAL;
-		}
+		case O_RDONLY:
+		case O_RDONLY|O_CREAT:
+		case O_RDONLY|O_TRUNC:	fresh_file->f_mode = FMODE_READ;
+					break;   		
+		case O_WRONLY:
+		case O_WRONLY|O_TRUNC:
+		case O_WRONLY|O_CREAT:	fresh_file->f_mode = FMODE_WRITE;
+					break;
+		case O_RDWR:
+		case O_RDWR|O_TRUNC:
+		case O_RDWR|O_CREAT:	fresh_file->f_mode = FMODE_WRITE|FMODE_READ;
+					break;
+		case O_RDONLY|O_APPEND:
+		case O_WRONLY|O_APPEND:
+		case O_RDWR|O_APPEND:	fresh_file->f_mode = FMODE_APPEND;
+					break;
+		default:		dbg(DBG_ERROR | DBG_VFS,"Not a valid flag for file=%s, in process pid=%d",filename,curproc->p_pid); 
+					return -EINVAL;
+	}
+
+	int doExist = open_namev(filename,oflags, &res_vnode,base);
+	if(doExist!=0){
+		dbg(DBG_ERROR | DBG_VFS,"The file with name= %s, doesn't exist.",filename);
+		return -ENOENT;
+	}
+
+	if(S_ISDIR(res_vnode->vn_mode) && (oflags&3==O_WRONLY || oflags&3==O_RDWR)){
+		dbg(DBG_ERROR | DBG_VFS,"The given filename= %s is a directory. No writing operations are allowed on directory.",filename);
+		return -EISDIR;
+	}
+
+
+	if(res_vnode->vn_devid!=0 && (bytedev_lookup(res_vnode->vn_devid)==NULL) && (blockdev_lookup(res_vnode->vn_devid)==NULL)){
+		dbg(DBG_ERROR | DBG_VFS,"The device (id=%d) associated with filename=%s is unavailable.",res_vnode->vn_devid,filename);
+		return -ENXIO;
+	}	
+	
+        fresh_file->f_vnode=res_vnode;
 		
-        NOT_YET_IMPLEMENTED("VFS: do_open");
+        /*NOT_YET_IMPLEMENTED("VFS: do_open");*/
+	curproc->p_files[file_descriptor] = fresh_file;
+
         return file_descriptor;
 }
