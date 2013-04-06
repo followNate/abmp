@@ -36,7 +36,7 @@ get_empty_fd(proc_t *p)
 
 /*
  * There a number of steps to opening a file:
- *      1. Get the next empty file descriptor.
+ *      1. Get the next empty f  descriptor.
  *      2. Call fget to get a fresh file_t.
  *      3. Save the file_t in curproc's file descriptor table.
  *      4. Set file_t->f_mode to OR of FMODE_(READ|WRITE|APPEND) based on
@@ -149,4 +149,5 @@ do_open(const char *filename, int oflags)
 	curproc->p_files[file_descriptor] = fresh_file;
 
         return file_descriptor;
+
 }
