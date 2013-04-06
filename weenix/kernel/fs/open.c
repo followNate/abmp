@@ -73,20 +73,71 @@ get_empty_fd(proc_t *p)
 int
 do_open(const char *filename, int oflags)
 {
-<<<<<<< HEAD
-
-        int new_fd = get_empty_fd(curproc)
-                /*KASSERT( "ERROR: get_empty_fd: out of file descriptors for pid %d\n", curproc->p_pid);  if new_fd not available */
-        /* get fresh file_t for current process */
-        file_t *file_ptr = fget(-1);       
-        curproc->p_files[new_fd]=file_ptr;
-        file-ptr->f_mode = oflags;
-=======
         int file_descriptor = get_empty_fd(curproc);
-        struct file fresh_file;
-        fresh_file = *fget(file_descriptor);
-        
->>>>>>> cf18550a8697ec8f039d09009b1d711759455d97
-        NOT_YET_IMPLEMENTED("VFS: do_open");
-        return -1;
+	
+	if(file_descriptor == -EMFILE){
+		dbg(DBG_ERROR | DBG_VFS,"The current process pid= %d exceeds the maximum permissible number of files.",curproc->p_pid);
+		return -EMFILE;
+	}
+	
+        file_t *fresh_file = fget(file_descriptor);
+	if(fresh_file == NULL){
+		dbg(DBG_ERROR | DBG_VFS,"Unable to get the file-%s as kernel memory is insufficient.",filename);
+		return -ENOMEM;
+	}
+
+	if(strlen(filename)>34){
+		dbg(DBG_ERROR | DBG_VFS, "The file name= %s is too long",filename);
+		return -ENAMETOOLONG;
+	}
+	
+	
+        switch(oflags)
+        {
+		case O_RDONLY:
+		case O_RDONLY|O_CREAT:
+		case O_RDONLY|O_TRUNC:	fresh_file->f_mode = FMODE_READ;
+					break;   		
+		case O_WRONLY:
+		case O_WRONLY|O_TRUNC:
+		case O_WRONLY|O_CREAT:	fresh_file->f_mode = FMODE_WRITE;
+					break;
+		case O_RDWR:
+		case O_RDWR|O_TRUNC:
+		case O_RDWR|O_CREAT:	fresh_file->f_mode = FMODE_WRITE|FMODE_READ;
+					break;
+		case O_RDONLY|O_APPEND:
+		case O_WRONLY|O_APPEND:
+		case O_RDWR|O_APPEND:	fresh_file->f_mode = FMODE_APPEND;
+					break;
+		default:		dbg(DBG_ERROR | DBG_VFS,"Not a valid flag for file=%s, in process pid=%d",filename,curproc->p_pid); 
+					return -EINVAL;
+	}
+
+	vnode_t *base = NULL;
+	vnode_t *res_vnode; 
+	int doExist = open_namev(filename,oflags, &res_vnode,base);
+	if(doExist!=0){
+		dbg(DBG_ERROR | DBG_VFS,"The file with name= %s, doesn't exist.",filename);
+		return -ENOENT;
+	}
+
+	if(S_ISDIR(res_vnode->vn_mode) && ((oflags & 3)==O_WRONLY || (oflags & 3)==O_RDWR)){
+		dbg(DBG_ERROR | DBG_VFS,"The given filename= %s is a directory. No writing operations are allowed on directory.",filename);
+		return -EISDIR;
+	}
+
+
+	if(res_vnode->vn_devid!=0 && (bytedev_lookup(res_vnode->vn_devid)==NULL) && (blockdev_lookup(res_vnode->vn_devid)==NULL)){
+		dbg(DBG_ERROR | DBG_VFS,"The device (id=%d) associated with filename=%s is unavailable.",res_vnode->vn_devid,filename);
+		return -ENXIO;
+	}	
+	
+        fresh_file->f_vnode=res_vnode;
+		
+        /*NOT_YET_IMPLEMENTED("VFS: do_open");*/
+	curproc->p_files[file_descriptor] = fresh_file;
+
+        return file_descriptor;
+
 }
