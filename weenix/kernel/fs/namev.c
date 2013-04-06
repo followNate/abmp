@@ -25,14 +25,22 @@
 int
 lookup(vnode_t *dir, const char *name, size_t len, vnode_t **result)
 {
+        KASSERT(dir != NULL&&name != NULL&&len > 0);
+        if (dir->vn_ops->lookup == NULL)
+        {
+                dbg(DBG_ERROR | DBG_VFS,"ERROR: lookup(): dir has no lookup()\n");
+                return -ENOTDIR;
+        }
+        
         int i = dir->vn_ops->lookup(dir,name,len,result);       /*Calling lookup for the vnode dir*/
         if(i<0)                                                 /* Return ENOTDIR if lookup fails*/
         {
-                return -ENOTDIR;
+                dbg(DBG_ERROR | DBG_VFS,"ERROR: lookup(): dir has no entry with the given name\n");
+                return i;
         }
-        vref(*result);                                          /* Increment the refcount */
+       /* vref(*result);  Increment the refcount */
         
-        if(name_match(".",name,strlen(name))==0)          						/*           Special Case . */                        {
+        if(name_match(".",name,strlen(name))==0)          						/*           Special Case . */      {
                 vput(*result);
                 return -EINVAL;
         }
