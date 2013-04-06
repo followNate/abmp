@@ -114,7 +114,7 @@ do_open(const char *filename, int oflags)
 		                        break;
 		case O_RDWR|O_APPEND:	fresh_file->f_mode = FMODE_WRITE|FMODE_READ|FMODE_APPEND;
 					break;
-		default:		dbg(DBG_ERROR | DBG_VFS,"Not a valid flag for file=%s, in process pid=%d",filename,curproc->p_pid); 
+		default:		dbg(DBG_ERROR | DBG_VFS,"Not a valid flag for file=%s, in process pid=%d",filename,curproc->p_pid);                                fput(fresh_file);
 					return -EINVAL;
 	}
 
