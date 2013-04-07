@@ -44,8 +44,7 @@ lookup(vnode_t *dir, const char *name, size_t len, vnode_t **result)
         }
        /* vref(*result);  Increment the refcount */
         
-        
-        /*NOT_YET_IMPLEMENTED("VFS: lookup");*/
+       /*NOT_YET_IMPLEMENTED("VFS: lookup");*/
         return 0;                                               /* return 0 if succesful */
 
 }
@@ -70,11 +69,10 @@ lookup(vnode_t *dir, const char *name, size_t len, vnode_t **result)
 int
 dir_namev(const char *pathname, size_t *namelen, const char **name,vnode_t *base, vnode_t **res_vnode)
 {
-
 	vnode_t *dir_vnode;
         vnode_t *ret_result;
         char *file_name=NULL;char *return_name=NULL;
-        char *file_pass=NULL;char **copy_name = NULL;
+        char *file_pass=NULL;
 
         size_t len=0,old_loc=0,new_loc=0;
         
@@ -88,7 +86,7 @@ dir_namev(const char *pathname, size_t *namelen, const char **name,vnode_t *base
                   file_name++;
                   while(file_name != NULL)
                    {
-                       if(file_name)
+                      if(file_name)
                         {
                             file_pass = file_name;
                             file_name = strchr(file_name,'/');
