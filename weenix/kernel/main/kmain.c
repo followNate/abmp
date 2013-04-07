@@ -176,6 +176,10 @@ static void *idleproc_run(int arg1, void *arg2)
         /* Create other kernel threads (in order) */
 
 #ifdef __VFS__
+        curproc->p_cwd=vfs_root_vn;
+        initthr->kt_proc->p_cwd=vfs_root_vn;
+        vref(vfs_root_vn);
+        vref(vfs_root_vn);
         /* Once you have VFS remember to set the current working directory
          * of the idle and init processes */
 
@@ -274,8 +278,7 @@ void producer_consumer();
 void reader_writer();
 void dead_own();
 void shellTest();
-void vfs_test_setup();
-kshell_cmd_func_t a(kshell_t,int,char**);
+
 
 kmutex_t m1;
 kmutex_t m2;
@@ -303,7 +306,7 @@ static void *initproc_run(int arg1, void *arg2)
 		case 8: reader_writer();break;
 		case 9: shellTest();break;
 		case 10: dead_own(); break;
-		case 11: vfs_test_setup();break;
+		
 	}
                 
 	   int status;
@@ -315,7 +318,7 @@ static void *initproc_run(int arg1, void *arg2)
         
         return NULL;
 }
-
+/*
 void vfs_test_setup()
 {
 	processSetUp();
@@ -328,7 +331,7 @@ kshell_cmd_func_t a(kshell_t *ksh, int argc, char **argv)
 	 dbg_print("Process cleaned successfully\n");
 	 return 0;
 }
-
+*/
 
 /* PROCESS AND THREAD TESTING CASES */
 void *init_child10(int arg1,void *arg2) 
