@@ -53,7 +53,8 @@
 #define TEST_8 8        /*  Reader and writer problem */
 #define TEST_9 9        /*  kshell testing */
 #define TEST_10 10      /*  Deadlock check when same thread again trying to lock the same mutex */
-static int curtest = TEST_6;
+#define TEST_11 11
+static int curtest = TEST_11;
 
 GDB_DEFINE_HOOK(boot)
 GDB_DEFINE_HOOK(initialized)
@@ -175,6 +176,10 @@ static void *idleproc_run(int arg1, void *arg2)
         /* Create other kernel threads (in order) */
 
 #ifdef __VFS__
+        curproc->p_cwd=vfs_root_vn;
+        initthr->kt_proc->p_cwd=vfs_root_vn;
+        vref(vfs_root_vn);
+        vref(vfs_root_vn);
         /* Once you have VFS remember to set the current working directory
          * of the idle and init processes */
 
@@ -274,6 +279,7 @@ void reader_writer();
 void dead_own();
 void shellTest();
 
+
 kmutex_t m1;
 kmutex_t m2;
 kmutex_t lock;
@@ -289,17 +295,18 @@ static void *initproc_run(int arg1, void *arg2)
 {
 	switch(curtest)
 	{       
-	        case 0: return NULL;
+	    case 0: return NULL;
 		case 1:	processSetUp(); break;
 		case 2: processSetUp(); break;
 		case 3: processSetUp(); break;
 		case 4: processSetUp(); break;
-       		case 5: processSetUp(); break;
+		case 5: processSetUp(); break;
 		case 6: producer_consumer();break;
 		case 7: deadlock();break;
 		case 8: reader_writer();break;
 		case 9: shellTest();break;
 		case 10: dead_own(); break;
+		
 	}
                 
 	   int status;
@@ -311,7 +318,22 @@ static void *initproc_run(int arg1, void *arg2)
         
         return NULL;
 }
+/*
+void vfs_test_setup()
+{
+	processSetUp();
+	shellTest();
+	kshell_add_command("adi",a, "display a line of text");
+}
 
+kshell_cmd_func_t a(kshell_t *ksh, int argc, char **argv)
+{
+	 dbg_print("Process cleaned successfully\n");
+	 return 0;
+}
+*/
+
+/* PROCESS AND THREAD TESTING CASES */
 void *init_child10(int arg1,void *arg2) 
 {
 if(curtest == TEST_3){
