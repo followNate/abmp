@@ -150,7 +150,7 @@ dbg(DBG_FORK,"Process %s (PID=%d) is Created and parent process is \"%s\" (PID=%
         }
         else
         {
-                new_proc_t->p_cwd=NULL;
+                new_proc_t->p_cwd=vfs_root_vn;
         }         
         /*NOT_YET_IMPLEMENTED("PROCS: proc_create");*/
         return new_proc_t;      
