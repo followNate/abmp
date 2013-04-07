@@ -31,7 +31,11 @@ lookup(vnode_t *dir, const char *name, size_t len, vnode_t **result)
                 dbg(DBG_ERROR | DBG_VFS,"ERROR: lookup(): dir has no lookup()\n");
                 return -ENOTDIR;
         }
-        
+        if(name_match(".",name,strlen(name))==0)          						/*           Special Case . */      {
+                result=&dir;
+                vref(*result);
+                return 0;
+        }
         int i = dir->vn_ops->lookup(dir,name,len,result);       /*Calling lookup for the vnode dir*/
         if(i<0)                                                 /* Return ENOTDIR if lookup fails*/
         {
@@ -40,18 +44,7 @@ lookup(vnode_t *dir, const char *name, size_t len, vnode_t **result)
         }
        /* vref(*result);  Increment the refcount */
         
-        if(name_match(".",name,len)==0)          						/*           Special Case . */                      
-	{
-                vput(*result);
-                return -EINVAL;
-        }
-        if(name_match("..",name,len)==0)                                  /* special case .. */
-        {
-                vput(*result);
-                return -ENOTEMPTY;
-        }
-
-        /*NOT_YET_IMPLEMENTED("VFS: lookup");*/
+       /*NOT_YET_IMPLEMENTED("VFS: lookup");*/
         return 0;                                               /* return 0 if succesful */
 
 }
