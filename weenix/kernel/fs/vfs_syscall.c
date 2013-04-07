@@ -131,9 +131,9 @@ do_write(int fd, const void *buf, size_t nbytes)
                  fput(open_file);
                  return i;
         }else{
-		KASSERT((S_ISCHR(f->f_vnode->vn_mode)) ||
-                                (S_ISBLK(f->f_vnode->vn_mode)) ||
-                                ((S_ISREG(f->f_vnode->vn_mode)) && (f->f_pos <= f->f_vnode->vn_len)));
+		KASSERT((S_ISCHR(open_file->f_vnode->vn_mode)) ||
+                                (S_ISBLK(open_file->f_vnode->vn_mode)) ||
+                                ((S_ISREG(open_file->f_vnode->vn_mode)) && (open_file->f_pos <= open_file->f_vnode->vn_len)));
 	}
         
         open_file->f_pos=open_file->f_pos+i;

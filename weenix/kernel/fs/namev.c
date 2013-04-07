@@ -25,14 +25,23 @@
 int
 lookup(vnode_t *dir, const char *name, size_t len, vnode_t **result)
 {
+        KASSERT(dir != NULL&&name != NULL&&len > 0);
+        if (dir->vn_ops->lookup == NULL)
+        {
+                dbg(DBG_ERROR | DBG_VFS,"ERROR: lookup(): dir has no lookup()\n");
+                return -ENOTDIR;
+        }
+        
         int i = dir->vn_ops->lookup(dir,name,len,result);       /*Calling lookup for the vnode dir*/
         if(i<0)                                                 /* Return ENOTDIR if lookup fails*/
         {
-                return -ENOTDIR;
+                dbg(DBG_ERROR | DBG_VFS,"ERROR: lookup(): dir has no entry with the given name\n");
+                return i;
         }
-        vref(*result);                                          /* Increment the refcount */
+       /* vref(*result);  Increment the refcount */
         
-        if(name_match(".",name,len)==0)          						/*           Special Case . */                        {
+        if(name_match(".",name,len)==0)          						/*           Special Case . */                      
+	{
                 vput(*result);
                 return -EINVAL;
         }
@@ -44,9 +53,8 @@ lookup(vnode_t *dir, const char *name, size_t len, vnode_t **result)
 
         /*NOT_YET_IMPLEMENTED("VFS: lookup");*/
         return 0;                                               /* return 0 if succesful */
+
 }
-
-
 /* When successful this function returns data in the following "out"-arguments:
  *  o res_vnode: the vnode of the parent directory of "name"
  *  o name: the `basename' (the element of the pathname)
@@ -66,38 +74,99 @@ lookup(vnode_t *dir, const char *name, size_t len, vnode_t **result)
  * be incremented.
  */
 int
-dir_namev(const char *pathname, size_t *namelen, const char **name,
-          vnode_t *base, vnode_t **res_vnode)
+dir_namev(const char *pathname, size_t *namelen, const char **name,vnode_t *base, vnode_t **res_vnode)
 {
-	vnode_t *dir_vnode = NULL;
-        vnode_t *ret_result = NULL;
-        if(pathname[0]=='/')
-        {
-              int i = lookup(vfs_root_vn,"/",1,&dir_vnode);
-                if(strlen(pathname) > 1)
-                 {
-                  char *file_name = strtok(pathname,"/");  
-                  size_t len = strlen(file_name);
+	vnode_t *dir_vnode;
+        vnode_t *ret_result;
+        char *file_name=NULL;char *return_name=NULL;
+        char *file_pass=NULL;
 
-                  resolve_vnode:
-                        ret_result = dir_vnode;                        
-                        i = lookup(dir_vnode,file_name,len,&ret_result);
-                        dir_vnode = ret_result;
-                        file_name = strtok(NULL,"/");
-                        len = strlen(file_name);
-                        
-                        if(file_name != NULL)
-                          {
-                               goto resolve_vnode;
-                          }                       
-                 }
-                
-        }else if(base == NULL){
-		
-	}else{
-		
-	}
-       
+        size_t len=0,old_loc=0,new_loc=0;
+        
+        if(pathname[0]=='/')
+         {
+                int i = lookup(vfs_root_vn,"/",1,&dir_vnode);
+                if(strlen(pathname) > 1)
+                 {                
+                  file_name = strchr(pathname,'/');
+                  old_loc = file_name-pathname+1;
+                  file_name++;
+                  while(file_name != NULL)
+                   {
+                      if(file_name)
+                        {
+                            file_pass = file_name;
+                            file_name = strchr(file_name,'/');
+                            if(file_name)
+                                {
+                                    new_loc = (file_name-pathname+1);
+                                    len = (new_loc-old_loc)-1;
+                                    old_loc = new_loc;
+                                    ret_result = dir_vnode;
+                                    lookup(dir_vnode,file_pass,len,&ret_result);
+                                    dir_vnode = ret_result;
+                                    file_name++;
+                                    return_name = file_name;
+                                }
+                        }
+                   }
+                }
+           }
+           else if(base == NULL)
+           {
+                dir_vnode = curproc->p_cwd;
+                strcpy(file_name,pathname);
+                while(file_name != NULL)
+                {
+                    if(file_name)
+                       {
+                            file_pass = file_name;
+                            file_name = strchr(file_name,'/');  
+                            new_loc = (file_name-pathname)-1;
+                            
+                            if(file_name)
+                                {
+                                    len = (new_loc-old_loc)-1;
+                                    old_loc = new_loc;  
+                                    ret_result = dir_vnode;
+                                    lookup(dir_vnode,file_pass,len,&ret_result);
+                                    dir_vnode = ret_result;
+                                    file_name++;
+                                    return_name = file_name;
+                                }                       
+                       }                
+                }
+           
+           }else if(base !=NULL)
+                {
+                        dir_vnode = base;
+                strcpy(file_name,pathname);
+                while(file_name != NULL)
+                 {
+                    if(file_name)
+                       {
+                            file_pass = file_name;
+                            file_name = strchr(file_name,'/');  
+                            new_loc = (file_name-pathname)-1;
+                            
+                            if(file_name)
+                                {
+                                    len = (new_loc-old_loc)-1;
+                                    old_loc = new_loc;  
+                                    ret_result = dir_vnode;
+                                    lookup(dir_vnode,file_pass,len,&ret_result);
+                                    dir_vnode = ret_result;
+                                    file_name++;
+                                    return_name = file_name;
+                                }                      
+                       }        
+                  }
+                }
+         
+       *namelen = strlen(return_name);
+       **res_vnode = *ret_result;
+       *name = (const char*)return_name;
+       vref(*res_vnode);
 	NOT_YET_IMPLEMENTED("VFS: dir_namev");
         return 0;
 }
@@ -115,28 +184,40 @@ open_namev(const char *pathname, int flag, vnode_t **res_vnode, vnode_t *base)
 {
         KASSERT(pathname != NULL);
         size_t namelen=0;
+        vnode_t *res_vnode1;
         const char *name=NULL;
-        int i = dir_namev(pathname,0, NULL,base,res_vnode);
+        int i = dir_namev(pathname,&namelen,&name,base,&res_vnode1);
 	if(i<0)
         {
                 return i;
         }
-        vnode_t *result =  NULL;
-	int j=lookup(*res_vnode,name,namelen,&result);     
+        if (!S_ISDIR(res_vnode1->vn_mode))
+        {
+                /* Entry is not a directory */
+                vput(res_vnode1);
+                return -ENOTDIR;
+        }
+        int j=lookup(res_vnode1,name,namelen,res_vnode);     
         if(j<0)
         {
-		return j;
-        }
-        vnode_t *result1 =  NULL;
-        vnode_t *dir= NULL;
-        if((flag&-4)==O_CREAT && j<0)
-        {
-		 int k=dir->vn_ops->create(*res_vnode,0,NULL, &result1);
-		if(k<0){
-			return k;
-		}
-	}
+		if(flag&O_CREAT)
+                {
+        		KASSERT(res_vnode1->vn_ops->create!=NULL);
+        		int k=(res_vnode1->vn_ops->create)(res_vnode1,0,NULL,res_vnode);
+        		if(k<0)
+        		{
+        			vput(res_vnode1);
+        			return k;
+        		}
+        	}
+        	else
+        	{
+        	        vput(res_vnode1);
+        	        return j;
+        	}		
+        }        
        /* NOT_YET_IMPLEMENTED("VFS: open_namev");*/
+        vput(res_vnode1);
         return 0;
 }
 

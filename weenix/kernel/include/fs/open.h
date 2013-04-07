@@ -11,4 +11,4 @@ struct open_args;
 struct proc;
 
 int do_open(const char *filename, int flags);
-int get_empty_fd(struct proc *p);
+int get_empty_fd(struct proc *p);	
