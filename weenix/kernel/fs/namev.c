@@ -80,10 +80,10 @@ dir_namev(const char *pathname, size_t *namelen, const char **name,vnode_t *base
 	vnode_t *dir_vnode;
         vnode_t *ret_result;
         char *file_name=NULL;char *return_name=NULL;
-        char *file_pass=NULL;char **copy_name = NULL;
+        char *file_pass=NULL;
 
         size_t len=0,old_loc=0,new_loc=0;
-        
+        KASSERT(pathname != NULL,"Pathname recieved is NULL");
         if(pathname[0]=='/')
          {
                 int i = lookup(vfs_root_vn,"/",1,&dir_vnode);
@@ -163,12 +163,12 @@ dir_namev(const char *pathname, size_t *namelen, const char **name,vnode_t *base
                        }        
                   }
                 }
-         
+        
        *namelen = strlen(return_name);
        **res_vnode = *ret_result;
        *name = (const char*)return_name;
        vref(*res_vnode);
-	NOT_YET_IMPLEMENTED("VFS: dir_namev");
+       NOT_YET_IMPLEMENTED("VFS: dir_namev");
         return 0;
 }
 
