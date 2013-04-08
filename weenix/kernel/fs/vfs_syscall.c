@@ -208,7 +208,8 @@ do_dup(int fd)
         if(!dup_fd)
         {
 		dbg(DBG_ERROR | DBG_VFS,"ERROR: do_dup: Invalid duplicate file descriptor");
-               return dup_fd; 
+		fput(open_file);
+                return -EMFILE; 
         }
         
         curproc->p_files[dup_fd]=open_file;
@@ -246,7 +247,11 @@ do_dup2(int ofd, int nfd)
         if(curproc->p_files[nfd]!=NULL)
         {
 		dbg(DBG_VFS, "INFO: do_dup2: New file descriptor is already in use.. calling do_close");
-                do_close(nfd);
+                int j=do_close(nfd);
+                if (j <0)
+                {
+                        return j;
+                }               
         }
                  
         file_t *open_file=fget(ofd);
@@ -291,7 +296,7 @@ do_mknod(const char *path, int mode, unsigned devid)
 		return -ENAMETOOLONG;
 	}
 
-        if(mode!=S_IFCHR&&mode!=S_IFCHR)
+        if(mode!=S_IFCHR&&mode!=S_IFBLK)
         {	
 		dbg(DBG_ERROR | DBG_VFS, "ERROR: do_mknod: Invalid mode used for creating device special file");
                 return -EINVAL;
@@ -333,6 +338,7 @@ do_mknod(const char *path, int mode, unsigned devid)
                         return -EEXIST;
                 }
         }
+        vput(res_vnode);
         KASSERT(NULL!=res_vnode->vn_ops->mknod);
         i=(res_vnode->vn_ops->mknod)(res_vnode,name,namelen,mode,devid);
          /*  NOT_YET_IMPLEMENTED("VFS: do_mknod");*/
@@ -399,6 +405,7 @@ do_mkdir(const char *path)
                         return -EEXIST;
                 }
         }
+        vput(res_vnode);
         KASSERT(NULL!=res_vnode->vn_ops->mkdir);                
         i=(res_vnode->vn_ops->mkdir)(res_vnode,name,namelen);
         
@@ -794,7 +801,8 @@ do_getdent(int fd, struct dirent *dirp)
         else if(i==0)
         {
                 open_file->f_pos=open_file->f_pos+i;
-                fput(open_file);return i;
+                fput(open_file);
+                return i;
         }
         else
         {
