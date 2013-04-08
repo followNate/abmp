@@ -487,10 +487,10 @@ void shellTest()
 
 void *kshell_test(int a, void *b)
 {
-    dbg_print("\nsd");
+    
     kshell_t *new_shell;
     int i;
-    /*while (1)*/
+    while (1)
     {
         new_shell = kshell_create(0);
         dbg_print("\nff");
@@ -498,7 +498,7 @@ void *kshell_test(int a, void *b)
         dbg_print("\nff");
         if(i>0){dbg(DBG_TERM,"Error Executing the command\n");}
         kshell_destroy(new_shell);
-       /* if(i==0){break;}*/
+        if(i==0){break;}
     }
     return NULL;
 }
