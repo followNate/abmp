@@ -291,7 +291,7 @@ do_mknod(const char *path, int mode, unsigned devid)
 		return -ENAMETOOLONG;
 	}
 
-        if(mode!=S_IFCHR&&mode!=S_IFCHR)
+        if(mode!=S_IFCHR&&mode!=S_IFBLK)
         {	
 		dbg(DBG_ERROR | DBG_VFS, "ERROR: do_mknod: Invalid mode used for creating device special file");
                 return -EINVAL;
