@@ -103,7 +103,7 @@ proc_create(char *name)
         new_proc_t->p_pid=pid;/*Assign the proc_id*/
        
         if(new_proc_t->p_pid==1)
-         {
+        {
                 KASSERT(PID_INIT != pid || PID_IDLE == curproc->p_pid); 
                 proc_initproc =new_proc_t;/*set a pointer to point the INIT process*/
         }       
@@ -148,9 +148,8 @@ dbg(DBG_FORK,"Process %s (PID=%d) is Created and parent process is \"%s\" (PID=%
                         vref(curproc->p_cwd);
                 }
         }
-        else
-        {
-                new_proc_t->p_cwd=vfs_root_vn;
+        else{
+		 new_proc_t->p_cwd=NULL;
         }         
         /*NOT_YET_IMPLEMENTED("PROCS: proc_create");*/
         return new_proc_t;      

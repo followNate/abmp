@@ -77,7 +77,7 @@ kshell_t *kshell_create(uint8_t ttyid)
 #ifdef __VFS__
         int fd;
         char tty_path[MAXPATHLEN];
-
+	
         snprintf(tty_path, MAXPATHLEN, "/dev/tty%u", ttyid);
         if ((fd = do_open(tty_path, O_RDWR)) < 0) {
                 dprintf("Couldn't open %s\n", tty_path);
