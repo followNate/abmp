@@ -54,7 +54,8 @@
 #define TEST_9 9        /*  kshell testing */
 #define TEST_10 10      /*  Deadlock check when same thread again trying to lock the same mutex */
 #define TEST_11 11
-static int curtest = TEST_9;
+
+static int curtest = TEST_11;
 
 GDB_DEFINE_HOOK(boot)
 GDB_DEFINE_HOOK(initialized)
@@ -285,7 +286,7 @@ void producer_consumer();
 void reader_writer();
 void dead_own();
 void shellTest();
-
+void vfs_test_setup();
 
 kmutex_t m1;
 kmutex_t m2;
@@ -313,6 +314,7 @@ static void *initproc_run(int arg1, void *arg2)
 		case 8: reader_writer();break;
 		case 9: shellTest();break;
 		case 10: dead_own(); break;
+		case 11: vfs_test_setup(); break;
 		
 	}
                 
@@ -325,20 +327,15 @@ static void *initproc_run(int arg1, void *arg2)
         
         return NULL;
 }
-/*
+extern int vfstest_main(int argc, void *argv);
 void vfs_test_setup()
 {
-	processSetUp();
-	shellTest();
-	kshell_add_command("adi",a, "display a line of text");
+	proc_t* proc_vfs = proc_create("vfs_test");
+        kthread_t *thread_vfs = kthread_create(proc_vfs, (kthread_func_t)vfstest_main, 1, NULL);
+        sched_make_runnable(thread_vfs);
 }
 
-kshell_cmd_func_t a(kshell_t *ksh, int argc, char **argv)
-{
-	 dbg_print("Process cleaned successfully\n");
-	 return 0;
-}
-*/
+
 
 /* PROCESS AND THREAD TESTING CASES */
 void *init_child10(int arg1,void *arg2) 
