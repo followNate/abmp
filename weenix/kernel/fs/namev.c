@@ -25,7 +25,10 @@
 int
 lookup(vnode_t *dir, const char *name, size_t len, vnode_t **result)
 {
-        KASSERT(dir != NULL&&name != NULL&&len > 0);
+        KASSERT(NULL != dir);
+        KASSERT(NULL != name);
+        
+
         if (dir->vn_ops->lookup == NULL||(!S_ISDIR(dir->vn_mode)))
         {
                 dbg(DBG_ERROR | DBG_VFS,"ERROR: lookup(): dir has no lookup()\n");
@@ -39,7 +42,7 @@ lookup(vnode_t *dir, const char *name, size_t len, vnode_t **result)
                 return i;
         }
        /* vref(*result);  Increment the refcount */
-        
+        KASSERT(NULL != result);
        /*NOT_YET_IMPLEMENTED("VFS: lookup");*/
         return 0;                                               /* return 0 if succesful */
 
@@ -110,7 +113,7 @@ dir_namev(const char *pathname, size_t *namelen, const char **name,vnode_t *base
                  }
                  if(file_pass!=NULL)
                  {
-                         dbg_print("hht");
+                         
                         if (file_pass - file_name -1 > NAME_LEN)
                         {
                                dbg(DBG_ERROR | DBG_VFS, "ERROR: dir_namev(): lookup failed. Path component too long.\n");
@@ -179,7 +182,7 @@ open_namev(const char *pathname, int flag, vnode_t **res_vnode, vnode_t *base)
 		if(flag&O_CREAT)
                 {
         		KASSERT(res_vnode1->vn_ops->create!=NULL);
-        		int k=(res_vnode1->vn_ops->create)(res_vnode1,0,NULL,res_vnode);
+        		int k=(res_vnode1->vn_ops->create)(res_vnode1,name,namelen,res_vnode);
         		if(k<0)
         		{
         			vput(res_vnode1);
