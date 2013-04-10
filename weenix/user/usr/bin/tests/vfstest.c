@@ -99,11 +99,11 @@ getdent(const char *dir, dirent_t *dirent)
                         return -1;
                 }
                 if (0 != strcmp(".", dirent->d_name) && 0 != strcmp("..", dirent->d_name)) {
-                        close(fd);
+			close(fd);
                         return 1;
                 }
         }
-
+	
         close(fd);
         return 0;
 }
@@ -130,7 +130,7 @@ removeall(const char *dir)
 
                 if (0 > stat(dirent.d_name, &status)) {
                         goto error;
-                }
+		}
 
                 if (S_ISDIR(status.st_mode)) {
                         if (0 > removeall(dirent.d_name)) {
@@ -170,7 +170,7 @@ vfstest_start(void)
         root_dir[0] = '\0';
         do {
                 sprintf(root_dir, "vfstest-%d", rand());
-                err = mkdir(root_dir, 0777);
+		err = mkdir(root_dir, 0777);
         } while (err != 0);
         printf("Created test root directory: ./%s\n", root_dir);
 }
@@ -900,7 +900,7 @@ int main(int argc, char **argv)
 int vfstest_main(int argc, char **argv)
 #endif
 {
-        if (argc != 1) {
+       if (argc != 1) {
                 fprintf(stderr, "USAGE: vfstest\n");
                 return 1;
         }
@@ -910,7 +910,7 @@ int vfstest_main(int argc, char **argv)
 
         syscall_success(chdir(root_dir));
 
-        vfstest_stat();
+	vfstest_stat();
         dbg_print("\n%d\n",++i);
         vfstest_chdir();
         dbg_print("\n%d\n",++i);
@@ -928,12 +928,12 @@ int vfstest_main(int argc, char **argv)
         
         vfstest_getdents();
         dbg_print("\n%d\n",++i);  
-        
+
 #ifdef __VM__
         vfstest_s5fs_vm();
 #endif
 
-        /*vfstest_infinite();*/
+       /* vfstest_infinite();*/
 
         syscall_success(chdir(".."));
      

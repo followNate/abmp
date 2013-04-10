@@ -36,7 +36,7 @@ lookup(vnode_t *dir, const char *name, size_t len, vnode_t **result)
         }
         
         int i = dir->vn_ops->lookup(dir,name,len,result);       /*Calling lookup for the vnode dir*/
-        if(i<0)                                                 /* Return ENOTDIR if lookup fails*/
+	 if(i<0)                                                 /* Return ENOTDIR if lookup fails*/
         {
                 dbg(DBG_ERROR | DBG_VFS,"ERROR: lookup(): dir has no entry with the given name\n");
                 return i;
