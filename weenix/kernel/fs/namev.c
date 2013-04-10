@@ -76,7 +76,7 @@ dir_namev(const char *pathname, size_t *namelen, const char **name,vnode_t *base
         char *file_pass=NULL;
 
         size_t len=0,old_loc=0,new_loc=0;
-        KASSERT(pathname != NULL,"Pathname recieved is NULL");
+/*        KASSERT(pathname != NULL,"Pathname recieved is NULL");*/
         if(pathname[0]=='/')
          {
                 int i = lookup(vfs_root_vn,"/",1,&dir_vnode);
