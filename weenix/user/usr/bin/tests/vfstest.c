@@ -938,8 +938,8 @@ int vfstest_main(int argc, char **argv)
         syscall_success(chdir(".."));
      
         vfstest_term();
-
+        dbg(DBG_VFS,"\ndnjjdjdkdkdkdd\n");  
         test_fini();
-
+        dbg(DBG_VFS,"\nlllllllllllll\n");  
         return 0;
 }

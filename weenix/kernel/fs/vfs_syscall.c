@@ -388,7 +388,6 @@ do_mkdir(const char *path)
         if(i<0)
         {
 		dbg(DBG_ERROR | DBG_VFS,"ERROR: do_mkdir: Unable to resolve a component in the path\n");
-                vput(res_vnode);
 		return i;
         }
         if(strlen(name)>NAME_LEN)
@@ -425,10 +424,12 @@ do_mkdir(const char *path)
                         return -EEXIST;
                 }
         }
-        vput(res_vnode);
+        
         KASSERT(NULL!=res_vnode->vn_ops->mkdir);                
         i=(res_vnode->vn_ops->mkdir)(res_vnode,name,namelen);
+        vput(res_vnode);
         dbg(DBG_VFS,"INFO: The new directory is successfully made. Path=%s\n",path);
+        
         /*NOT_YET_IMPLEMENTED("VFS: do_mkdir");*/
         return i;
        
@@ -470,7 +471,6 @@ do_rmdir(const char *path)
         if(i<0)
         {
 		dbg(DBG_ERROR | DBG_VFS,"ERROR: do_rmdir: Error removing directory\n");
-                vput(res_vnode);
 		return i;
         }
         if(strlen(name)>NAME_LEN)
@@ -511,7 +511,6 @@ do_rmdir(const char *path)
                 if(j!=0)
                 {
 			dbg(DBG_ERROR | DBG_VFS,"ERROR: do_rmdir: Unable to resolve the final component in the path\n");
-                        vput(result);
         		vput(res_vnode);
 			return j;
                 }
@@ -562,7 +561,6 @@ do_unlink(const char *path)
         if(i<0)
         {
 		dbg(DBG_ERROR | DBG_VFS,"ERROR: do_unlink: Unable to resolve the path\n");
-                vput(res_vnode);
 		return i;
         }
         if(res_vnode==NULL)
@@ -603,7 +601,6 @@ do_unlink(const char *path)
                 if(j!=0)
                 {
 			dbg(DBG_ERROR | DBG_VFS,"ERROR: do_unlink: Lookup for final component in the path fails\n");
-                        vput(result);
         		vput(res_vnode);
 			return j;
                 }
@@ -964,7 +961,6 @@ do_stat(const char *path, struct stat *buf)
         int i=dir_namev(path, &namelen,&name,NULL,&res_vnode);
         if(i<0)
         {
-		vput(res_vnode);
                 return i;
         }
         if(strlen(name)>NAME_LEN)
