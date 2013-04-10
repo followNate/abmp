@@ -826,24 +826,19 @@ do_getdent(int fd, struct dirent *dirp)
                 return -ENOTDIR;
         }
         KASSERT(open_file->f_vnode->vn_ops->readdir);
-        int i=(open_file->f_vnode->vn_ops->readdir)(open_file->f_vnode,open_file->f_pos,dirp);
-        
-        if(i<0)
+        int i=0;
+        i=(open_file->f_vnode->vn_ops->readdir)(open_file->f_vnode,open_file->f_pos,dirp);
+        open_file->f_pos=open_file->f_pos+i;
+        if(i<=0)
         {
                  fput(open_file);
                  return i;
         }
-        else if(i==0)
-        {
-                open_file->f_pos=open_file->f_pos+i;
-                fput(open_file);
-                return i;
-        }
         else
         {
-                open_file->f_pos=open_file->f_pos+i;
+                
                 fput(open_file);
-                return sizeof(dirent_t);
+                return 0;
         }
         /*NOT_YET_IMPLEMENTED("VFS: do_getdent");*/
        
