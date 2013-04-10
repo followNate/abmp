@@ -45,7 +45,7 @@ do_read(int fd, void *buf, size_t nbytes)
         
         if(fd<0||fd>=NFILES||(curproc->p_files[fd]==NULL))
         {
-                dbg(DBG_ERROR | DBG_VFS,"ERROR: do_read: Not a valid file descriptor");
+                dbg(DBG_ERROR | DBG_VFS,"ERROR: do_read: Not a valid file descriptor\n");
 		return -EBADF;       
         }
         
@@ -55,14 +55,14 @@ do_read(int fd, void *buf, size_t nbytes)
        
         if(!((open_file->f_mode)  & FMODE_READ))
         {
-		dbg(DBG_ERROR | DBG_VFS,"ERROR: do_read: File is not meant for reading");
+		dbg(DBG_ERROR | DBG_VFS,"ERROR: do_read: File is not meant for reading\n");
                  fput(open_file);
                  return -EBADF;       
         }
                
         if(S_ISDIR(open_file->f_vnode->vn_mode))
         {
-		dbg(DBG_ERROR | DBG_VFS,"ERROR: do_read: File descriptor points to a Directory");
+		dbg(DBG_ERROR | DBG_VFS,"ERROR: do_read: File descriptor points to a Directory\n");
                 fput(open_file);
                 return -EISDIR;
         }
@@ -70,14 +70,15 @@ do_read(int fd, void *buf, size_t nbytes)
         int i=(open_file->f_vnode->vn_ops->read)(open_file->f_vnode,open_file->f_pos,buf,nbytes);
         if(i<0)
         {
-		dbg(DBG_ERROR | DBG_VFS,"ERROR: do_read: Error while the reading the file");
+		dbg(DBG_ERROR | DBG_VFS,"ERROR: do_read: Error while the reading the file\n");
                 fput(open_file);
                 return i;
         }
         
         open_file->f_pos=open_file->f_pos+i;
         fput(open_file);
-       /* NOT_YET_IMPLEMENTED("VFS: do_read");*/
+	dbg(DBG_VFS,"INFO: Successfully opens the file with fd=%d\n",fd);
+	 /* NOT_YET_IMPLEMENTED("VFS: do_read");*/
         return i;
 }
 
@@ -98,7 +99,7 @@ do_write(int fd, const void *buf, size_t nbytes)
         
         if(fd<0||fd>=NFILES||(curproc->p_files[fd]==NULL))
         {
-		dbg(DBG_ERROR | DBG_VFS, "ERROR: do_write: Invalid file descriptor");
+		dbg(DBG_ERROR | DBG_VFS, "ERROR: do_write: Invalid file descriptor\n");
                 return -EBADF;       
         }
         
@@ -108,7 +109,7 @@ do_write(int fd, const void *buf, size_t nbytes)
 
         if(!((open_file->f_mode) & FMODE_WRITE))
         {
-                dbg(DBG_ERROR | DBG_VFS,"ERROR: do_write: Invalid file descriptor"); 
+                dbg(DBG_ERROR | DBG_VFS,"ERROR: do_write: Invalid file descriptor\n"); 
 		fput(open_file);
                 return -EBADF;       
         }
@@ -118,7 +119,7 @@ do_write(int fd, const void *buf, size_t nbytes)
                 int j=do_lseek(fd,NULL,SEEK_END);
                 if(j<0)
                 {
-                        dbg(DBG_ERROR | DBG_VFS,"ERROR:do_write:  Unable to write file in APPEND mode"); 
+                        dbg(DBG_ERROR | DBG_VFS,"ERROR:do_write:  Unable to write file in APPEND mode\n"); 
 			fput(open_file);
                         return j;
                 }
@@ -127,7 +128,7 @@ do_write(int fd, const void *buf, size_t nbytes)
         int i=(open_file->f_vnode->vn_ops->write)(open_file->f_vnode,open_file->f_pos,buf,nbytes);
         if(i<0)
         {
-		dbg(DBG_ERROR | DBG_VFS,"ERROR: do_write: Unable to write to file");
+		dbg(DBG_ERROR | DBG_VFS,"ERROR: do_write: Unable to write to file\n");
                  fput(open_file);
                  return i;
         }else{
@@ -138,6 +139,7 @@ do_write(int fd, const void *buf, size_t nbytes)
         
         open_file->f_pos=open_file->f_pos+i;
         fput(open_file);
+	dbg(DBG_VFS,"INFO: INFO: Successfully performed write operation on the file with fd=%d\n",fd);
         /*NOT_YET_IMPLEMENTED("VFS: do_write");*/
         return i;
 }
@@ -156,7 +158,7 @@ do_close(int fd)
         
         if(fd<0||fd>=NFILES||(curproc->p_files[fd]==NULL))
         {
-		dbg(DBG_ERROR | DBG_VFS,"ERROR: do_close: Invalid file descriptor");
+		dbg(DBG_ERROR | DBG_VFS,"ERROR: do_close: Invalid file descriptor\n");
                 return -EBADF;       
         }
        
@@ -171,6 +173,7 @@ do_close(int fd)
         fput(open_file);
          
          /*NOT_YET_IMPLEMENTED("VFS: do_close");*/
+	dbg(DBG_VFS,"INFO: Successfully closes the file with fd=%d\n",fd);
         return 0;
 }
 
@@ -197,7 +200,7 @@ do_dup(int fd)
         
         if(fd<0||fd>=NFILES||(curproc->p_files[fd]==NULL))
         {
-		dbg(DBG_ERROR | DBG_VFS,"ERROR: do_dup: Invalid file descriptor");
+		dbg(DBG_ERROR | DBG_VFS,"ERROR: do_dup: Invalid file descriptor\n");
                 return -EBADF;       
         }
               
@@ -207,13 +210,14 @@ do_dup(int fd)
         int dup_fd=get_empty_fd(curproc);
         if(!dup_fd)
         {
-		dbg(DBG_ERROR | DBG_VFS,"ERROR: do_dup: Invalid duplicate file descriptor");
-               return dup_fd; 
+		dbg(DBG_ERROR | DBG_VFS,"ERROR: do_dup: Invalid duplicate file descriptor\n");
+		fput(open_file);
+                return -EMFILE; 
         }
         
         curproc->p_files[dup_fd]=open_file;
         
-        
+        dbg(DBG_VFS,"INFO: Successfully performed dup operation on file with fd=%d\n",fd);
         /*NOT_YET_IMPLEMENTED("VFS: do_dup");*/
         return dup_fd; 
 }
@@ -234,26 +238,32 @@ do_dup2(int ofd, int nfd)
         
         if(ofd<0||ofd>=NFILES||(curproc->p_files[ofd]==NULL))
         {
-		dbg(DBG_ERROR | DBG_VFS,"ERROR: do_dup2: Invalid old file descriptor");
+		dbg(DBG_ERROR | DBG_VFS,"ERROR: do_dup2: Invalid old file descriptor\n");
                 return -EBADF;       
         }
         if(nfd<0||nfd>=NFILES)
         {
-		dbg(DBG_ERROR | DBG_VFS,"ERROR: do_dup2: Invalid new file descriptor");
+		dbg(DBG_ERROR | DBG_VFS,"ERROR: do_dup2: Invalid new file descriptor\n");
                 return -EBADF;       
         }
-        KASSERT(ofd!=nfd);   
+        if(ofd!=nfd)   
+        {
         if(curproc->p_files[nfd]!=NULL)
         {
-		dbg(DBG_VFS, "INFO: do_dup2: New file descriptor is already in use.. calling do_close");
-                do_close(nfd);
+		dbg(DBG_VFS, "INFO: do_dup2: New file descriptor is already in use.. calling do_close\n");
+                int j=do_close(nfd);
+                if (j <0)
+                {
+                        return j;
+                }               
         }
                  
         file_t *open_file=fget(ofd);
         KASSERT(open_file!=NULL);
         
         curproc->p_files[nfd]=open_file;
-        
+        }
+	dbg(DBG_VFS,"INFO: Successfully performed dup2 operation on the files with old fd=%d and new fd=%d\n",ofd,nfd);
         /*NOT_YET_IMPLEMENTED("VFS: do_dup2");*/
         return nfd;
 }
@@ -286,14 +296,14 @@ do_dup2(int ofd, int nfd)
 int
 do_mknod(const char *path, int mode, unsigned devid)
 {
-	if(strlen(path)>NAME_LEN){
-		dbg(DBG_ERROR | DBG_VFS,"ERROR: do_mknod: File path is too long");
+	if(strlen(path)>MAXPATHLEN){
+		dbg(DBG_ERROR | DBG_VFS,"ERROR: do_mknod: File path is too long\n");
 		return -ENAMETOOLONG;
 	}
 
-        if(mode!=S_IFCHR&&mode!=S_IFCHR)
+        if(mode!=S_IFCHR&&mode!=S_IFBLK)
         {	
-		dbg(DBG_ERROR | DBG_VFS, "ERROR: do_mknod: Invalid mode used for creating device special file");
+		dbg(DBG_ERROR | DBG_VFS, "ERROR: do_mknod: Invalid mode used for creating device special file\n");
                 return -EINVAL;
         }
         size_t namelen=0;
@@ -303,19 +313,25 @@ do_mknod(const char *path, int mode, unsigned devid)
         int i=dir_namev(path, &namelen,&name,NULL,&res_vnode);
         if(i<0)
         {
-		dbg(DBG_ERROR | DBG_VFS,"ERROR: do_mknod: Unable to resolve the file path");
+		dbg(DBG_ERROR | DBG_VFS,"ERROR: do_mknod: Unable to resolve the file path\n");
                 return i;
-        }
+        } 
+        if(strlen(name)>NAME_LEN)
+        {
+		dbg(DBG_ERROR | DBG_VFS, "ERROR: do_mkdir: A component of name was too long\n");
+		vput(res_vnode);
+		return -ENAMETOOLONG;
+	}
         if(res_vnode==NULL)
         {
-		dbg(DBG_ERROR | DBG_VFS,"ERROR: do_mknod: Directory component in path doesn't exist");
+		dbg(DBG_ERROR | DBG_VFS,"ERROR: do_mknod: Directory component in path doesn't exist\n");
                 return -ENOENT;
         }
         else 
         {
                 if(!S_ISDIR(res_vnode->vn_mode))
                 {
-			dbg(DBG_ERROR | DBG_VFS,"ERROR: do_mknod: A component in the path is not a directory");
+			dbg(DBG_ERROR | DBG_VFS,"ERROR: do_mknod: A component in the path is not a directory\n");
                         vput(res_vnode);
                         return -ENOTDIR;
                 }
@@ -327,14 +343,16 @@ do_mknod(const char *path, int mode, unsigned devid)
                          
                 if(j==0)
                 {
-			dbg(DBG_ERROR | DBG_VFS, "ERROR: do_mknod: Path already exists");
+			dbg(DBG_ERROR | DBG_VFS, "ERROR: do_mknod: Path already exists\n");
                         vput(res_vnode);
                         vput(result);
                         return -EEXIST;
                 }
         }
+        vput(res_vnode);
         KASSERT(NULL!=res_vnode->vn_ops->mknod);
         i=(res_vnode->vn_ops->mknod)(res_vnode,name,namelen,mode,devid);
+        dbg(DBG_VFS,"INFO: Making Device node successful. Path=%s, mode=%d, devid=%u\n",path,mode,devid);
          /*  NOT_YET_IMPLEMENTED("VFS: do_mknod");*/
         return i;
 }
@@ -356,9 +374,9 @@ do_mknod(const char *path, int mode, unsigned devid)
 int
 do_mkdir(const char *path)
 {
-	if(strlen(path)>NAME_LEN){
-		dbg(DBG_ERROR | DBG_VFS, "ERROR: do_mkdir: A component of path was too long");
-		return ENAMETOOLONG;
+	if(strlen(path)>MAXPATHLEN){
+		dbg(DBG_ERROR | DBG_VFS, "ERROR: do_mkdir: A component of path was too long\n");
+		return -ENAMETOOLONG;
 	}
 	
         size_t namelen=0;
@@ -369,19 +387,26 @@ do_mkdir(const char *path)
         int i=dir_namev(path, &namelen,&name,NULL,&res_vnode);
         if(i<0)
         {
-		dbg(DBG_ERROR | DBG_VFS,"ERROR: do_mkdir: Unable to resolve a component in the path");
-                return i;
+		dbg(DBG_ERROR | DBG_VFS,"ERROR: do_mkdir: Unable to resolve a component in the path\n");
+		return i;
         }
-        if(res_vnode==NULL)
+        if(strlen(name)>NAME_LEN)
         {
-		dbg(DBG_ERROR | DBG_VFS,"ERROR: do_mkdir: A directory path component is missing");
+		dbg(DBG_ERROR | DBG_VFS, "ERROR: do_mkdir: A component of name was too long\n");
+		vput(res_vnode);
+		return -ENAMETOOLONG;
+	}
+	
+	if(res_vnode==NULL)
+        {
+		dbg(DBG_ERROR | DBG_VFS,"ERROR: do_mkdir: A directory path component is missing\n");
                 return -ENOENT;
         }
         else 
         {
                 if(!S_ISDIR(res_vnode->vn_mode))
                 {
-			dbg(DBG_ERROR | DBG_VFS, "ERROR: do_mkdir: A component is not the path not directory");
+			dbg(DBG_ERROR | DBG_VFS, "ERROR: do_mkdir: A component is not the path not directory\n");
                         vput(res_vnode);
                         return -ENOTDIR;
                 }
@@ -393,14 +418,17 @@ do_mkdir(const char *path)
                          
                 if(j==0)
                 {
-			dbg(DBG_ERROR | DBG_VFS, "ERROR: do_mkdir: Path already exists");
+			dbg(DBG_ERROR | DBG_VFS, "ERROR: do_mkdir: Path already exists\n");
                         vput(res_vnode);
                         vput(result);
                         return -EEXIST;
                 }
         }
+        
         KASSERT(NULL!=res_vnode->vn_ops->mkdir);                
         i=(res_vnode->vn_ops->mkdir)(res_vnode,name,namelen);
+        vput(res_vnode);
+        dbg(DBG_VFS,"INFO: The new directory is successfully made. Path=%s\n",path);
         
         /*NOT_YET_IMPLEMENTED("VFS: do_mkdir");*/
         return i;
@@ -429,8 +457,8 @@ do_mkdir(const char *path)
 int
 do_rmdir(const char *path)
 {
-	if(strlen(path)>NAME_LEN){
-		dbg(DBG_ERROR | DBG_VFS,"ERROR: do_rmdir: Path component is too long");
+	if(strlen(path)>MAXPATHLEN){
+		dbg(DBG_ERROR | DBG_VFS,"ERROR: do_rmdir: Path component is too long\n");
 		return -ENAMETOOLONG;
 	}
 	
@@ -442,32 +470,38 @@ do_rmdir(const char *path)
         int i=dir_namev(path, &namelen,&name,NULL,&res_vnode);
         if(i<0)
         {
-		dbg(DBG_ERROR | DBG_VFS,"ERROR: do_rmdir: Error removing directory");
-                return i;
+		dbg(DBG_ERROR | DBG_VFS,"ERROR: do_rmdir: Error removing directory\n");
+		return i;
         }
-        if(res_vnode==NULL)
+        if(strlen(name)>NAME_LEN)
         {
-		dbg(DBG_ERROR | DBG_VFS,"ERROR: do_rmdir: A directory component in the path doesn't exist");
+		dbg(DBG_ERROR | DBG_VFS, "ERROR: do_mkdir: A component of name was too long\n");
+		vput(res_vnode);
+		return -ENAMETOOLONG;
+	}
+	if(res_vnode==NULL)
+        {
+		dbg(DBG_ERROR | DBG_VFS,"ERROR: do_rmdir: A directory component in the path doesn't exist\n");
                 return -ENOENT;
         }
         else 
         {
                 if(!S_ISDIR(res_vnode->vn_mode))
                 {
-			dbg(DBG_ERROR | DBG_VFS,"ERROR: do_rmdir: A component in path is not directory");
+			dbg(DBG_ERROR | DBG_VFS,"ERROR: do_rmdir: A component in path is not directory\n");
                         vput(res_vnode);
                         return -ENOTDIR;
                 }
         }     
         if(strcmp(name,".")==0)
         {
-		dbg(DBG_ERROR | DBG_VFS,"ERROR: do_rmdir: Path has \'.\'as final component");
+		dbg(DBG_ERROR | DBG_VFS,"ERROR: do_rmdir: Path has \'.\'as final component\n");
                 vput(res_vnode);
                 return -EINVAL;
         }
         if(strcmp(name,"..")==0)
         {
-		dbg(DBG_ERROR | DBG_VFS,"ERROR: do_rmdir: Path had \'..\' as final component");
+		dbg(DBG_ERROR | DBG_VFS,"ERROR: do_rmdir: Path had \'..\' as final component\n");
                 vput(res_vnode);
                 return -ENOTEMPTY;
         }
@@ -476,13 +510,14 @@ do_rmdir(const char *path)
                 int j=lookup(res_vnode,name,namelen,&result);     
                 if(j!=0)
                 {
-			dbg(DBG_ERROR | DBG_VFS,"ERROR: do_rmdir: Unable to resolve the final component in the path");
-                        return j;
+			dbg(DBG_ERROR | DBG_VFS,"ERROR: do_rmdir: Unable to resolve the final component in the path\n");
+        		vput(res_vnode);
+			return j;
                 }
         }
         if(result==NULL)
         {
-		dbg(DBG_ERROR | DBG_VFS, "ERROR: do_rmdir: Directory component of path doesn't exist");
+		dbg(DBG_ERROR | DBG_VFS, "ERROR: do_rmdir: Directory component of path doesn't exist\n");
                 vput(res_vnode);
                 return -ENOENT;
         }
@@ -491,6 +526,7 @@ do_rmdir(const char *path)
         i=(res_vnode->vn_ops->rmdir)(res_vnode,name,namelen);
         vput(result);
         vput(res_vnode);
+        dbg(DBG_VFS,"INFO: Directory remove successful. Path=%s\n",path);
         /*NOT_YET_IMPLEMENTED("VFS: do_rmdir");*/
         return i;
 }
@@ -511,8 +547,8 @@ do_rmdir(const char *path)
 int
 do_unlink(const char *path)
 {
-       if(strlen(path)>NAME_LEN){
-		dbg(DBG_ERROR | DBG_VFS,"ERROR: do_unlink: Path is too long");
+       if(strlen(path)>MAXPATHLEN){
+		dbg(DBG_ERROR | DBG_VFS,"ERROR: do_unlink: Path is too long\n");
 		return -ENAMETOOLONG;
 	}
 	
@@ -524,24 +560,30 @@ do_unlink(const char *path)
         int i=dir_namev(path, &namelen,&name,NULL,&res_vnode);
         if(i<0)
         {
-		dbg(DBG_ERROR | DBG_VFS,"ERROR: do_unlink: Unable to resolve the path");
-                return i;
+		dbg(DBG_ERROR | DBG_VFS,"ERROR: do_unlink: Unable to resolve the path\n");
+		return i;
         }
         if(res_vnode==NULL)
         {
-		dbg(DBG_ERROR | DBG_VFS,"ERROR: do_unlink: A component in path doesn't exist");
+		dbg(DBG_ERROR | DBG_VFS,"ERROR: do_unlink: A component in path doesn't exist\n");
                 return -ENOENT;
         }
         else 
         {
                 if(!S_ISDIR(res_vnode->vn_mode))
                 {
-			dbg(DBG_ERROR | DBG_VFS,"ERROR: do_unlink: A component in the path is not directory");
+			dbg(DBG_ERROR | DBG_VFS,"ERROR: do_unlink: A component in the path is not directory\n");
                         vput(res_vnode);
                         return -ENOTDIR;
                 }
-        }     
-        if(strcmp(name,".")==0)
+        }
+        if(strlen(name)>NAME_LEN)
+        {
+		dbg(DBG_ERROR | DBG_VFS, "ERROR: do_mkdir: A component of name was too long\n");
+		vput(res_vnode);
+		return -ENAMETOOLONG;
+	}     
+        /*if(strcmp(name,".")==0)
         {
 		dbg(DBG_ERROR | DBG_VFS,"ERROR: do_unlink: The final component in the path is \'.\'");
                 vput(res_vnode);
@@ -552,26 +594,27 @@ do_unlink(const char *path)
 		dbg(DBG_ERROR | DBG_VFS,"EEROR: do_unlink: The final component in the path is \'..\'");
                 vput(res_vnode);
                 return -ENOTEMPTY;
-        }
+        }*/
         if(name!=NULL)
         {
                 int j=lookup(res_vnode,name,namelen,&result);     
                 if(j!=0)
                 {
-			dbg(DBG_ERROR | DBG_VFS,"ERROR: do_unlink: Lookup for final component in the path fails");
-                        return j;
+			dbg(DBG_ERROR | DBG_VFS,"ERROR: do_unlink: Lookup for final component in the path fails\n");
+        		vput(res_vnode);
+			return j;
                 }
         }
         if(result==NULL)
         {
-		dbg(DBG_ERROR | DBG_VFS,"ERROR: do_unlink: Component in the path doesn't exist");
+		dbg(DBG_ERROR | DBG_VFS,"ERROR: do_unlink: Component in the path doesn't exist\n");
                 vput(res_vnode);
                 return -ENOENT;
         }
         
         if(S_ISDIR(result->vn_mode))
         {
-		dbg(DBG_ERROR | DBG_VFS,"ERROR: do_unlink: Path refers to a directory");
+		dbg(DBG_ERROR | DBG_VFS,"ERROR: do_unlink: Path refers to a directory\n");
                 vput(res_vnode);
                 vput(result);
                 return -EISDIR;
@@ -582,6 +625,7 @@ do_unlink(const char *path)
         i=(res_vnode->vn_ops->unlink)(res_vnode,name,namelen);
         vput(res_vnode);
         vput(result);
+        dbg(DBG_VFS,"INFO: Unlink successful. Path=%s\n",path);
        /* NOT_YET_IMPLEMENTED("VFS: do_unlink");*/
         return i;
 }
@@ -610,8 +654,8 @@ do_unlink(const char *path)
 int
 do_link(const char *from, const char *to)
 {
-	if(strlen(from)>NAME_LEN){
-		dbg(DBG_ERROR | DBG_VFS,"ERROR: do_link: Path name is too long");
+	if(strlen(from)>MAXPATHLEN){
+		dbg(DBG_ERROR | DBG_VFS,"ERROR: do_link: Path name is too long\n");
 		return -ENAMETOOLONG;
 	}
 	
@@ -637,10 +681,16 @@ do_link(const char *from, const char *to)
                         vput(node2);
                 return j;
         }
-      
+        if(strlen(name)>NAME_LEN)
+        {
+		dbg(DBG_ERROR | DBG_VFS, "ERROR: do_mkdir: A component of name was too long\n");
+		vput(node1);
+                vput(node2);
+		return -ENAMETOOLONG;
+	}
         if(node1==NULL||node2==NULL)
         {
-                dbg(DBG_ERROR | DBG_VFS,"ERROR: do_link: A directory component in the path of either \'to\' or \'from\' doesn't exist");
+                dbg(DBG_ERROR | DBG_VFS,"ERROR: do_link: A directory component in the path of either \'to\' or \'from\' doesn't exist\n");
 		return -ENOENT;
         }
         else 
@@ -648,9 +698,7 @@ do_link(const char *from, const char *to)
 
                 if((!S_ISDIR(node2->vn_mode))||(!S_ISDIR(node1->vn_mode)))
                 {
-                        vput(node1);
-                        vput(node2);
-			dbg(DBG_ERROR | DBG_VFS,"ERROR: do_link: A component in the path of either \'to\' or \'from\' is not directory");
+                       dbg(DBG_ERROR | DBG_VFS,"ERROR: do_link: A component in the path of either \'to\' or \'from\' is not directory\n");
                         return -ENOTDIR;
                 }
         }     
@@ -663,7 +711,7 @@ do_link(const char *from, const char *to)
                         vput(node1);
                         vput(node2);
                         vput(result);
-			dbg(DBG_ERROR | DBG_VFS,"ERROR: do_link: Either \'to\' or \'from\' path already exist");
+			dbg(DBG_ERROR | DBG_VFS,"ERROR: do_link: Either \'to\' or \'from\' path already exist\n");
                         return -EEXIST;
                 }
         }
@@ -671,6 +719,7 @@ do_link(const char *from, const char *to)
         i=(node2->vn_ops->link)(node1,node2,name,namelen);
         vput(node1);
         vput(node2);
+        dbg(DBG_VFS,"INFO: Linking successful. From:%s To:%s\n",from,to);
        /* NOT_YET_IMPLEMENTED("VFS: do_link");*/
         return i;
 }
@@ -692,7 +741,7 @@ do_rename(const char *oldname, const char *newname)
         if(i<0)
                 return i;
         int j=do_unlink(oldname);
-         
+        dbg(DBG_VFS,"INFO: Rename Successful. oldname:%s newname:%s\n",oldname,newname);
         /*NOT_YET_IMPLEMENTED("VFS: do_rename");*/
         return j;
 }
@@ -714,8 +763,8 @@ do_rename(const char *oldname, const char *newname)
 int
 do_chdir(const char *path)
 {
-	if(strlen(path)>NAME_LEN){
-		dbg(DBG_ERROR | DBG_VFS,"ERROR: do_chdir: Path name is too long");
+	if(strlen(path)>MAXPATHLEN){
+		dbg(DBG_ERROR | DBG_VFS,"ERROR: do_chdir: Path name is too long\n");
 		return -ENAMETOOLONG;
 	}
 
@@ -724,25 +773,26 @@ do_chdir(const char *path)
         int j=open_namev(path,NULL,&res_vnode,NULL);
         if(j<0)
         {
-		dbg(DBG_ERROR | DBG_VFS,"ERROR: do_chdir: Unable to change the directory");
+		dbg(DBG_ERROR | DBG_VFS,"ERROR: do_chdir: Unable to change the directory\n");
                 return j;
         }
         if(res_vnode==NULL)
         {
-		dbg(DBG_ERROR | DBG_VFS,"ERROR: do_chdir: Path Doesn't exist");
+		dbg(DBG_ERROR | DBG_VFS,"ERROR: do_chdir: Path Doesn't exist\n");
                 return -ENOENT;
         }
         else 
         {
                 if(!S_ISDIR(res_vnode->vn_mode))
                 {
-			dbg(DBG_ERROR | DBG_VFS,"ERROR: do_chdir: A component of path is not a directory");
+			dbg(DBG_ERROR | DBG_VFS,"ERROR: do_chdir: A component of path is not a directory\n");
                         vput(res_vnode);
                         return -ENOTDIR;
                 }
         }    
         vput(curproc->p_cwd);
         curproc->p_cwd=res_vnode;
+        dbg(DBG_VFS,"INFO: Current directory is successfully changed. Path:%s\n",path);
         /*NOT_YET_IMPLEMENTED("VFS: do_chdir");*/
         return 0;
 }
@@ -770,7 +820,7 @@ do_getdent(int fd, struct dirent *dirp)
         KASSERT(dirp!=NULL);
         if(fd<0||fd>=NFILES||(curproc->p_files[fd]==NULL))
         {
-		dbg(DBG_ERROR | DBG_VFS,"ERROR: do_getdent: Invalid file descriptor fd");
+		dbg(DBG_ERROR | DBG_VFS,"ERROR: do_getdent: Invalid file descriptor fd\n");
                 return -EBADF;       
         }
         file_t *open_file=fget(fd);
@@ -779,31 +829,27 @@ do_getdent(int fd, struct dirent *dirp)
           
         if(!S_ISDIR(open_file->f_vnode->vn_mode))
         {
-		dbg(DBG_ERROR | DBG_VFS,"ERROR: do_getdent: File descriptor doesn't refer to a directory");
+		dbg(DBG_ERROR | DBG_VFS,"ERROR: do_getdent: File descriptor doesn't refer to a directory\n");
                 fput(open_file);
                 return -ENOTDIR;
         }
         KASSERT(open_file->f_vnode->vn_ops->readdir);
-        int i=(open_file->f_vnode->vn_ops->readdir)(open_file->f_vnode,open_file->f_pos,dirp);
-        
-        if(i<0)
+        int i=0;
+        i=(open_file->f_vnode->vn_ops->readdir)(open_file->f_vnode,open_file->f_pos,dirp);
+        open_file->f_pos=open_file->f_pos+i;
+        if(i<=0)
         {
                  fput(open_file);
                  return i;
         }
-        else if(i==0)
-        {
-                open_file->f_pos=open_file->f_pos+i;
-                fput(open_file);return i;
-        }
         else
         {
-                open_file->f_pos=open_file->f_pos+i;
+                
                 fput(open_file);
-                return sizeof(dirent_t);
+                return 0;
         }
         /*NOT_YET_IMPLEMENTED("VFS: do_getdent");*/
-       
+       dbg(DBG_VFS,"INFO: Successfully performed getdent operation on file with fd=%d\n",fd);
 }
 
 /*
@@ -824,12 +870,12 @@ do_lseek(int fd, int offset, int whence)
         off_t i=0;
         if(fd<0||fd>=NFILES||(curproc->p_files[fd]==NULL))
         {
-		dbg(DBG_ERROR | DBG_VFS,"ERROR: do_lseek: fd is not an open file descriptor");
+		dbg(DBG_ERROR | DBG_VFS,"ERROR: do_lseek: fd is not an open file descriptor\n");
                 return -EBADF;       
         }
         if((whence!=SEEK_SET)&&(whence!=SEEK_CUR)&&(whence!=SEEK_END))
         {
-		dbg(DBG_ERROR | DBG_VFS,"ERROR: do_lseek: \'whence\' is not SEEK_SET|SEEK_CUR|SEEK_END");
+		dbg(DBG_ERROR | DBG_VFS,"ERROR: do_lseek: \'whence\' is not SEEK_SET|SEEK_CUR|SEEK_END\n");
                 return -EINVAL;       
         }
         file_t *open_file=fget(fd);
@@ -842,7 +888,7 @@ do_lseek(int fd, int offset, int whence)
                 if(offset<0)
                 {
                         fput(open_file);
-			dbg(DBG_ERROR | DBG_VFS,"ERROR: do_lseek: File offset is negative");
+			dbg(DBG_ERROR | DBG_VFS,"ERROR: do_lseek: File offset is negative\n");
                         return -EINVAL;
                 }
                 else
@@ -857,7 +903,7 @@ do_lseek(int fd, int offset, int whence)
                 if(open_file->f_pos+offset<0)
                 {
                         fput(open_file);
-			dbg(DBG_ERROR | DBG_VFS,"ERROR: do_lseek: File offset is negative");
+			dbg(DBG_ERROR | DBG_VFS,"ERROR: do_lseek: File offset is negative\n");
                         return -EINVAL;
                 } 
                 else
@@ -872,7 +918,7 @@ do_lseek(int fd, int offset, int whence)
                 if(open_file->f_vnode->vn_len+offset<0)
                 {
                         fput(open_file);
-			dbg(DBG_ERROR | DBG_VFS,"ERROR: do_lseek: File offset is negative");
+			dbg(DBG_ERROR | DBG_VFS,"ERROR: do_lseek: File offset is negative\n");
                         return -EINVAL;
                 }      
                 else
@@ -883,6 +929,7 @@ do_lseek(int fd, int offset, int whence)
                 }
         }
         /*NOT_YET_IMPLEMENTED("VFS: do_lseek");*/
+	dbg(DBG_VFS,"INFO: Successfully performed seek operation on file with fd=%d, offset%d and whence=%d\n",fd,offset,whence);
         return i;
 }
 
@@ -900,8 +947,8 @@ do_lseek(int fd, int offset, int whence)
 int
 do_stat(const char *path, struct stat *buf)
 {
-	if(strlen(path)>NAME_LEN){
-		dbg(DBG_ERROR | DBG_VFS,"ERROR: do_stat: A component of path is too long");
+	if(strlen(path)>MAXPATHLEN){
+		dbg(DBG_ERROR | DBG_VFS,"ERROR: do_stat: A component of path is too long\n");
 		return -ENAMETOOLONG;
 	}
 
@@ -916,9 +963,15 @@ do_stat(const char *path, struct stat *buf)
         {
                 return i;
         }
-        if(res_vnode==NULL)
+        if(strlen(name)>NAME_LEN)
         {
-		dbg(DBG_ERROR | DBG_VFS,"ERROR: do_stat: A component of path doesn't exist");
+		dbg(DBG_ERROR | DBG_VFS, "ERROR: do_mkdir: A component of name was too long\n");
+		vput(res_vnode);
+		return -ENAMETOOLONG;
+	}
+	if(res_vnode==NULL)
+        {
+		dbg(DBG_ERROR | DBG_VFS,"ERROR: do_stat: A component of path doesn't exist\n");
                 return -ENOENT;
         }
         else 
@@ -926,11 +979,11 @@ do_stat(const char *path, struct stat *buf)
                 if(!S_ISDIR(res_vnode->vn_mode))
                 {
                         vput(res_vnode);
-			dbg(DBG_ERROR | DBG_VFS,"ERROR: do_stat: A component of the path prefix of path is not directory");
+			dbg(DBG_ERROR | DBG_VFS,"ERROR: do_stat: A component of the path prefix of path is not directory\n");
                         return -ENOTDIR;
                 }
         }     
-        if(strcmp(name,".")==0)
+        /*if(strcmp(name,".")==0)
         {
 		dbg(DBG_ERROR | DBG_VFS,"ERROR: do_stat: final component of path is \'.\'");
                 vput(res_vnode);
@@ -941,30 +994,32 @@ do_stat(const char *path, struct stat *buf)
 		dbg(DBG_ERROR | DBG_VFS,"ERROR: do_stat: final component of path is \'..\'");
                 vput(res_vnode);
                 return -ENOTEMPTY;
-        }
+        }*/
         if(name!=NULL)
         {
                 int j=lookup(res_vnode,name,namelen,&result);     
                 if(j!=0)
                 {
-			dbg(DBG_ERROR | DBG_VFS,"ERROR: do_stat: Lookup for the final component of path fails");
+			vput(res_vnode);
+			dbg(DBG_ERROR | DBG_VFS,"ERROR: do_stat: Lookup for the final component of path fails\n");
                         return j;
                 }
         }
         if(result==NULL)
         {
                 vput(res_vnode);
-		dbg(DBG_ERROR | DBG_VFS,"ERROR: do_stat: A component of path doesn't exist");
+		dbg(DBG_ERROR | DBG_VFS,"ERROR: do_stat: A component of path doesn't exist\n");
                 return -ENOENT;
         }
         
         KASSERT(res_vnode->vn_ops->stat); 
-        i=(res_vnode->vn_ops->stat)(res_vnode,buf);
+        i=(res_vnode->vn_ops->stat)(result,buf);
         
         vput(res_vnode);
         vput(result);
         
         /*NOT_YET_IMPLEMENTED("VFS: do_stat");*/
+	dbg(DBG_VFS,"INFO: Successfully found the associated nodes with the path:%s\n",path);
         return i;
 }
 

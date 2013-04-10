@@ -54,7 +54,7 @@
 #define TEST_9 9        /*  kshell testing */
 #define TEST_10 10      /*  Deadlock check when same thread again trying to lock the same mutex */
 #define TEST_11 11
-static int curtest = TEST_9;
+static int curtest = TEST_11;
 
 GDB_DEFINE_HOOK(boot)
 GDB_DEFINE_HOOK(initialized)
@@ -180,6 +180,13 @@ static void *idleproc_run(int arg1, void *arg2)
         initthr->kt_proc->p_cwd=vfs_root_vn;
         vref(vfs_root_vn);
         vref(vfs_root_vn);
+        KASSERT(do_mkdir("/dev") == 0);
+        KASSERT(do_mknod("/dev/null", S_IFCHR, MKDEVID(1, 0)) == 0);
+        KASSERT(do_mknod("/dev/zero", S_IFCHR, MKDEVID(1, 1)) == 0);
+        KASSERT(do_mknod("/dev/tty0", S_IFCHR, MKDEVID(2, 0)) == 0);
+        KASSERT(do_mknod("/dev/tty1", S_IFCHR, MKDEVID(2, 1)) == 0);
+        KASSERT(do_mknod("/dev/tty2", S_IFCHR, MKDEVID(2, 3)) == 0);
+
         /* Once you have VFS remember to set the current working directory
          * of the idle and init processes */
 
@@ -278,7 +285,7 @@ void producer_consumer();
 void reader_writer();
 void dead_own();
 void shellTest();
-
+void vfs_test_setup();
 
 kmutex_t m1;
 kmutex_t m2;
@@ -306,6 +313,7 @@ static void *initproc_run(int arg1, void *arg2)
 		case 8: reader_writer();break;
 		case 9: shellTest();break;
 		case 10: dead_own(); break;
+		case 11: vfs_test_setup(); break;
 		
 	}
                 
@@ -318,20 +326,14 @@ static void *initproc_run(int arg1, void *arg2)
         
         return NULL;
 }
-/*
+extern int vfstest_main(int argc, void *argv);
 void vfs_test_setup()
 {
-	processSetUp();
-	shellTest();
-	kshell_add_command("adi",a, "display a line of text");
+ 	proc_t* proc_vfs = proc_create("vfs_test");
+        kthread_t *thread_vfs = kthread_create(proc_vfs, (kthread_func_t)vfstest_main, 1, NULL);
+        sched_make_runnable(thread_vfs);
 }
-
-kshell_cmd_func_t a(kshell_t *ksh, int argc, char **argv)
-{
-	 dbg_print("Process cleaned successfully\n");
-	 return 0;
-}
-*/
+ 
 
 /* PROCESS AND THREAD TESTING CASES */
 void *init_child10(int arg1,void *arg2) 
@@ -474,17 +476,21 @@ void shellTest()
 { 
         proc_t* new_shell = proc_create("kshell");
         kthread_t *new_shell_thread = kthread_create(new_shell,kshell_test, NULL, NULL);
+        dbg_print("\nsd");
         sched_make_runnable(new_shell_thread);     
 }
 
 void *kshell_test(int a, void *b)
 {
+    
     kshell_t *new_shell;
     int i;
     while (1)
     {
         new_shell = kshell_create(0);
+        dbg_print("\nff");
         i = kshell_execute_next(new_shell);
+        dbg_print("\nff");
         if(i>0){dbg(DBG_TERM,"Error Executing the command\n");}
         kshell_destroy(new_shell);
         if(i==0){break;}
