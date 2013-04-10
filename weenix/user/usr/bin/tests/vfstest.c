@@ -350,22 +350,29 @@ vfstest_paths(void)
         syscall_success(mkdir(PATHS_TEST_DIR, 0777));
         syscall_success(chdir(PATHS_TEST_DIR));
 
+  
         syscall_fail(stat("", &s), EINVAL);
 
         paths_equal(".", ".");
         paths_equal("1/2/3", "1/2/3");
         paths_equal("4/5/6", "4/5/6");
 
+ 
         /* root directory */
         paths_equal("/", "/");
-        paths_equal("/", "/..");
+           
+  paths_equal("/", "/..");
+ 
         paths_equal("/", "/../");
-        paths_equal("/", "/../.");
+         
+    
+   paths_equal("/", "/../.");
 
         /* . and .. */
         paths_equal(".", "./.");
         paths_equal(".", "1/..");
         paths_equal(".", "1/../");
+        
         paths_equal(".", "1/2/../..");
         paths_equal(".", "1/2/../..");
         paths_equal(".", "1/2/3/../../..");
@@ -623,6 +630,7 @@ vfstest_read(void)
         test_assert(5 == ret, "write(%d, \"hello\", 5) returned %d", fd, ret);
         syscall_success(ret = lseek(fd, 0, SEEK_SET));
         test_assert(0 == ret, "lseek(%d, 0, SEEK_SET) returned %d", fd, ret);
+
         read_fd(fd, READ_BUFSIZE, "hello");
         syscall_success(close(fd));
 
@@ -911,21 +919,32 @@ int vfstest_main(int argc, char **argv)
         syscall_success(chdir(root_dir));
 
 	vfstest_stat();
+ 
         dbg_print("\n%d\n",++i);
+ 
         vfstest_chdir();
+
         dbg_print("\n%d\n",++i);
         vfstest_mkdir();
+
+
         dbg_print("\n%d\n",++i);
-        /*vfstest_paths();
-        dbg_print("\n%d\n",++i);*/
+
+        vfstest_paths();
+   
+        dbg_print("\n%d\n",++i);
+         
         vfstest_fd();
+     test_fini();
         dbg_print("\n%d\n",++i);
         vfstest_open();
+     test_fini();
         dbg_print("\n%d\n",++i);
        
         vfstest_read();
         dbg_print("\n%d\n",++i);
-        
+         test_fini();
+  KASSERT(0);
         vfstest_getdents();
         dbg_print("\n%d\n",++i);
 	test_fini();
@@ -936,9 +955,9 @@ int vfstest_main(int argc, char **argv)
 #endif
 
        /* vfstest_infinite();*/
-
+ test_fini();
         syscall_success(chdir(".."));
-     
+ 
         vfstest_term();
         dbg(DBG_VFS,"\ndnjjdjdkdkdkdd\n");  
         /*test_fini();*/
