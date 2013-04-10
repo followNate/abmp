@@ -99,11 +99,12 @@ getdent(const char *dir, dirent_t *dirent)
                         return -1;
                 }
                 if (0 != strcmp(".", dirent->d_name) && 0 != strcmp("..", dirent->d_name)) {
-                        close(fd);
+                        dbg(DBG_TEST,"Mohit: inside getdent(.,%s), Just before closing the file= %d\n",dirent->d_name,fd);
+			close(fd);
                         return 1;
                 }
         }
-
+	
         close(fd);
         return 0;
 }
@@ -111,6 +112,7 @@ getdent(const char *dir, dirent_t *dirent)
 static int
 removeall(const char *dir)
 {
+	dbg(DBG_TEST,"Mohit: inside removeall(%s)\n",dir);
         int ret, fd = -1;
         dirent_t dirent;
         struct stat status;
@@ -124,13 +126,15 @@ removeall(const char *dir)
                 if (0 > (ret = getdent(".", &dirent))) {
                         goto error;
                 }
+		dbg(DBG_TEST,"Mohit: after calling getdent(.,%s)\n",dirent.d_name);
                 if (0 == ret) {
                         break;
                 }
 
                 if (0 > stat(dirent.d_name, &status)) {
                         goto error;
-                }
+		}
+		dbg(DBG_TEST,"Mohit: after calling stat(%s,status)\n",dirent.d_name);
 
                 if (S_ISDIR(status.st_mode)) {
                         if (0 > removeall(dirent.d_name)) {
@@ -140,6 +144,7 @@ removeall(const char *dir)
                         if (0 > unlink(dirent.d_name)) {
                                 goto error;
                         }
+			dbg(DBG_TEST,"Mohit: after calling unlink(%s)\n",dirent.d_name);
                 }
         }
 
@@ -170,7 +175,7 @@ vfstest_start(void)
         root_dir[0] = '\0';
         do {
                 sprintf(root_dir, "vfstest-%d", rand());
-                err = mkdir(root_dir, 0777);
+		err = mkdir(root_dir, 0777);
         } while (err != 0);
         printf("Created test root directory: ./%s\n", root_dir);
 }
@@ -900,7 +905,7 @@ int main(int argc, char **argv)
 int vfstest_main(int argc, char **argv)
 #endif
 {
-        if (argc != 1) {
+       if (argc != 1) {
                 fprintf(stderr, "USAGE: vfstest\n");
                 return 1;
         }
@@ -910,9 +915,9 @@ int vfstest_main(int argc, char **argv)
 
         syscall_success(chdir(root_dir));
 
-        vfstest_stat();
+	vfstest_stat();
         dbg_print("\n%d\n",++i);
-        vfstest_chdir();
+        /*vfstest_chdir();
         dbg_print("\n%d\n",++i);
         vfstest_mkdir();
         dbg_print("\n%d\n",++i);
@@ -928,16 +933,16 @@ int vfstest_main(int argc, char **argv)
         
         vfstest_getdents();
         dbg_print("\n%d\n",++i);  
-        KASSERT(0);     
 #ifdef __VM__
         vfstest_s5fs_vm();
 #endif
 
-        /*vfstest_infinite();*/
+        vfstest_infinite();*/
 
         syscall_success(chdir(".."));
 
         vfstest_term();
+	/*KASSERT(0);*/
          
         test_fini();
 

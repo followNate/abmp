@@ -77,7 +77,8 @@ do_read(int fd, void *buf, size_t nbytes)
         
         open_file->f_pos=open_file->f_pos+i;
         fput(open_file);
-       /* NOT_YET_IMPLEMENTED("VFS: do_read");*/
+	dbg(DBG_VFS,"INFO: Successfully opens the file with fd=%d\n",fd);
+	 /* NOT_YET_IMPLEMENTED("VFS: do_read");*/
         return i;
 }
 
@@ -138,6 +139,7 @@ do_write(int fd, const void *buf, size_t nbytes)
         
         open_file->f_pos=open_file->f_pos+i;
         fput(open_file);
+	dbg(DBG_VFS,"INFO: INFO: Successfully performed write operation on the file with fd=%d\n",fd);
         /*NOT_YET_IMPLEMENTED("VFS: do_write");*/
         return i;
 }
@@ -171,6 +173,7 @@ do_close(int fd)
         fput(open_file);
          
          /*NOT_YET_IMPLEMENTED("VFS: do_close");*/
+	dbg(DBG_VFS,"INFO: Successfully closes the file with fd=%d\n",fd);
         return 0;
 }
 
@@ -214,7 +217,7 @@ do_dup(int fd)
         
         curproc->p_files[dup_fd]=open_file;
         
-        
+        dbg(DBG_VFS,"INFO: Successfully performed dup operation on file with fd=%d\n",fd);
         /*NOT_YET_IMPLEMENTED("VFS: do_dup");*/
         return dup_fd; 
 }
@@ -260,6 +263,7 @@ do_dup2(int ofd, int nfd)
         
         curproc->p_files[nfd]=open_file;
         }
+	dbg(DBG_VFS,"INFO: Successfully performed dup2 operation on the files with old fd=%d and new fd=%d\n",ofd,nfd);
         /*NOT_YET_IMPLEMENTED("VFS: do_dup2");*/
         return nfd;
 }
@@ -348,7 +352,7 @@ do_mknod(const char *path, int mode, unsigned devid)
         vput(res_vnode);
         KASSERT(NULL!=res_vnode->vn_ops->mknod);
         i=(res_vnode->vn_ops->mknod)(res_vnode,name,namelen,mode,devid);
-        dbg(DBG_VFS,"Making Device node successful\n");
+        dbg(DBG_VFS,"INFO: Making Device node successful. Path=%s, mode=%d, devid=%u\n",path,mode,devid);
          /*  NOT_YET_IMPLEMENTED("VFS: do_mknod");*/
         return i;
 }
@@ -423,7 +427,7 @@ do_mkdir(const char *path)
         vput(res_vnode);
         KASSERT(NULL!=res_vnode->vn_ops->mkdir);                
         i=(res_vnode->vn_ops->mkdir)(res_vnode,name,namelen);
-        dbg(DBG_VFS,"The new directory is successfully made\n");
+        dbg(DBG_VFS,"INFO: The new directory is successfully made. Path=%s\n",path);
         /*NOT_YET_IMPLEMENTED("VFS: do_mkdir");*/
         return i;
        
@@ -519,7 +523,7 @@ do_rmdir(const char *path)
         i=(res_vnode->vn_ops->rmdir)(res_vnode,name,namelen);
         vput(result);
         vput(res_vnode);
-        dbg(DBG_VFS,"Directory remove successful\n");
+        dbg(DBG_VFS,"INFO: Directory remove successful. Path=%s\n",path);
         /*NOT_YET_IMPLEMENTED("VFS: do_rmdir");*/
         return i;
 }
@@ -617,7 +621,7 @@ do_unlink(const char *path)
         i=(res_vnode->vn_ops->unlink)(res_vnode,name,namelen);
         vput(res_vnode);
         vput(result);
-        dbg(DBG_VFS,"Unlink successful\n");
+        dbg(DBG_VFS,"INFO: Unlink successful. Path=%s\n",path);
        /* NOT_YET_IMPLEMENTED("VFS: do_unlink");*/
         return i;
 }
@@ -711,7 +715,7 @@ do_link(const char *from, const char *to)
         i=(node2->vn_ops->link)(node1,node2,name,namelen);
         vput(node1);
         vput(node2);
-        dbg(DBG_VFS,"Linking successful\n");
+        dbg(DBG_VFS,"INFO: Linking successful. From:%s To:%s\n",from,to);
        /* NOT_YET_IMPLEMENTED("VFS: do_link");*/
         return i;
 }
@@ -733,7 +737,7 @@ do_rename(const char *oldname, const char *newname)
         if(i<0)
                 return i;
         int j=do_unlink(oldname);
-        dbg(DBG_VFS,"Rename Successful\n");
+        dbg(DBG_VFS,"INFO: Rename Successful. oldname:%s newname:%s\n",oldname,newname);
         /*NOT_YET_IMPLEMENTED("VFS: do_rename");*/
         return j;
 }
@@ -784,7 +788,7 @@ do_chdir(const char *path)
         }    
         vput(curproc->p_cwd);
         curproc->p_cwd=res_vnode;
-        dbg(DBG_VFS,"Current directory is successfully changed\n");
+        dbg(DBG_VFS,"INFO: Current directory is successfully changed. Path:%s\n",path);
         /*NOT_YET_IMPLEMENTED("VFS: do_chdir");*/
         return 0;
 }
@@ -846,7 +850,7 @@ do_getdent(int fd, struct dirent *dirp)
                 return sizeof(dirent_t);
         }
         /*NOT_YET_IMPLEMENTED("VFS: do_getdent");*/
-       
+       dbg(DBG_VFS,"INFO: Successfully performed getdent operation on file with fd=%d\n",fd);
 }
 
 /*
@@ -926,6 +930,7 @@ do_lseek(int fd, int offset, int whence)
                 }
         }
         /*NOT_YET_IMPLEMENTED("VFS: do_lseek");*/
+	dbg(DBG_VFS,"INFO: Successfully performed seek operation on file with fd=%d, offset%d and whence=%d\n",fd,offset,whence);
         return i;
 }
 
@@ -1014,6 +1019,7 @@ do_stat(const char *path, struct stat *buf)
         vput(result);
         
         /*NOT_YET_IMPLEMENTED("VFS: do_stat");*/
+	dbg(DBG_VFS,"INFO: Successfully found the associated nodes with the path:%s\n",path);
         return i;
 }
 
