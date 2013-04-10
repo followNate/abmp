@@ -145,7 +145,7 @@ do_open(const char *filename, int oflags)
 	}	
 	
         fresh_file->f_vnode=res_vnode;
-		
+	
         /*NOT_YET_IMPLEMENTED("VFS: do_open");*/
 	curproc->p_files[file_descriptor] = fresh_file;
 	dbg(DBG_VFS,"INFO: Successfully opened the file with path:%s\n",filename);

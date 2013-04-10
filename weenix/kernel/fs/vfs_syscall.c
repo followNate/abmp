@@ -388,7 +388,8 @@ do_mkdir(const char *path)
         if(i<0)
         {
 		dbg(DBG_ERROR | DBG_VFS,"ERROR: do_mkdir: Unable to resolve a component in the path\n");
-                return i;
+                vput(res_vnode);
+		return i;
         }
         if(strlen(name)>NAME_LEN)
         {
@@ -469,7 +470,8 @@ do_rmdir(const char *path)
         if(i<0)
         {
 		dbg(DBG_ERROR | DBG_VFS,"ERROR: do_rmdir: Error removing directory\n");
-                return i;
+                vput(res_vnode);
+		return i;
         }
         if(strlen(name)>NAME_LEN)
         {
@@ -509,7 +511,9 @@ do_rmdir(const char *path)
                 if(j!=0)
                 {
 			dbg(DBG_ERROR | DBG_VFS,"ERROR: do_rmdir: Unable to resolve the final component in the path\n");
-                        return j;
+                        vput(result);
+        		vput(res_vnode);
+			return j;
                 }
         }
         if(result==NULL)
@@ -558,7 +562,8 @@ do_unlink(const char *path)
         if(i<0)
         {
 		dbg(DBG_ERROR | DBG_VFS,"ERROR: do_unlink: Unable to resolve the path\n");
-                return i;
+                vput(res_vnode);
+		return i;
         }
         if(res_vnode==NULL)
         {
@@ -598,7 +603,9 @@ do_unlink(const char *path)
                 if(j!=0)
                 {
 			dbg(DBG_ERROR | DBG_VFS,"ERROR: do_unlink: Lookup for final component in the path fails\n");
-                        return j;
+                        vput(result);
+        		vput(res_vnode);
+			return j;
                 }
         }
         if(result==NULL)
@@ -962,6 +969,7 @@ do_stat(const char *path, struct stat *buf)
         int i=dir_namev(path, &namelen,&name,NULL,&res_vnode);
         if(i<0)
         {
+		vput(res_vnode);
                 return i;
         }
         if(strlen(name)>NAME_LEN)
@@ -1001,6 +1009,7 @@ do_stat(const char *path, struct stat *buf)
                 int j=lookup(res_vnode,name,namelen,&result);     
                 if(j!=0)
                 {
+			vput(res_vnode);
 			dbg(DBG_ERROR | DBG_VFS,"ERROR: do_stat: Lookup for the final component of path fails\n");
                         return j;
                 }
@@ -1013,7 +1022,7 @@ do_stat(const char *path, struct stat *buf)
         }
         
         KASSERT(res_vnode->vn_ops->stat); 
-        i=(res_vnode->vn_ops->stat)(res_vnode,buf);
+        i=(res_vnode->vn_ops->stat)(result,buf);
         
         vput(res_vnode);
         vput(result);

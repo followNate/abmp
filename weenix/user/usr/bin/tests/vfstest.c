@@ -99,7 +99,6 @@ getdent(const char *dir, dirent_t *dirent)
                         return -1;
                 }
                 if (0 != strcmp(".", dirent->d_name) && 0 != strcmp("..", dirent->d_name)) {
-                        dbg(DBG_TEST,"Mohit: inside getdent(.,%s), Just before closing the file= %d\n",dirent->d_name,fd);
 			close(fd);
                         return 1;
                 }
@@ -112,7 +111,6 @@ getdent(const char *dir, dirent_t *dirent)
 static int
 removeall(const char *dir)
 {
-	dbg(DBG_TEST,"Mohit: inside removeall(%s)\n",dir);
         int ret, fd = -1;
         dirent_t dirent;
         struct stat status;
@@ -126,7 +124,6 @@ removeall(const char *dir)
                 if (0 > (ret = getdent(".", &dirent))) {
                         goto error;
                 }
-		dbg(DBG_TEST,"Mohit: after calling getdent(.,%s)\n",dirent.d_name);
                 if (0 == ret) {
                         break;
                 }
@@ -134,7 +131,6 @@ removeall(const char *dir)
                 if (0 > stat(dirent.d_name, &status)) {
                         goto error;
 		}
-		dbg(DBG_TEST,"Mohit: after calling stat(%s,status)\n",dirent.d_name);
 
                 if (S_ISDIR(status.st_mode)) {
                         if (0 > removeall(dirent.d_name)) {
@@ -144,7 +140,6 @@ removeall(const char *dir)
                         if (0 > unlink(dirent.d_name)) {
                                 goto error;
                         }
-			dbg(DBG_TEST,"Mohit: after calling unlink(%s)\n",dirent.d_name);
                 }
         }
 
@@ -917,11 +912,11 @@ int vfstest_main(int argc, char **argv)
 
 	vfstest_stat();
         dbg_print("\n%d\n",++i);
-        /*vfstest_chdir();
+        vfstest_chdir();
         dbg_print("\n%d\n",++i);
         vfstest_mkdir();
         dbg_print("\n%d\n",++i);
-        vfstest_paths();
+        /*vfstest_paths();
         dbg_print("\n%d\n",++i);
         vfstest_fd();
         dbg_print("\n%d\n",++i);
