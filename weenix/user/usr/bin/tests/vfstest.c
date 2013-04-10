@@ -952,13 +952,10 @@ int vfstest_main(int argc, char **argv)
 #endif
 
        /* vfstest_infinite();*/
- test_fini();
         syscall_success(chdir(".."));
 
         vfstest_term();
          
-        dbg(DBG_VFS,"\ndnjjdjdkdkdkdd\n");  
-        /*test_fini();*/
-        dbg(DBG_VFS,"\nlllllllllllll\n");  
+        test_fini();
         return 0;
 }

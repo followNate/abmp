@@ -55,7 +55,7 @@
 #define TEST_10 10      /*  Deadlock check when same thread again trying to lock the same mutex */
 #define TEST_11 11
 
-static int curtest = TEST_9;
+static int curtest = TEST_11;
 
 GDB_DEFINE_HOOK(boot)
 GDB_DEFINE_HOOK(initialized)
