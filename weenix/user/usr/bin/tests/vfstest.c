@@ -934,22 +934,19 @@ int vfstest_main(int argc, char **argv)
    
         dbg_print("\n%d\n",++i);
          
-        vfstest_fd();
-     test_fini();
+        
         dbg_print("\n%d\n",++i);
         vfstest_open();
-     test_fini();
+     
         dbg_print("\n%d\n",++i);
        
         vfstest_read();
         dbg_print("\n%d\n",++i);
-         test_fini();
-  KASSERT(0);
+         
         vfstest_getdents();
-        dbg_print("\n%d\n",++i);
-	test_fini();
-        KASSERT(0);  
 
+        dbg_print("\n%d\n",++i);  
+        
 #ifdef __VM__
         vfstest_s5fs_vm();
 #endif
@@ -957,8 +954,9 @@ int vfstest_main(int argc, char **argv)
        /* vfstest_infinite();*/
  test_fini();
         syscall_success(chdir(".."));
- 
+
         vfstest_term();
+         
         dbg(DBG_VFS,"\ndnjjdjdkdkdkdd\n");  
         /*test_fini();*/
         dbg(DBG_VFS,"\nlllllllllllll\n");  

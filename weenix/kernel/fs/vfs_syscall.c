@@ -64,7 +64,7 @@ do_read(int fd, void *buf, size_t nbytes)
         {
 		dbg(DBG_ERROR | DBG_VFS,"ERROR: do_read: File descriptor points to a Directory\n");
                 fput(open_file);
-                return -EISDIR;
+                return -EBADF;
         }
         KASSERT(open_file->f_vnode->vn_ops->read);
         int i=(open_file->f_vnode->vn_ops->read)(open_file->f_vnode,open_file->f_pos,buf,nbytes);
@@ -842,11 +842,17 @@ do_getdent(int fd, struct dirent *dirp)
                  fput(open_file);
                  return i;
         }
-        else
+        else if(i==0)
         {
                 
                 fput(open_file);
                 return 0;
+        }
+        else
+        {
+                
+                fput(open_file);
+                return sizeof(dirent_t);
         }
         /*NOT_YET_IMPLEMENTED("VFS: do_getdent");*/
        dbg(DBG_VFS,"INFO: Successfully performed getdent operation on file with fd=%d\n",fd);
