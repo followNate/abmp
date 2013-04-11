@@ -30,7 +30,7 @@ lookup(vnode_t *dir, const char *name, size_t len, vnode_t **result)
         
         if (dir->vn_ops->lookup == NULL||(!S_ISDIR(dir->vn_mode)))
         {
-                dbg(DBG_ERROR | DBG_VFS,"ERROR: lookup(): dir has no lookup()\n");
+                dbg(DBG_ERROR | DBG_VFS,"ERROR: dir has no lookup()\n");
                 return -ENOTDIR;
         }
         if(strcmp(name,".")==0||len == 0)
@@ -43,7 +43,7 @@ lookup(vnode_t *dir, const char *name, size_t len, vnode_t **result)
         int i = dir->vn_ops->lookup(dir,name,len,result);       /*Calling lookup for the vnode dir*/
 	 if(i<0)                                                 /* Return ENOTDIR if lookup fails*/
         {
-                dbg(DBG_ERROR | DBG_VFS,"ERROR: lookup(): dir has no entry with the given name\n");
+                dbg(DBG_ERROR | DBG_VFS,"ERROR: dir has no entry with the given name\n");
                 return i;
         }
        /* vref(*result);  Increment the refcount */
@@ -73,20 +73,22 @@ lookup(vnode_t *dir, const char *name, size_t len, vnode_t **result)
 int
 dir_namev(const char *pathname, size_t *namelen, const char **name,vnode_t *base, vnode_t **res_vnode)
 {
+	KASSERT(NULL != pathname);
+	
 	vnode_t *dir_vnode;
         vnode_t *ret_result;
         char *file_name=(char *)pathname;
         char *file_pass=(char *)pathname;
         char *end=(char *)pathname + strlen(pathname);
-        dbg(DBG_VFS, "The Path is (%s)\n",  pathname);
+        dbg(DBG_VFS, "INFO: The Path is (%s)\n",  pathname);
         if (strlen(pathname) > MAXPATHLEN)
         {
-                dbg(DBG_ERROR | DBG_VFS, "ERROR: dir_namev(): The Path (%s) is too long.\n",  pathname);
+                dbg(DBG_ERROR | DBG_VFS, "ERROR: The Path (%s) is too long.\n",  pathname);
                 return -ENAMETOOLONG;
         }
         if (strlen(pathname) == 0)
         {
-                dbg(DBG_ERROR | DBG_VFS, "ERROR: dir_namev(): The name is invalid\n");
+                dbg(DBG_ERROR | DBG_VFS, "ERROR: The name is invalid\n");
                 return -EINVAL;
         }
         if(pathname[0]=='/')
@@ -117,7 +119,7 @@ dir_namev(const char *pathname, size_t *namelen, const char **name,vnode_t *base
 
                 if (!S_ISDIR(dir_vnode->vn_mode))
                 {
-                        dbg(DBG_ERROR | DBG_VFS, "ERROR: dir_namev(): lookup failed. a path element is not a directory.\n");
+                        dbg(DBG_ERROR | DBG_VFS, "ERROR: lookup failed. a path element is not a directory.\n");
                         vput(dir_vnode);
                         return -ENOTDIR;
                  }
@@ -126,7 +128,7 @@ dir_namev(const char *pathname, size_t *namelen, const char **name,vnode_t *base
                         int kk= file_pass - file_name ;
                         if (kk > NAME_LEN)
                         {
-                               dbg(DBG_ERROR | DBG_VFS, "ERROR: dir_namev(): lookup failed. Path component too long.\n");
+                               dbg(DBG_ERROR | DBG_VFS, "ERROR: lookup failed. Path component too long.\n");
                                vput(dir_vnode);
                                return -ENAMETOOLONG;
                         }
@@ -135,7 +137,7 @@ dir_namev(const char *pathname, size_t *namelen, const char **name,vnode_t *base
                         int ii=lookup(dir_vnode,file_name,file_pass - file_name,&ret_result);
                         if(ii<0)
                         {
-                                vput(dir_vnode);    
+                               vput(dir_vnode);    
                                return ii;      
                         }
                         vput(dir_vnode);
@@ -151,7 +153,10 @@ dir_namev(const char *pathname, size_t *namelen, const char **name,vnode_t *base
        
        *res_vnode = dir_vnode;
        *name = (const char*)file_name;
-       dbg(DBG_VFS, "The name is (%s), namelen is (%d)\n", file_name,*namelen);
+	KASSERT(NULL!=res_vnode);       
+	KASSERT(NULL != namelen);
+        KASSERT(NULL != name);
+	dbg(DBG_VFS, "INFO: The name is (%s), namelen is (%d)\n", file_name,*namelen);
         /*NOT_YET_IMPLEMENTED("VFS: dir_namev");*/
         return 0;
 

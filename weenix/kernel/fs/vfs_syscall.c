@@ -139,7 +139,7 @@ do_write(int fd, const void *buf, size_t nbytes)
         
         open_file->f_pos=open_file->f_pos+i;
         fput(open_file);
-	dbg(DBG_VFS,"INFO: INFO: Successfully performed write operation on the file with fd=%d\n",fd);
+	dbg(DBG_VFS,"INFO: Successfully performed write operation on the file with fd=%d\n",fd);
         /*NOT_YET_IMPLEMENTED("VFS: do_write");*/
         return i;
 }
