@@ -566,7 +566,7 @@ void shellTest()
 { 
         proc_t* new_shell = proc_create("kshell");
         kthread_t *new_shell_thread = kthread_create(new_shell,kshell_test, NULL, NULL);
-        dbg_print("\nsd");
+        /*dbg_print("\nsd");*/
         sched_make_runnable(new_shell_thread);     
 }
 
@@ -578,9 +578,9 @@ void *kshell_test(int a, void *b)
     while (1)
     {
         new_shell = kshell_create(0);
-        dbg_print("\nff");
+        /*dbg_print("\nff");*/
         i = kshell_execute_next(new_shell);
-        dbg_print("\nff");
+        /*dbg_print("\nff");*/
         if(i>0){dbg(DBG_TERM,"Error Executing the command\n");}
         kshell_destroy(new_shell);
         if(i==0){break;}

@@ -100,7 +100,7 @@ We removed the directory "dir4".
 We opened the file "file2.txt" in directory "dir2" for reading 18 characters and displayed on the terminal. (Please check the terminal log mesage for the same)
 
 We used do_lseek() function and set offset to -19 and whence to SEEK_END and displayed on the terminal. 
-Lastly we validated do_dup and do_up2 funtions on "file2.txt an displayed the new file descriptors.
+Lastly we validated do_dup and do_dup2 funtions on "file2.txt an displayed the new file descriptors.
 
 
 
