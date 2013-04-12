@@ -217,7 +217,7 @@ do_dup(int fd)
         
         curproc->p_files[dup_fd]=open_file;
         
-        dbg(DBG_VFS,"INFO: Successfully performed dup operation on file with fd=%d\n",fd);
+        dbg(DBG_VFS,"INFO: Successfully performed dup operation on file with fd=%d. The new file descriptor is: %d\n",fd,dup_fd);
         /*NOT_YET_IMPLEMENTED("VFS: do_dup");*/
         return dup_fd; 
 }
