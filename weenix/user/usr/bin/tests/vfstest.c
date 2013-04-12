@@ -919,7 +919,7 @@ int vfstest_main(int argc, char **argv)
         syscall_success(chdir(root_dir));
 
 	vfstest_stat();
- 
+
         dbg_print("\n%d\n",++i);
  
         vfstest_chdir();
