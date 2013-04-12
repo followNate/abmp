@@ -360,10 +360,10 @@ void *extra_self_tests(int arg1, void *arg2)
         do_close(fd);
    dbg(DBG_ERROR | DBG_VFS,"TEST:Linking Source directory => /dir/dir2, Destination directory => /dir/linkdir \n");
         do_chdir("/");   
-        do_link("dir/dir1","dir/linkdir1");
+        do_link("dir2","dir1");
 
    dbg(DBG_ERROR | DBG_VFS,"TEST:Linking Source file => /dir/dir2/file2.txt, Destination directory => /dir/linkdir2 \n");
-        do_link("dir/dir1/file1.txt","dir/linkdir2");
+        do_link("file1.txt","aditya");
         
    dbg(DBG_ERROR | DBG_VFS,"TEST: Renaming directory from dir/dir3 to dir/renamed \n");
         do_rename("dir/dir3","dir/renameddir3");
