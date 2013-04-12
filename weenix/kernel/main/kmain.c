@@ -57,7 +57,7 @@
 #define TEST_12 12      /*  Self test cases */
 
 
-static int curtest = TEST_12;
+static int curtest = TEST_9;
 
 GDB_DEFINE_HOOK(boot)
 GDB_DEFINE_HOOK(initialized)
