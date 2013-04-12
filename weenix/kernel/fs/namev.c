@@ -44,7 +44,6 @@ lookup(vnode_t *dir, const char *name, size_t len, vnode_t **result)
 	 if(i<0)                                                 /* Return ENOTDIR if lookup fails*/
         {
                 dbg(DBG_VFS,"ERROR: lookup(): dir has no entry with the given name:\n");
-
                 return i;
         }
        /* vref(*result);  Increment the refcount */

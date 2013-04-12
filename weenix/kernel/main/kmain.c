@@ -339,11 +339,12 @@ void *extra_self_tests(int arg1, void *arg2)
                 do_mkdir("dir");
                 do_mkdir("dir/dir1");
                 do_mkdir("dir/dir2");
-                do_mkdir("dir/dir3");                
+                do_mkdir("dir/dir3");             
+                do_mkdir("dir/dir4");  
    dbg(DBG_ERROR | DBG_VFS,"TEST: Directories are created\n");
         int fd;
         char *buf="Testing file_1 for write operation";
-
+        char readbuf[25];
                /* performs write operation */
    dbg(DBG_ERROR | DBG_VFS,"TEST: Change directory to dir/dir1\n");
         do_chdir("dir/dir1");
@@ -362,8 +363,8 @@ void *extra_self_tests(int arg1, void *arg2)
         do_chdir("/");   
         do_link("dir/dir1","dir/linkdir1");
 
-   dbg(DBG_ERROR | DBG_VFS,"TEST:Linking Source file => /dir/dir2/file2.txt, Destination directory => /dir/linkdir2 \n");
-        do_link("dir/dir1/file1.txt","dir/linkdir2");
+   dbg(DBG_ERROR | DBG_VFS,"TEST:Linking Source file => /dir/dir2/file2.txt, to the Destination => /dir/linkdir2 \n");
+        do_link("dir/dir1/file1.txt","/dir/linkdir2");
         
    dbg(DBG_ERROR | DBG_VFS,"TEST: Renaming directory from dir/dir3 to dir/renamed \n");
         do_rename("dir/dir3","dir/renameddir3");
@@ -371,10 +372,38 @@ void *extra_self_tests(int arg1, void *arg2)
    dbg(DBG_ERROR | DBG_VFS,"TEST: Renaming file from dir/dir1/file1.txt to dir/dir1/renamedfile1.txt \n");
         do_rename("dir/dir1/file1.txt","dir/dir1/renamedfile1.txt");
 
-        shellTest();
-        
-                /*performs read operation */
-                
+   dbg(DBG_ERROR | DBG_VFS,"TEST: Removing directory dir/dir4 \n");
+        do_rmdir("dir/dir4");
+
+   dbg(DBG_ERROR | DBG_VFS,"TEST: reading 18 chars from file: /dir/linkdir2 which is hard link of /dir/dir2/file2.txt \n");
+        fd = do_open("/dir/linkdir2", O_RDONLY);
+        memset(readbuf,0,sizeof(char)*25);
+        do_read(fd,readbuf,18);
+        do_close(fd);
+   dbg(DBG_ERROR | DBG_VFS,"TEST: read 18 chars: \"%s\" from file: /dir/linkdir2\n",readbuf);
+   
+   dbg(DBG_ERROR | DBG_VFS,"TEST: reading file using lseek function on  /dir/linkdir2 which is hard link of /dir/dir2/file2.txt \n");
+        memset(readbuf,0,sizeof(char)*25);
+        fd = do_open("/dir/linkdir2", O_RDONLY);
+        do_lseek(fd,-19,2);
+        do_read(fd,readbuf,19);
+        do_close(fd);
+   dbg(DBG_ERROR | DBG_VFS,"TEST: read chars: \"%s\" using lseek from file: /dir/linkdir2\n",readbuf);
+   
+   dbg(DBG_ERROR | DBG_VFS,"TEST: creating a duplicate file descriptor of file: /dir/dir2/file2.txt using do_dup()\n");
+        fd = do_open("/dir/dir2/file2.txt", O_RDONLY);
+    int fd2= do_dup(fd);
+   dbg(DBG_ERROR | DBG_VFS,"TEST: duplicate file descriptor is :\"%d\" of file: /dir/dir2/file2.txt \n",fd2);
+             do_close(fd);        do_close(fd2);
+                     
+   dbg(DBG_ERROR | DBG_VFS,"TEST: creating a duplicate file descriptor of file: /dir/dir2/file2.txt using do_dup2()\n");    
+        fd = do_open("/dir/dir2/file2.txt", O_RDONLY);
+        fd2= do_dup2(fd,20);
+   dbg(DBG_ERROR | DBG_VFS,"TEST: custom file descriptor is :\"%d\" of file: /dir/dir2/file2.txt \n",fd2);
+                do_close(fd);        do_close(fd2);
+
+        shellTest(); 
+                /*performs read operation */                
      return NULL;
 }
 
