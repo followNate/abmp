@@ -656,8 +656,8 @@ do_unlink(const char *path)
 int
 do_link(const char *from, const char *to)
 {
-	if(strlen(from)>MAXPATHLEN){
-		dbg(DBG_ERROR | DBG_VFS,"ERROR: do_link: Path name is too long\n");
+	if(strlen(from)>MAXPATHLEN || strlen(to)>MAXPATHLEN){
+		dbg(DBG_ERROR | DBG_VFS,"ERROR: do_link: Path name of either \'from\' or \'to\' is too long\n");
 		return -ENAMETOOLONG;
 	}
 	
