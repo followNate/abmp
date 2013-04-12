@@ -57,7 +57,7 @@
 #define TEST_12 12      /*  Self test cases */
 
 
-static int curtest = TEST_11;
+static int curtest = TEST_12;
 
 GDB_DEFINE_HOOK(boot)
 GDB_DEFINE_HOOK(initialized)
@@ -345,24 +345,24 @@ void *extra_self_tests(int arg1, void *arg2)
         int fd;
         char *buf="Testing file_1 for write operation";
         char readbuf[25];
-               /* performs write operation */
+
    dbg(DBG_ERROR | DBG_VFS,"TEST: Change directory to dir/dir1\n");
         do_chdir("dir/dir1");
    dbg(DBG_ERROR | DBG_VFS,"TEST: Create file1.txt in dir/dir1\n");
         fd = do_open("file1.txt", O_CREAT|O_WRONLY);
         do_write(fd, buf, strlen(buf));
-        do_close(fd);
+        do_close(fd);      
    dbg(DBG_ERROR | DBG_VFS,"TEST: Change directory to dir/dir2\n");
         do_chdir("/dir/dir2");
         strcpy(buf,"Testing file_2 for read operation\n");
+
    dbg(DBG_ERROR | DBG_VFS,"TEST: Create file2.txt in dir/dir2\n");
         fd = do_open("file2.txt", O_CREAT | O_RDONLY);
-        /*do_write(fd, buf, sizeof(buf));*/
         do_close(fd);
+
    dbg(DBG_ERROR | DBG_VFS,"TEST:Linking Source directory => /dir/dir2, Destination directory => /dir/linkdir \n");
         do_chdir("/");   
-        do_link("dir2","dir1");
-
+        do_link("dir/dir2","dir/linkdir");
 
    dbg(DBG_ERROR | DBG_VFS,"TEST:Linking Source file => /dir/dir2/file2.txt, to the Destination => /dir/linkdir2 \n");
         do_link("dir/dir1/file1.txt","/dir/linkdir2");
@@ -404,7 +404,7 @@ void *extra_self_tests(int arg1, void *arg2)
                 do_close(fd);        do_close(fd2);
 
         shellTest(); 
-                /*performs read operation */                
+                /*performs read operation      */         
      return NULL;
 }
 
