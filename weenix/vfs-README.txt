@@ -104,7 +104,7 @@ Lastly we validated do_dup and do_up2 funtions on "file2.txt an displayed the ne
 
 
 
-NOTE: We are not removing the ceated files and directories for the TESTING purpose. ! 
+NOTE: We are not removing the created files and directories for the TESTING purpose. ! 
 
 
 Please reach us ASAP if you find any doubts.
