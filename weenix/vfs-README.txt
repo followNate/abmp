@@ -89,8 +89,8 @@ Test Case 11:	EXECUTING vfstest.c
 Description: This test case exectues the test cases defined in vfstest.c file. The grader can view final report in the logs.
 
 Test Case 12:	CUSTOM TEST CASES
-Description: Here we are validating following system calls to file system.
-do_mkdir, do_rmdir, do_chdir, do_link, do_unlink, do_lseek, do_open, do_read, do_write, do_close, do_dup etc. The grader can validate the result from the logs.
+Description: Here we are validating following system calls to file system. At the end of execution we launch the kshell.
+do_mkdir, do_rmdir, do_chdir, do_link, do_unlink, do_lseek, do_open, do_read, do_write, do_close, do_dup etc. The grader can validate the result from the logs as well as in the kshell.
 
 Here we have created a main directory "dir" and created four directories "dir1", "dir2", "dir3", "dir4" in this main directory.In directory "dir1" we have created a file "file1.txt" and in directory "dir2" we have created a file "file2.txt". 
 We linked the directory "dir/dir2" into a new directory "/dir/linkofdir2" and "the dir/dir1/file1.txt" present in directory "dir1" into a new file "/dir/linkofdir2". 
