@@ -150,7 +150,6 @@ removeall(const char *dir)
         if (0 > rmdir(dir)) {
                 return errno;
         }
-
         close(fd);
         return 0;
 
