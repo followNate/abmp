@@ -360,12 +360,12 @@ void *extra_self_tests(int arg1, void *arg2)
         fd = do_open("file2.txt", O_CREAT | O_RDONLY);
         do_close(fd);
 
-   dbg(DBG_ERROR | DBG_VFS,"TEST:Linking Source directory => /dir/dir2, Destination directory => /dir/linkdir \n");
+   dbg(DBG_ERROR | DBG_VFS,"TEST:Linking Source directory => /dir/dir2, Destination directory => /dir/linkofdir2 \n");
         do_chdir("/");   
-        do_link("dir/dir2","dir/linkdir");
+        do_link("dir/dir2","dir/linkofdir2");
 
-   dbg(DBG_ERROR | DBG_VFS,"TEST:Linking Source file => /dir/dir2/file2.txt, to the Destination => /dir/linkdir2 \n");
-        do_link("dir/dir1/file1.txt","/dir/linkdir2");
+   dbg(DBG_ERROR | DBG_VFS,"TEST:Linking Source file => /dir/dir2/file2.txt, to the Destination => /dir/linkoffile2 \n");
+        do_link("dir/dir1/file1.txt","/dir/linkofdir2");
         
    dbg(DBG_ERROR | DBG_VFS,"TEST: Renaming directory from dir/dir3 to dir/renamed \n");
         do_rename("dir/dir3","dir/renameddir3");
