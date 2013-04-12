@@ -918,7 +918,7 @@ int vfstest_main(int argc, char **argv)
         syscall_success(chdir(root_dir));
 
 	vfstest_stat();
- 
+
         dbg_print("\n%d\n",++i);
  
         vfstest_chdir();
@@ -943,19 +943,19 @@ int vfstest_main(int argc, char **argv)
         dbg_print("\n%d\n",++i);
          
         vfstest_getdents();
+
         dbg_print("\n%d\n",++i);  
         
 #ifdef __VM__
         vfstest_s5fs_vm();
 #endif
 
-       /* vfstest_infinite();*/
- test_fini();
+        /*vfstest_infinite();*/
         syscall_success(chdir(".."));
 
         vfstest_term();
          
         test_fini();
-        
+
         return 0;
 }

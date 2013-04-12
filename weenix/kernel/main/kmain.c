@@ -56,6 +56,7 @@
 #define TEST_11 11      /*  tests 400 test cases from vfstest.c file */
 #define TEST_12 12      /*  Self test cases */
 
+
 static int curtest = TEST_12;
 
 GDB_DEFINE_HOOK(boot)
