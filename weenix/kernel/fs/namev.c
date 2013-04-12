@@ -28,17 +28,22 @@ lookup(vnode_t *dir, const char *name, size_t len, vnode_t **result)
         KASSERT(NULL != dir);
         KASSERT(NULL != name);
         
-
         if (dir->vn_ops->lookup == NULL||(!S_ISDIR(dir->vn_mode)))
         {
                 dbg(DBG_ERROR | DBG_VFS,"ERROR: lookup(): dir has no lookup()\n");
                 return -ENOTDIR;
         }
-        
+        if(strcmp(name,".")==0||len == 0)
+        {
+		dbg(DBG_VFS,"name (%s) points to current directory\n",name);
+                vref(dir);
+                *result=dir;
+                return 0;
+        }
         int i = dir->vn_ops->lookup(dir,name,len,result);       /*Calling lookup for the vnode dir*/
 	 if(i<0)                                                 /* Return ENOTDIR if lookup fails*/
         {
-                dbg(DBG_ERROR | DBG_VFS,"ERROR: lookup(): dir has no entry with the given name\n");
+                dbg(DBG_VFS,"ERROR: lookup(): dir has no entry with the given name:\n");
                 return i;
         }
        /* vref(*result);  Increment the refcount */
@@ -79,6 +84,11 @@ dir_namev(const char *pathname, size_t *namelen, const char **name,vnode_t *base
                 dbg(DBG_ERROR | DBG_VFS, "ERROR: dir_namev(): The Path (%s) is too long.\n",  pathname);
                 return -ENAMETOOLONG;
         }
+        if (strlen(pathname) == 0)
+        {
+                dbg(DBG_ERROR | DBG_VFS, "ERROR: dir_namev(): The name is invalid\n");
+                return -EINVAL;
+        }
         if(pathname[0]=='/')
         {
                 dir_vnode=vfs_root_vn;
@@ -95,12 +105,12 @@ dir_namev(const char *pathname, size_t *namelen, const char **name,vnode_t *base
                 dir_vnode = base;
                 vref(dir_vnode);
         }
-        if (file_name == end)
+       /* if (file_name == end)
         {
                 vput(dir_vnode);
                 return -ENOENT;
-        }     
-        while(file_name != end)
+        }*/     
+        while(file_pass != end)
         { 
                 file_pass = strchr(file_name,'/');
                 KASSERT(dir_vnode!=NULL);
@@ -113,14 +123,15 @@ dir_namev(const char *pathname, size_t *namelen, const char **name,vnode_t *base
                  }
                  if(file_pass!=NULL)
                  {
-                         
-                        if (file_pass - file_name -1 > NAME_LEN)
+                        int kk= file_pass - file_name ;
+                        if (kk > NAME_LEN)
                         {
                                dbg(DBG_ERROR | DBG_VFS, "ERROR: dir_namev(): lookup failed. Path component too long.\n");
                                vput(dir_vnode);
                                return -ENAMETOOLONG;
                         }
-                                
+                        
+                        dbg(DBG_VFS, "The name passing to lookup is: (%s), namelen is (%d)\n", file_pass,*namelen);
                         int ii=lookup(dir_vnode,file_name,file_pass - file_name,&ret_result);
                         if(ii<0)
                         {
@@ -131,20 +142,15 @@ dir_namev(const char *pathname, size_t *namelen, const char **name,vnode_t *base
                         dir_vnode = ret_result;
                         file_pass++;
                         file_name=file_pass;
-                        if (file_name == end)
-                        {
-                                vput(dir_vnode);
-                                return -ENOENT;
-                        }
+                        
                  }
                  else
                         break;
         }
        *namelen = end-file_name;
-       
        *res_vnode = dir_vnode;
        *name = (const char*)file_name;
-       dbg(DBG_VFS, "The name is (%s), namelen is (%d)\n", file_name,*namelen);
+       dbg(DBG_VFS, "returning from namev.c and the name is (%s), namelen is (%d)\n", file_name,*namelen);
         /*NOT_YET_IMPLEMENTED("VFS: dir_namev");*/
         return 0;
 }
@@ -175,6 +181,7 @@ open_namev(const char *pathname, int flag, vnode_t **res_vnode, vnode_t *base)
                 vput(res_vnode1);
                 return -ENOTDIR;
         }
+        dbg(DBG_VFS,"Calling lookup() to check for the file existence\n");
         int j=lookup(res_vnode1,name,namelen,res_vnode);     
         if(j<0)
         {

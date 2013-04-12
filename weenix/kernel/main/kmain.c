@@ -53,8 +53,10 @@
 #define TEST_8 8        /*  Reader and writer problem */
 #define TEST_9 9        /*  kshell testing */
 #define TEST_10 10      /*  Deadlock check when same thread again trying to lock the same mutex */
-#define TEST_11 11
-static int curtest = TEST_11;
+#define TEST_11 11      /*  tests 400 test cases from vfstest.c file */
+#define TEST_12 12      /*  Self test cases */
+
+static int curtest = TEST_12;
 
 GDB_DEFINE_HOOK(boot)
 GDB_DEFINE_HOOK(initialized)
@@ -250,8 +252,8 @@ static kthread_t *initproc_create(void)
         KASSERT(NULL != procc);
         KASSERT(PID_INIT == procc->p_pid);
         kthread_t *initthr;
-        initthr=kthread_create(procc,initproc_run,NULL,NULL);       
-        KASSERT(initthr != NULL && "Could not create thread for Idle process");      
+        initthr=kthread_create(procc,initproc_run,NULL,NULL);
+        KASSERT(initthr != NULL && "Could not create thread for Idle process");
         return initthr;
 }
 
@@ -286,6 +288,7 @@ void reader_writer();
 void dead_own();
 void shellTest();
 void vfs_test_setup();
+void add_tests();
 
 kmutex_t m1;
 kmutex_t m2;
@@ -314,6 +317,7 @@ static void *initproc_run(int arg1, void *arg2)
 		case 9: shellTest();break;
 		case 10: dead_own(); break;
 		case 11: vfs_test_setup(); break;
+		case 12: add_tests(); break;
 		
 	}
                 
@@ -326,6 +330,61 @@ static void *initproc_run(int arg1, void *arg2)
         
         return NULL;
 }
+
+void *extra_self_tests(int arg1, void *arg2)
+{
+        /* creating /test1/test2/ directories */
+   dbg(DBG_ERROR | DBG_VFS,"TEST: Creating directories\n");        
+                do_mkdir("dir");
+                do_mkdir("dir/dir1");
+                do_mkdir("dir/dir2");
+                do_mkdir("dir/dir3");                
+   dbg(DBG_ERROR | DBG_VFS,"TEST: Directories are created\n");
+        int fd;
+        char *buf="Testing file_1 for write operation";
+
+               /* performs write operation */
+   dbg(DBG_ERROR | DBG_VFS,"TEST: Change directory to dir/dir1\n");
+        do_chdir("dir/dir1");
+   dbg(DBG_ERROR | DBG_VFS,"TEST: Create file1.txt in dir/dir1\n");
+        fd = do_open("file1.txt", O_CREAT|O_WRONLY);
+        do_write(fd, buf, strlen(buf));
+        do_close(fd);
+   dbg(DBG_ERROR | DBG_VFS,"TEST: Change directory to dir/dir2\n");
+        do_chdir("/dir/dir2");
+        strcpy(buf,"Testing file_2 for read operation\n");
+   dbg(DBG_ERROR | DBG_VFS,"TEST: Create file2.txt in dir/dir2\n");
+        fd = do_open("file2.txt", O_CREAT | O_RDONLY);
+        /*do_write(fd, buf, sizeof(buf));*/
+        do_close(fd);
+   dbg(DBG_ERROR | DBG_VFS,"TEST:Linking Source directory => /dir/dir2, Destination directory => /dir/linkdir \n");
+        do_chdir("/");   
+        do_link("dir/dir1","dir/linkdir1");
+
+   dbg(DBG_ERROR | DBG_VFS,"TEST:Linking Source file => /dir/dir2/file2.txt, Destination directory => /dir/linkdir2 \n");
+        do_link("dir/dir1/file1.txt","dir/linkdir2");
+        
+   dbg(DBG_ERROR | DBG_VFS,"TEST: Renaming directory from dir/dir3 to dir/renamed \n");
+        do_rename("dir/dir3","dir/renameddir3");
+
+   dbg(DBG_ERROR | DBG_VFS,"TEST: Renaming file from dir/dir1/file1.txt to dir/dir1/renamedfile1.txt \n");
+        do_rename("dir/dir1/file1.txt","dir/dir1/renamedfile1.txt");
+
+        shellTest();
+        
+                /*performs read operation */
+                
+     return NULL;
+}
+
+void add_tests()
+{
+        proc_t *proc_extra = proc_create("extra_tests_proc");
+        kthread_t *add_test_thread = kthread_create(proc_extra,extra_self_tests,1,NULL);
+        sched_make_runnable(add_test_thread);
+}
+
+
 extern int vfstest_main(int argc, void *argv);
 void vfs_test_setup()
 {
@@ -333,7 +392,7 @@ void vfs_test_setup()
         kthread_t *thread_vfs = kthread_create(proc_vfs, (kthread_func_t)vfstest_main, 1, NULL);
         sched_make_runnable(thread_vfs);
 }
- 
+
 
 /* PROCESS AND THREAD TESTING CASES */
 void *init_child10(int arg1,void *arg2) 

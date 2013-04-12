@@ -57,14 +57,14 @@ do_read(int fd, void *buf, size_t nbytes)
         {
 		dbg(DBG_ERROR | DBG_VFS,"ERROR: do_read: File is not meant for reading\n");
                  fput(open_file);
-                 return -EBADF;       
+                 return -EBADF;  
         }
                
         if(S_ISDIR(open_file->f_vnode->vn_mode))
         {
 		dbg(DBG_ERROR | DBG_VFS,"ERROR: do_read: File descriptor points to a Directory\n");
                 fput(open_file);
-                return -EISDIR;
+                return -EBADF;
         }
         KASSERT(open_file->f_vnode->vn_ops->read);
         int i=(open_file->f_vnode->vn_ops->read)(open_file->f_vnode,open_file->f_pos,buf,nbytes);
@@ -339,6 +339,7 @@ do_mknod(const char *path, int mode, unsigned devid)
         
         if(name!=NULL)
         {
+                dbg(DBG_VFS,"Calling lookup() to check for the file existence\n");
                 int j=lookup(res_vnode,name,namelen,&result);
                          
                 if(j==0)
@@ -414,6 +415,7 @@ do_mkdir(const char *path)
         
         if(name!=NULL)
         {
+                dbg(DBG_VFS,"Calling lookup() to check for the file existence\n");
                 int j=lookup(res_vnode,name,namelen,&result);
                          
                 if(j==0)
@@ -506,7 +508,7 @@ do_rmdir(const char *path)
                 return -ENOTEMPTY;
         }
         if(name!=NULL)
-        {
+        {                
                 int j=lookup(res_vnode,name,namelen,&result);     
                 if(j!=0)
                 {
@@ -696,7 +698,7 @@ do_link(const char *from, const char *to)
         else 
         {
 
-                if((!S_ISDIR(node2->vn_mode))||(!S_ISDIR(node1->vn_mode)))
+                if((!S_ISDIR(node2->vn_mode)))/*||(!S_ISDIR(node1->vn_mode)))*/
                 {
                        dbg(DBG_ERROR | DBG_VFS,"ERROR: do_link: A component in the path of either \'to\' or \'from\' is not directory\n");
                         return -ENOTDIR;
@@ -740,9 +742,38 @@ do_rename(const char *oldname, const char *newname)
         int i=do_link(oldname,newname);
         if(i<0)
                 return i;
-        int j=do_unlink(oldname);
+        size_t namelen=0;
+        const char *name=NULL;
+        vnode_t *node2;
+        vnode_t *result;
+        int k=0, j=0;
+        k=dir_namev(oldname, &namelen,&name,NULL,&node2);
+
+        if(k<0)
+             {
+                vput(node2);
+                return k;
+              }
+        if(name!=NULL)
+        {
+                j=lookup(node2,name,namelen,&result);
+                if(j==0)
+                {
+                    vput(result);  
+                    if(!S_ISDIR(result->vn_mode))
+                      {
+                        dbg(DBG_VFS | DBG_ERROR,"Unlink the file\n");
+                        j = do_unlink(oldname);
+                      }
+                      else
+                        j = do_rmdir(oldname);               
+
+                 }
+        }
+
         dbg(DBG_VFS,"INFO: Rename Successful. oldname:%s newname:%s\n",oldname,newname);
         /*NOT_YET_IMPLEMENTED("VFS: do_rename");*/
+        vput(node2);
         return j;
 }
 
@@ -842,11 +873,17 @@ do_getdent(int fd, struct dirent *dirp)
                  fput(open_file);
                  return i;
         }
-        else
+        else if(i==0)
         {
                 
                 fput(open_file);
                 return 0;
+        }
+        else
+        {
+                
+                fput(open_file);
+                return sizeof(dirent_t);
         }
         /*NOT_YET_IMPLEMENTED("VFS: do_getdent");*/
        dbg(DBG_VFS,"INFO: Successfully performed getdent operation on file with fd=%d\n",fd);

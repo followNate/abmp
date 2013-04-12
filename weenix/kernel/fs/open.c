@@ -125,7 +125,7 @@ do_open(const char *filename, int oflags)
 	if(doExist!=0){
 		dbg(DBG_ERROR | DBG_VFS,"ERROR: The file with name= %s, doesn't exist.\n",filename);
 		fput(fresh_file);
-		return -ENOENT;
+		return doExist;
 	}
 
 	if(S_ISDIR(res_vnode->vn_mode) && ((oflags & 3)==O_WRONLY || (oflags & 3)==O_RDWR)){

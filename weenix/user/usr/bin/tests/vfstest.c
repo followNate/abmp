@@ -342,7 +342,7 @@ vfstest_chdir(void)
 
 static void
 vfstest_paths(void)
-{/*
+{
 #define PATHS_TEST_DIR "paths"
 
         struct stat s;
@@ -350,22 +350,29 @@ vfstest_paths(void)
         syscall_success(mkdir(PATHS_TEST_DIR, 0777));
         syscall_success(chdir(PATHS_TEST_DIR));
 
+  
         syscall_fail(stat("", &s), EINVAL);
 
         paths_equal(".", ".");
         paths_equal("1/2/3", "1/2/3");
         paths_equal("4/5/6", "4/5/6");
+ 
+        /* root directory */
 
-       * root directory *
         paths_equal("/", "/");
-        paths_equal("/", "/..");
+           
+  paths_equal("/", "/..");
+ 
         paths_equal("/", "/../");
-        paths_equal("/", "/../.");
+         
+    
+   paths_equal("/", "/../.");
 
-        * . and .. *
+        /* . and .. */
         paths_equal(".", "./.");
         paths_equal(".", "1/..");
         paths_equal(".", "1/../");
+        
         paths_equal(".", "1/2/../..");
         paths_equal(".", "1/2/../..");
         paths_equal(".", "1/2/3/../../..");
@@ -375,7 +382,7 @@ vfstest_paths(void)
         paths_equal(".", "1/2/3/../../../4/5/6/../../..");
         paths_equal(".", "1/./2/./3/./.././.././.././4/./5/./6/./.././.././..");
 
-        * extra slashes *
+        /* extra slashes */
         paths_equal("1/2/3", "1/2/3/");
         paths_equal("1/2/3", "1//2/3");
         paths_equal("1/2/3", "1/2//3");
@@ -383,7 +390,7 @@ vfstest_paths(void)
         paths_equal("1/2/3", "1//2//3/");
         paths_equal("1/2/3", "1///2///3///");
 
-        * strange names *
+        /* strange names */
         paths_equal("-", "-");
         paths_equal(" ", " ");
         paths_equal("\\", "\\");
@@ -391,7 +398,7 @@ vfstest_paths(void)
 
         struct stat st;
 
-        * error cases *
+        /* error cases */
         syscall_fail(stat("asdf", &st), ENOENT);
         syscall_fail(stat("1/asdf", &st), ENOENT);
         syscall_fail(stat("1/../asdf", &st), ENOENT);
@@ -401,7 +408,7 @@ vfstest_paths(void)
         syscall_fail(open("1/file/other", O_RDONLY, 0777), ENOTDIR);
         syscall_fail(open("1/file/other", O_RDONLY | O_CREAT, 0777), ENOTDIR);
 
-        syscall_success(chdir(".."));*/
+        syscall_success(chdir(".."));
 }
 
 static void
@@ -623,6 +630,7 @@ vfstest_read(void)
         test_assert(5 == ret, "write(%d, \"hello\", 5) returned %d", fd, ret);
         syscall_success(ret = lseek(fd, 0, SEEK_SET));
         test_assert(0 == ret, "lseek(%d, 0, SEEK_SET) returned %d", fd, ret);
+
         read_fd(fd, READ_BUFSIZE, "hello");
         syscall_success(close(fd));
 
@@ -791,7 +799,6 @@ vfstest_s5fs_vm(void)
 
         syscall_success(close(fd));
         syscall_success(close(newfd));
-
         /* Remove one, make sure the other remains */
         syscall_success(unlink("oldchld"));
         syscall_fail(mkdir("newchld", 0), EEXIST);
@@ -803,7 +810,7 @@ vfstest_s5fs_vm(void)
         syscall_fail(link("parent", "newchld"), EISDIR);
 
         /* only rename test */
-        /*syscall_success(rename("oldchld", "newchld"));*/
+        /*syscall_success(rename("oldchld", "newchld"));*/make
 
         /* mmap/munmap tests */
         syscall_success(fd = open("newchld", O_RDWR, 0));
@@ -911,35 +918,44 @@ int vfstest_main(int argc, char **argv)
         syscall_success(chdir(root_dir));
 
 	vfstest_stat();
+ 
         dbg_print("\n%d\n",++i);
+ 
         vfstest_chdir();
+
         dbg_print("\n%d\n",++i);
         vfstest_mkdir();
+
+
         dbg_print("\n%d\n",++i);
+
         vfstest_paths();
+   
         dbg_print("\n%d\n",++i);
-        vfstest_fd();
+         
+        
         dbg_print("\n%d\n",++i);
         vfstest_open();
+     
         dbg_print("\n%d\n",++i);
        
         vfstest_read();
         dbg_print("\n%d\n",++i);
-        
+         
         vfstest_getdents();
         dbg_print("\n%d\n",++i);  
-
+        
 #ifdef __VM__
         vfstest_s5fs_vm();
 #endif
 
        /* vfstest_infinite();*/
-
+ test_fini();
         syscall_success(chdir(".."));
-     
+
         vfstest_term();
-        dbg(DBG_VFS,"\ndnjjdjdkdkdkdd\n");  
+         
         test_fini();
-        dbg(DBG_VFS,"\nlllllllllllll\n");  
+        
         return 0;
 }
