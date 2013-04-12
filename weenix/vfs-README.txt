@@ -93,13 +93,23 @@ Description: Here we are validating following system calls to file system. At th
 do_mkdir, do_rmdir, do_chdir, do_link, do_unlink, do_lseek, do_open, do_read, do_write, do_close, do_dup etc. The grader can validate the result from the logs as well as in the kshell.
 
 Here we have created a main directory "dir" and created four directories "dir1", "dir2", "dir3", "dir4" in this main directory.In directory "dir1" we have created a file "file1.txt" and in directory "dir2" we have created a file "file2.txt". 
-We linked the directory "dir1" into a new directory "linkdir1" and "the file1.txt" present in directory"dir1" into a new directory "linkdir2". 
-We rename the directory "dir3" to "renameddir3" and "file1.txt" in directory "dir1" to "renamedfile1.txt". 
-We removed the directory "dir4". 
-We open the file "file2.txt" in directory "dir2" for reading 18 characters and display on the terminal. 
-We used do_lseek() function and set offset to -19 and whence to SEEK_END and display on the terminal. 
-Lastly we validated do_dup and do_up2 funtions on "file2.txt an display the new file descriptors.
+We linked the directory "dir/dir2" into a new directory "/dir/linkofdir2" and "the dir/dir1/file1.txt" present in directory "dir1" into a new file "/dir/linkofdir2". 
 
+We renamed the directory "dir3" to "renameddir3" and "file1.txt" in directory "/dir/dir1" to "/dir/renamedfile1.txt". 
+We removed the directory "dir4". 
+We opened the file "file2.txt" in directory "dir2" for reading 18 characters and displayed on the terminal. (Please check the terminal log mesage for the same)
+
+We used do_lseek() function and set offset to -19 and whence to SEEK_END and displayed on the terminal. 
+Lastly we validated do_dup and do_up2 funtions on "file2.txt an displayed the new file descriptors.
+
+
+
+NOTE: We are not removing the ceated files and directories for the TESTING purpose. ! 
+
+
+Please reach us ASAP if you find any doubts.
+
+THANKS..
 
 
 
