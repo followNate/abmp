@@ -90,4 +90,4 @@ Description: This test case exectues the test cases defined in vfstest.c file. T
 
 Test Case 12:	CUSTOM TEST CASES
 Description: Here we are validating following system calls to file system.
-do_mkdir, do_rmdir, do_chdir, do_link, do_unlink, do_rename, do_lseek, do_open, do_read, do_write, do_close, do_dup etc. The grader can validate the result from the logs.
+do_mkdir, do_rmdir, do_chdir, do_link, do_unlink, do_lseek, do_open, do_read, do_write, do_close, do_dup etc. The grader can validate the result from the logs.
