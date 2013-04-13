@@ -115,7 +115,7 @@ dir_namev(const char *pathname, size_t *namelen, const char **name,vnode_t *base
         while(file_pass != end)
         { 
                 file_pass = strchr(file_name,'/');
-                KASSERT(dir_vnode!=NULL);
+                KASSERT(NULL!=dir_vnode);
 
                 if (!S_ISDIR(dir_vnode->vn_mode))
                 {
