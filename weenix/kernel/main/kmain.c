@@ -399,8 +399,8 @@ void *extra_self_tests(int arg1, void *arg2)
         do_chdir("/");
         do_link("dir/dir2","dir/linkofdir2");
 
-   dbg(DBG_ERROR | DBG_VFS,"TEST:Linking Source file => /dir/dir2/file2.txt, to the Destination => /dir/linkoffile2 \n");
-        do_link("dir/dir1/file1.txt","dir/linkoffile2");
+   dbg(DBG_ERROR | DBG_VFS,"TEST:Linking Source file => /dir/dir1/file1.txt, to the Destination => /dir/linkoffile1 \n");
+        do_link("dir/dir1/file1.txt","dir/linkoffile1");
         
    dbg(DBG_ERROR | DBG_VFS,"TEST: Renaming directory from dir/dir3 to dir/renamed \n");
         do_rename("dir/dir3","dir/renameddir3");
@@ -414,9 +414,8 @@ void *extra_self_tests(int arg1, void *arg2)
    dbg(DBG_ERROR | DBG_VFS,"TEST: reading 18 chars from file: /dir/linkoffile2 which is hard link of /dir/dir2/file2.txt \n");
         fd = do_open("dir/linkdir2", O_RDONLY);
         memset(readbuf,0,sizeof(char)*150);
-        do_read(fd,readbuf,18);
         do_close(fd);
-   dbg(DBG_ERROR | DBG_VFS,"TEST: read 18 chars: \"%s\" from file: /dir/linkoffile2\n",readbuf);
+   dbg(DBG_ERROR | DBG_VFS,"TEST: read 18 chars: \"%s\" from file: /dir/linkoffile1\n",readbuf);
    
    dbg(DBG_ERROR | DBG_VFS,"TEST: reading file using lseek function on  /dir/linkoffile2 which is hard link of /dir/dir2/file2.txt \n");
         memset(readbuf,0,sizeof(char)*150);
@@ -424,7 +423,7 @@ void *extra_self_tests(int arg1, void *arg2)
         do_lseek(fd,-19,2);
         do_read(fd,readbuf,19);
         do_close(fd);
-   dbg(DBG_ERROR | DBG_VFS,"TEST: read chars: \"%s\" using lseek from file: /dir/linkoffile2\n",readbuf);
+   dbg(DBG_ERROR | DBG_VFS,"TEST: read chars: \"%s\" using lseek from file: /dir/linkoffile1\n",readbuf);
    
    dbg(DBG_ERROR | DBG_VFS,"TEST: creating a duplicate file descriptor of file: /dir/dir2/file2.txt using do_dup()\n");
         fd = do_open("/dir/dir2/file2.txt", O_RDONLY);
@@ -607,7 +606,7 @@ void shellTest()
 { 
         proc_t* new_shell = proc_create("kshell");
         kthread_t *new_shell_thread = kthread_create(new_shell,kshell_test, NULL, NULL);
-        dbg_print("\nsd");
+        /*dbg_print("\nsd");*/
         sched_make_runnable(new_shell_thread);     
 }
 
@@ -619,9 +618,9 @@ void *kshell_test(int a, void *b)
     while (1)
     {
         new_shell = kshell_create(0);
-        dbg_print("\nff");
+        /*dbg_print("\nff");*/
         i = kshell_execute_next(new_shell);
-        dbg_print("\nff");
+        /*dbg_print("\nff");*/
         if(i>0){dbg(DBG_TERM,"Error Executing the command\n");}
         kshell_destroy(new_shell);
         if(i==0){break;}
