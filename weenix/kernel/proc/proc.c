@@ -251,7 +251,7 @@ proc_kill(proc_t *p, int status)
 	/* Call proc_cleanup() here to clean the PCB and make it a Zombie*/
 	/*clean the PCB expect for p_pid and return value(or status code)*/
 
-	KASSERT(1 < p->p_pid);
+	/*KASSERT(1 < p->p_pid);*/
 	
         dbg(DBG_PROC,"Killing Process with PID=%d\n",p->p_pid);
 	
