@@ -809,7 +809,7 @@ vfstest_s5fs_vm(void)
         syscall_fail(link("parent", "newchld"), EISDIR);
 
         /* only rename test */
-        /*syscall_success(rename("oldchld", "newchld"));*/make
+        /*syscall_success(rename("oldchld", "newchld"));*/
 
         /* mmap/munmap tests */
         syscall_success(fd = open("newchld", O_RDWR, 0));
@@ -913,37 +913,14 @@ int vfstest_main(int argc, char **argv)
         int i=0;
         test_init();
         vfstest_start();
-
         syscall_success(chdir(root_dir));
-
 	vfstest_stat();
-
-        dbg_print("\n%d\n",++i);
- 
         vfstest_chdir();
-
-        dbg_print("\n%d\n",++i);
         vfstest_mkdir();
-
-
-        dbg_print("\n%d\n",++i);
-
         vfstest_paths();
-   
-        dbg_print("\n%d\n",++i);
-         
-        
-        dbg_print("\n%d\n",++i);
         vfstest_open();
-     
-        dbg_print("\n%d\n",++i);
-       
         vfstest_read();
-        dbg_print("\n%d\n",++i);
-         
         vfstest_getdents();
-
-        dbg_print("\n%d\n",++i);  
         
 #ifdef __VM__
         vfstest_s5fs_vm();
@@ -951,10 +928,7 @@ int vfstest_main(int argc, char **argv)
 
         /*vfstest_infinite();*/
         syscall_success(chdir(".."));
-
         vfstest_term();
-         
         test_fini();
-
         return 0;
 }
