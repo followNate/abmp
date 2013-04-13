@@ -74,7 +74,7 @@ int
 dir_namev(const char *pathname, size_t *namelen, const char **name,vnode_t *base, vnode_t **res_vnode)
 {
 	KASSERT(NULL != pathname);
-	
+	KASSERT(NULL!=res_vnode); 
 	vnode_t *dir_vnode;
         vnode_t *ret_result;
         char *file_name=(char *)pathname;
@@ -115,7 +115,12 @@ dir_namev(const char *pathname, size_t *namelen, const char **name,vnode_t *base
         while(file_pass != end)
         { 
                 file_pass = strchr(file_name,'/');
-                KASSERT(NULL!=dir_vnode);
+                if(NULL==dir_vnode)
+                {
+                
+                        dbg(DBG_ERROR | DBG_VFS, "ERROR: lookup failed. a path element does not exist.\n");
+                        return -ENOENT;
+                }
 
                 if (!S_ISDIR(dir_vnode->vn_mode))
                 {
@@ -155,7 +160,9 @@ dir_namev(const char *pathname, size_t *namelen, const char **name,vnode_t *base
 
        dbg(DBG_VFS, "INFO: returning from namev.c and the name is (%s), namelen is (%d)\n", file_name,*namelen);
 
-	KASSERT(NULL!=res_vnode);       
+
+	      
+	KASSERT(NULL!=*res_vnode);
 	KASSERT(NULL != namelen);
         KASSERT(NULL != name);
 

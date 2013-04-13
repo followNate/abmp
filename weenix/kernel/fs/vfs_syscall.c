@@ -300,7 +300,11 @@ do_mknod(const char *path, int mode, unsigned devid)
 		dbg(DBG_ERROR | DBG_VFS,"ERROR: do_mknod: File path is too long\n");
 		return -ENAMETOOLONG;
 	}
-
+        if(path == NULL)
+        {
+		dbg(DBG_ERROR | DBG_VFS,"ERROR: do_mknod: missing operand\n");
+		return -EINVAL;
+	}
         if(mode!=S_IFCHR&&mode!=S_IFBLK)
         {	
 		dbg(DBG_ERROR | DBG_VFS, "ERROR: do_mknod: Invalid mode used for creating device special file\n");
@@ -384,7 +388,11 @@ do_mkdir(const char *path)
         const char *name=NULL;
         vnode_t *res_vnode;
         vnode_t *result;
-        KASSERT(path != NULL);
+        if(path == NULL)
+        {
+		dbg(DBG_ERROR | DBG_VFS,"ERROR: do_mkdir: missing operand\n");
+		return -EINVAL;
+	}
         int i=dir_namev(path, &namelen,&name,NULL,&res_vnode);
         if(i<0)
         {
@@ -468,7 +476,11 @@ do_rmdir(const char *path)
         const char *name=NULL;
         vnode_t *res_vnode;
         vnode_t *result;
-        KASSERT(path != NULL);
+        if(path == NULL)
+        {
+		dbg(DBG_ERROR | DBG_VFS,"ERROR: do_rmdir: missing operand\n");
+		return -EINVAL;
+	}
         int i=dir_namev(path, &namelen,&name,NULL,&res_vnode);
         if(i<0)
         {
@@ -558,7 +570,11 @@ do_unlink(const char *path)
         const char *name=NULL;
         vnode_t *res_vnode;
         vnode_t *result;
-        KASSERT(path != NULL);
+        if(path == NULL)
+        {
+		dbg(DBG_ERROR | DBG_VFS,"ERROR: do_unlink: missing operand\n");
+		return -EINVAL;
+	}
         int i=dir_namev(path, &namelen,&name,NULL,&res_vnode);
         if(i<0)
         {
@@ -581,7 +597,7 @@ do_unlink(const char *path)
         }
         if(strlen(name)>NAME_LEN)
         {
-		dbg(DBG_ERROR | DBG_VFS, "ERROR: do_mkdir: A component of name was too long\n");
+		dbg(DBG_ERROR | DBG_VFS, "ERROR: do_unlink: A component of name was too long\n");
 		vput(res_vnode);
 		return -ENAMETOOLONG;
 	}     
@@ -661,7 +677,11 @@ do_link(const char *from, const char *to)
 		return -ENAMETOOLONG;
 	}
 	
-        KASSERT(from!=NULL&&to!=NULL);
+        if(from==NULL||to==NULL)
+        {
+		dbg(DBG_ERROR | DBG_VFS,"ERROR: do_link: missing operand\n");
+		return -EINVAL;
+	}
         size_t namelen=0;
         const char *name=NULL;
         vnode_t *node1;
@@ -685,7 +705,7 @@ do_link(const char *from, const char *to)
         }
         if(strlen(name)>NAME_LEN)
         {
-		dbg(DBG_ERROR | DBG_VFS, "ERROR: do_mkdir: A component of name was too long\n");
+		dbg(DBG_ERROR | DBG_VFS, "ERROR: do_link: A component of name was too long\n");
 		vput(node1);
                 vput(node2);
 		return -ENAMETOOLONG;
@@ -737,7 +757,11 @@ do_link(const char *from, const char *to)
 int
 do_rename(const char *oldname, const char *newname)
 {
-        KASSERT(oldname != NULL&&newname != NULL);
+        if(oldname == NULL||newname == NULL)
+        {
+		dbg(DBG_ERROR | DBG_VFS,"ERROR: do_rename: missing argument\n");
+		return -EINVAL;
+	}
         
         int i=do_link(oldname,newname);
         if(i<0)
@@ -798,7 +822,11 @@ do_chdir(const char *path)
 		dbg(DBG_ERROR | DBG_VFS,"ERROR: do_chdir: Path name is too long\n");
 		return -ENAMETOOLONG;
 	}
-
+        if(path == NULL)
+        {
+		dbg(DBG_ERROR | DBG_VFS,"ERROR: do_mkdir: missing path operand\n");
+		return -EINVAL;
+	}
         KASSERT(curproc!=NULL);
         vnode_t *res_vnode;
         int j=open_namev(path,NULL,&res_vnode,NULL);
@@ -989,12 +1017,15 @@ do_stat(const char *path, struct stat *buf)
 		return -ENAMETOOLONG;
 	}
 
-        KASSERT(buf!=NULL);
+        if(buf==NULL||path == NULL)
+        {
+		dbg(DBG_ERROR | DBG_VFS,"ERROR: do_stat: missing path operand\n");
+		return -EINVAL;
+	}
         size_t namelen=0;
         const char *name=NULL;
         vnode_t *res_vnode;
         vnode_t *result;
-        KASSERT(path != NULL);
         int i=dir_namev(path, &namelen,&name,NULL,&res_vnode);
         if(i<0)
         {
@@ -1002,7 +1033,7 @@ do_stat(const char *path, struct stat *buf)
         }
         if(strlen(name)>NAME_LEN)
         {
-		dbg(DBG_ERROR | DBG_VFS, "ERROR: do_mkdir: A component of name was too long\n");
+		dbg(DBG_ERROR | DBG_VFS, "ERROR: do_stat: A component of name was too long\n");
 		vput(res_vnode);
 		return -ENAMETOOLONG;
 	}
