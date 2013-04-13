@@ -30,7 +30,7 @@ lookup(vnode_t *dir, const char *name, size_t len, vnode_t **result)
         
         if (dir->vn_ops->lookup == NULL||(!S_ISDIR(dir->vn_mode)))
         {
-                dbg(DBG_ERROR | DBG_VFS,"ERROR: dir has no lookup()\n");
+                dbg(DBG_ERROR | DBG_VFS,"ERROR: lookup(): dir has no lookup()\n");
                 return -ENOTDIR;
         }
         if(strcmp(name,".")==0||len == 0)
@@ -39,6 +39,11 @@ lookup(vnode_t *dir, const char *name, size_t len, vnode_t **result)
                 vref(dir);
                 *result=dir;
                 return 0;
+        }
+        if (len > NAME_LEN)
+        {
+                dbg(DBG_ERROR | DBG_VFS, "ERROR: lookup(): name is too long.\n");
+                return -ENAMETOOLONG;
         }
         int i = dir->vn_ops->lookup(dir,name,len,result);       /*Calling lookup for the vnode dir*/
 	 if(i<0)                                                 /* Return ENOTDIR if lookup fails*/
@@ -83,12 +88,12 @@ dir_namev(const char *pathname, size_t *namelen, const char **name,vnode_t *base
         dbg(DBG_VFS, "INFO: The Path is (%s)\n",  pathname);
         if (strlen(pathname) > MAXPATHLEN)
         {
-                dbg(DBG_ERROR | DBG_VFS, "ERROR: The Path (%s) is too long.\n",  pathname);
+                dbg(DBG_ERROR | DBG_VFS, "ERROR: dir_namev(): The Path (%s) is too long.\n",  pathname);
                 return -ENAMETOOLONG;
         }
         if (strlen(pathname) == 0)
         {
-                dbg(DBG_ERROR | DBG_VFS, "ERROR: The name is invalid\n");
+                dbg(DBG_ERROR | DBG_VFS, "ERROR: dir_namev(): The name is invalid\n");
                 return -EINVAL;
         }
         if(pathname[0]=='/')
@@ -118,13 +123,13 @@ dir_namev(const char *pathname, size_t *namelen, const char **name,vnode_t *base
                 if(NULL==dir_vnode)
                 {
                 
-                        dbg(DBG_ERROR | DBG_VFS, "ERROR: lookup failed. a path element does not exist.\n");
+                        dbg(DBG_ERROR | DBG_VFS, "ERROR: dir_namev(): lookup failed. a path element does not exist.\n");
                         return -ENOENT;
                 }
 
                 if (!S_ISDIR(dir_vnode->vn_mode))
                 {
-                        dbg(DBG_ERROR | DBG_VFS, "ERROR: lookup failed. a path element is not a directory.\n");
+                        dbg(DBG_ERROR | DBG_VFS, "ERROR: dir_namev(): lookup failed. a path element is not a directory.\n");
                         vput(dir_vnode);
                         return -ENOTDIR;
                  }
@@ -133,7 +138,7 @@ dir_namev(const char *pathname, size_t *namelen, const char **name,vnode_t *base
                         int kk= file_pass - file_name ;
                         if (kk > NAME_LEN)
                         {
-                               dbg(DBG_ERROR | DBG_VFS, "ERROR: lookup failed. Path component too long.\n");
+                               dbg(DBG_ERROR | DBG_VFS, "ERROR: dir_namev(): lookup failed. Path component too long.\n");
                                vput(dir_vnode);
                                return -ENAMETOOLONG;
                         }
