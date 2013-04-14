@@ -57,7 +57,7 @@
 #define TEST_12 12      /*  Self test cases */
 
 
-static int curtest = TEST_12;
+static int curtest = TEST_9;
 
 GDB_DEFINE_HOOK(boot)
 GDB_DEFINE_HOOK(initialized)
@@ -412,7 +412,7 @@ void *extra_self_tests(int arg1, void *arg2)
         do_rmdir("dir/dir4");
 
    dbg(DBG_ERROR | DBG_VFS,"TEST: reading 18 chars from file: /dir/linkoffile2 which is hard link of /dir/dir2/file2.txt \n");
-        fd = do_open("dir/linkdir2", O_RDONLY);
+        fd = do_open("dir/linkoffile2", O_RDONLY);
         memset(readbuf,0,sizeof(char)*150);
         do_close(fd);
    dbg(DBG_ERROR | DBG_VFS,"TEST: read 18 chars: \"%s\" from file: /dir/linkoffile1\n",readbuf);
