@@ -109,8 +109,8 @@ vmmap_insert(vmmap_t *map, vmarea_t *newvma)
 		}list_iterate_end();
 		if(before){
 			list_insert_before(&(area->vma_plink),&(newvma->vma_plink));
-		else{
-			list_insert_tail(&(map->vma_list),&(newvma->vma_plink));
+		}else{
+			list_insert_tail(&(map->vmm_list),&(newvma->vma_plink));
 		}
 	}else{
 		list_insert_head(&(map->vmm_list),&(newvma->vma_plink));
@@ -141,19 +141,29 @@ vmmap_find_range(vmmap_t *map, uint32_t npages, int dir)
 	 * corressponding vma will be considered free. i.e, the underlying
 	 * physical pages are free.*/
 	
-	int startvfn = -1;
+	int startvfn = -1, i=-1;
 	vmarea_t *area;
 	
 	if(!list_empty(&(map->vmm_list))){
 		if(dir==VMMAP_DIR_HILO){
 			list_iterate_reverse(&(map->vmm_list), area, vmarea_t,vma_plink){
-					
+				i = vmmap_is_range_empty(map,area->vma_start,npages);
+				if(i==0){
+					startvfn = area->vma_start;
+					break;
+				}
                 	}list_iterate_end();
 		}else{
 			list_iterate_begin(&(map->vmm_list), area, vmarea_t,vma_plink){
-					
+				i = vmmap_is_range_empty(map,area->vma_start,npages);
+                                if(i==0){
+                                        startvfn = area->vma_start;
+                                        break;
+                                }
 			}list_iterate_end();
 		}
+	}else{
+		startvfn=1;
 	}	
 
         /*NOT_YET_IMPLEMENTED("VM: vmmap_find_range");*/
@@ -190,8 +200,31 @@ vmmap_lookup(vmmap_t *map, uint32_t vfn)
 vmmap_t *
 vmmap_clone(vmmap_t *map)
 {
-        NOT_YET_IMPLEMENTED("VM: vmmap_clone");
-        return NULL;
+	vmmap_t *newmap = NULL;
+	
+	newmap = vmmap_create();
+	if(newmap){
+		vmarea_t *area, newarea;
+		list_iterate_begin(&(map->vmm_list), area, vmarea_t, vma_plink){
+                        if(area->vma_start <= vfn && area->vma_end >= vfn){
+                                newarea = vmarea_malloc();
+                 		if(!newarea){
+					return NULL;
+				}
+				newarea->vma_start = area->vma_start;
+				newarea->vma_end = area->vma_end;
+				newarea->vma_offset = area->vma_offset;
+				newarea->vma_prot = area->vma_prot;
+				newarea->vma_flags = area->vma_flags;
+				newarea->vma_vmmap = newmap;
+				/*not adding mmobj and steup vma_olink*/
+				vmmap_insert(newmap, newarea);
+                        }
+                }list_iterate_end();		
+	}
+	
+        /*NOT_YET_IMPLEMENTED("VM: vmmap_clone");*/
+        return newmap;
 }
 
 /* Insert a mapping into the map starting at lopage for npages pages.
@@ -277,6 +310,7 @@ vmmap_remove(vmmap_t *map, uint32_t lopage, uint32_t npages)
 int
 vmmap_is_range_empty(vmmap_t *map, uint32_t startvfn, uint32_t npages)
 {
+	uint32_t endvfn = startvfn+npages;
 	KASSERT((startvfn < endvfn) && (ADDR_TO_PN(USER_MEM_LOW) <= startvfn) && (ADDR_TO_PN(USER_MEM_HIGH) >= endvfn));
 		
 	int i=0;
@@ -284,10 +318,12 @@ vmmap_is_range_empty(vmmap_t *map, uint32_t startvfn, uint32_t npages)
         if(!list_empty(&(map->vmm_list))){
                 vmarea_t *area;
                 list_iterate_begin(&(map->vmm_list), area, vmarea_t, vma_plink){
-                        if(area->vma_start <= startvfn && area->vma_end >= startvfn+npages){
-                                i=1;
+                        if(area->vma_start > endvfn && area->vma_end < startvfn){
+                                i=0;
                                 break;
-                        }
+                        }else{
+				i=1;
+			}
                 }list_iterate_end();
         }
 
