@@ -204,22 +204,20 @@ vmmap_clone(vmmap_t *map)
 	
 	newmap = vmmap_create();
 	if(newmap){
-		vmarea_t *area, newarea;
+		vmarea_t *area, *newarea;
 		list_iterate_begin(&(map->vmm_list), area, vmarea_t, vma_plink){
-                        if(area->vma_start <= vfn && area->vma_end >= vfn){
-                                newarea = vmarea_malloc();
-                 		if(!newarea){
-					return NULL;
-				}
-				newarea->vma_start = area->vma_start;
-				newarea->vma_end = area->vma_end;
-				newarea->vma_offset = area->vma_offset;
-				newarea->vma_prot = area->vma_prot;
-				newarea->vma_flags = area->vma_flags;
-				newarea->vma_vmmap = newmap;
-				/*not adding mmobj and steup vma_olink*/
-				vmmap_insert(newmap, newarea);
-                        }
+                	newarea = vmarea_alloc();
+                 	if(!newarea){
+				return NULL;
+			}
+			newarea->vma_start = area->vma_start;
+			newarea->vma_end = area->vma_end;
+			newarea->vma_off = area->vma_off;
+			newarea->vma_prot = area->vma_prot;
+			newarea->vma_flags = area->vma_flags;
+			newarea->vma_vmmap = newmap;
+			/*not adding mmobj and steup vma_olink*/
+			vmmap_insert(newmap, newarea);
                 }list_iterate_end();		
 	}
 	
@@ -342,7 +340,19 @@ vmmap_is_range_empty(vmmap_t *map, uint32_t startvfn, uint32_t npages)
 int
 vmmap_read(vmmap_t *map, const void *vaddr, void *buf, size_t count)
 {
-        NOT_YET_IMPLEMENTED("VM: vmmap_read");
+	uint32_t *vfn = (uint32_t*)vaddr;
+	vmarea_t *vma = vmmap_lookup(map,vfn);
+	KASSERT(NULL!=vma);
+	
+	if(vma){
+		if(vma->vma_end >= *vfn+count){
+			
+		}else{
+			return -EFAULT;
+		}
+	}
+
+        /*NOT_YET_IMPLEMENTED("VM: vmmap_read");*/
         return 0;
 }
 
