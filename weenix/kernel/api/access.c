@@ -133,7 +133,7 @@ int addr_perm(struct proc *p, const void *vaddr, int perm)
 			}
 		}
 	}
-	dbg(DBG_VM,"INFO: VM: The given address 0x%x has required permissions",*((uint32_t*)vaddr)); 
+	dbg(DBG_VM,"INFO: The given address 0x%x has required permissions",*((uint32_t*)vaddr)); 
 	/*NOT_YET_IMPLEMENTED("VM: ***none***");*/
         return i;
 }
@@ -164,7 +164,7 @@ repeat:		vma = vmmap_lookup(p->p_vmmap, newaddr);
 		}
 	}
 
-	dbg(DBG_VM,"INFO: VM: The given address range 0x%x-0x%x has required permissions",*((uint32_t*)avaddr),*((uint32_t*)avaddr)+len);
+	dbg(DBG_VM,"INFO: The given address range 0x%x-0x%x has required permissions",*((uint32_t*)avaddr),*((uint32_t*)avaddr)+len);
         /*NOT_YET_IMPLEMENTED("VM: ***none***");*/
         return i;
 }
