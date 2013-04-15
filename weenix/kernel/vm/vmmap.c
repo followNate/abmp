@@ -91,19 +91,27 @@ vmmap_destroy(vmmap_t *map)
 void
 vmmap_insert(vmmap_t *map, vmarea_t *newvma)
 {
-	KASSERT(NULL!=map);
-	KASSERT(NULL!=newvma);
-	
+	KASSERT(NULL!=map && NULL!=newvma);
+	KASSERT(NULL == newvma->vma_vmmap);
+	KASSERT(newvma->vma_start < newvma->vma_end);
+	KASSERT(ADDR_TO_PN(USER_MEM_LOW) <= newvma->vma_start && ADDR_TO_PN(USER_MEM_HIGH) >= newvma->vma_end);
+
 	newvma->vma_vmmap = map;
+	int before = 0;
 
 	if(!list_empty(&(map->vmm_list))){
 		vmarea_t *area;
 		list_iterate_begin(&(map->vmm_list), area, vmarea_t,vma_plink){
 			if(area->vma_start > newvma->vma_start){
+				before =1;
 				break;
 			}
 		}list_iterate_end();
-		list_insert_before(&(area->vma_plink),&(newvma->vma_plink));
+		if(before){
+			list_insert_before(&(area->vma_plink),&(newvma->vma_plink));
+		else{
+			list_insert_tail(&(map->vma_list),&(newvma->vma_plink));
+		}
 	}else{
 		list_insert_head(&(map->vmm_list),&(newvma->vma_plink));
 	}
@@ -124,21 +132,26 @@ vmmap_find_range(vmmap_t *map, uint32_t npages, int dir)
 	KASSERT(NULL!=map);
 	KASSERT(0<npages);
 	
+	/*Mohit: Assumptions: Every memory region has mmobj_t object
+	 * which manages pframes (which in turn deals with physical
+	 * pages).
+	 * The memory region also consists of virtual memory areas(VMA)
+	 * which are defined by start and end vfn. So I am assuming that
+	 * if there is any virtual memory address which doesn't have a
+	 * corressponding vma will be considered free. i.e, the underlying
+	 * physical pages are free.*/
+	
 	int startvfn = -1;
 	vmarea_t *area;
 	
 	if(!list_empty(&(map->vmm_list))){
 		if(dir==VMMAP_DIR_HILO){
 			list_iterate_reverse(&(map->vmm_list), area, vmarea_t,vma_plink){
-                		if(area->vma_start - area->vma_end >= npages){
 					
-				}
                 	}list_iterate_end();
 		}else{
 			list_iterate_begin(&(map->vmm_list), area, vmarea_t,vma_plink){
-                		if(area->vma_end - area->vma_start >= npages){
 					
-				}
 			}list_iterate_end();
 		}
 	}	
@@ -154,7 +167,6 @@ vmarea_t *
 vmmap_lookup(vmmap_t *map, uint32_t vfn)
 {
 	KASSERT(NULL!=map);
-	KASSERT(vfn>0);
 	
 	vmarea_t *vma = NULL;
 	if(!list_empty(&(map->vmm_list))){
@@ -210,7 +222,14 @@ vmmap_clone(vmmap_t *map)
 int
 vmmap_map(vmmap_t *map, vnode_t *file, uint32_t lopage, uint32_t npages,
           int prot, int flags, off_t off, int dir, vmarea_t **new)
-{
+{	KASSERT(NULL != map);
+        KASSERT(0 < npages);
+        KASSERT(!(~(PROT_NONE | PROT_READ | PROT_WRITE | PROT_EXEC) & prot));
+        KASSERT((MAP_SHARED & flags) || (MAP_PRIVATE & flags));
+        KASSERT((0 == lopage) || (ADDR_TO_PN(USER_MEM_LOW) <= lopage));
+        KASSERT((0 == lopage) || (ADDR_TO_PN(USER_MEM_HIGH) >= (lopage + npages)));
+        KASSERT(PAGE_ALIGNED(off));
+	
         NOT_YET_IMPLEMENTED("VM: vmmap_map");
         return -1;
 }
@@ -258,15 +277,14 @@ vmmap_remove(vmmap_t *map, uint32_t lopage, uint32_t npages)
 int
 vmmap_is_range_empty(vmmap_t *map, uint32_t startvfn, uint32_t npages)
 {
-	KASSERT(NULL!=map);
-        KASSERT(startvfn>0);
-	
+	KASSERT((startvfn < endvfn) && (ADDR_TO_PN(USER_MEM_LOW) <= startvfn) && (ADDR_TO_PN(USER_MEM_HIGH) >= endvfn));
+		
 	int i=0;
 
         if(!list_empty(&(map->vmm_list))){
                 vmarea_t *area;
                 list_iterate_begin(&(map->vmm_list), area, vmarea_t, vma_plink){
-                        if(area->vma_start <= startvfn && area->vma_end >= startvfn){
+                        if(area->vma_start <= startvfn && area->vma_end >= startvfn+npages){
                                 i=1;
                                 break;
                         }
