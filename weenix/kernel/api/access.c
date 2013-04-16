@@ -122,8 +122,20 @@ fail:
  */
 int addr_perm(struct proc *p, const void *vaddr, int perm)
 {
-        NOT_YET_IMPLEMENTED("VM: ***none***");
-        return 0;
+        int i = 0;
+	vmmap_t *map = p->p_vmmap;
+	if(map){
+		vmarea_t *vma = vmmap_lookup(map,*((uint32_t*)vaddr));
+		if(vma){
+			int vmaperm = vma->vma_prot;
+			if(vmaperm & perm){
+				i = 1;
+			}
+		}
+	}
+	dbg(DBG_VM,"INFO: VM: The given address 0x%x has required permissions",*((uint32_t*)vaddr)); 
+	/*NOT_YET_IMPLEMENTED("VM: ***none***");*/
+        return i;
 }
 
 /*
@@ -137,6 +149,22 @@ int addr_perm(struct proc *p, const void *vaddr, int perm)
  */
 int range_perm(struct proc *p, const void *avaddr, size_t len, int perm)
 {
-        NOT_YET_IMPLEMENTED("VM: ***none***");
-        return 0;
+	int i = addr_perm(p,avaddr,perm);
+	if(i){
+		uint32_t newaddr = *((uint32_t*)avaddr);
+		vmarea_t *vma = NULL;
+repeat:		vma = vmmap_lookup(p->p_vmmap, newaddr);
+		while(vma->vma_end < *((uint32_t*)avaddr)+len){
+			newaddr = vma->vma_end+1;
+			i = addr_perm(p,&newaddr, perm);
+			if(i)
+				goto repeat;
+			else
+				break;
+		}
+	}
+
+	dbg(DBG_VM,"INFO: VM: The given address range 0x%x-0x%x has required permissions",*((uint32_t*)avaddr),*((uint32_t*)avaddr)+len);
+        /*NOT_YET_IMPLEMENTED("VM: ***none***");*/
+        return i;
 }
