@@ -83,7 +83,8 @@ proc_t *
 proc_create(char *name)
 {
       
-        pid_t pid=_proc_getid(); /*Get the proc_id*/
+        /*TODO wirte to code for VM: */
+	pid_t pid=_proc_getid(); /*Get the proc_id*/
        
         KASSERT(PID_IDLE != pid || list_empty(&_proc_list));
         
@@ -183,7 +184,7 @@ dbg(DBG_FORK,"Process %s (PID=%d) is Created and parent process is \"%s\" (PID=%
 void
 proc_cleanup(int status)
 {
-	/*TODO Code for VM */
+	/*TODO Code for VM: */
 
 	/*clean the PCB expect for p_pid and return value(or status code)*/
 	KASSERT(1 <= curproc->p_pid);

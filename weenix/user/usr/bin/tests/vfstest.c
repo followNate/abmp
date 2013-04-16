@@ -907,7 +907,6 @@ int vfstest_main(int argc, char **argv)
 
         test_init();
         vfstest_start();
-
         syscall_success(chdir(root_dir));
 
         vfstest_stat();
@@ -926,9 +925,7 @@ int vfstest_main(int argc, char **argv)
         /*vfstest_infinite();*/
 
         syscall_success(chdir(".."));
-
         vfstest_term();
         test_fini();
-
         return 0;
 }

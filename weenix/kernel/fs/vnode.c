@@ -485,7 +485,18 @@ special_file_write(vnode_t *file, off_t offset, const void *buf, size_t count)
 static int
 special_file_mmap(vnode_t *file, vmarea_t *vma, mmobj_t **ret)
 {
-        NOT_YET_IMPLEMENTED("VM: special_file_mmap");
+	KASSERT(file);
+        KASSERT((S_ISCHR(file->vn_mode) || S_ISBLK(file->vn_mode)));
+
+        if(S_ISCHR(file->vn_mode)){
+                KASSERT(file->vn_cdev && file->vn_cdev->cd_ops && file->vn_cdev->cd_ops->mmap);
+                return file->vn_cdev->cd_ops->mmap(file,vma,ret);
+        }else{
+                return -ENOTSUP;
+        }
+
+        dbg(DBG_VM,"INFO: Successfully wrote into special file.\n");
+        /*NOT_YET_IMPLEMENTED("VM: special_file_mmap");*/
         return 0;
 }
 

@@ -58,8 +58,13 @@ vmarea_free(vmarea_t *vma)
 vmmap_t *
 vmmap_create(void)
 {
-        NOT_YET_IMPLEMENTED("VM: vmmap_create");
-        return NULL;
+	vmmap_t *newvmmap = (vmmap_t*)slab_obj_alloc(vmmap_allocator);
+	if(newvmmap){
+		newvmmap->vmm_proc = NULL;
+		list_init(&(newvmmap->vmm_list));
+	}
+        /*NOT_YET_IMPLEMENTED("VM: vmmap_create");*/
+        return newvmmap;
 }
 
 /* Removes all vmareas from the address space and frees the
@@ -67,7 +72,16 @@ vmmap_create(void)
 void
 vmmap_destroy(vmmap_t *map)
 {
-        NOT_YET_IMPLEMENTED("VM: vmmap_destroy");
+	KASSERT(NULL!=map);
+	if(!list_empty(&(map->vmm_list))){
+		vmarea_t * area;
+		list_iterate_begin(&(map->vmm_list), area, vmarea_t, vma_plink){
+			list_remove(&(area->vma_plink));
+		}list_iterate_end();
+	}
+	map->vmm_proc = NULL;
+	slab_obj_free(vmmap_allocator, map);
+        /*NOT_YET_IMPLEMENTED("VM: vmmap_destroy");*/
 }
 
 /* Add a vmarea to an address space. Assumes (i.e. asserts to some extent)
@@ -77,7 +91,24 @@ vmmap_destroy(vmmap_t *map)
 void
 vmmap_insert(vmmap_t *map, vmarea_t *newvma)
 {
-        NOT_YET_IMPLEMENTED("VM: vmmap_insert");
+	KASSERT(NULL!=map);
+	KASSERT(NULL!=newvma);
+	
+	newvma->vma_vmmap = map;
+
+	if(!list_empty(&(map->vmm_list))){
+		vmarea_t *area;
+		list_iterate_begin(&(map->vmm_list), area, vmarea_t,vma_plink){
+			if(area->vma_start > newvma->vma_start){
+				break;
+			}
+		}list_iterate_end();
+		list_insert_before(&(area->vma_plink),&(newvma->vma_plink));
+	}else{
+		list_insert_head(&(map->vmm_list),&(newvma->vma_plink));
+	}
+
+        /*NOT_YET_IMPLEMENTED("VM: vmmap_insert");*/
 }
 
 /* Find a contiguous range of free virtual pages of length npages in
@@ -90,8 +121,30 @@ vmmap_insert(vmmap_t *map, vmarea_t *newvma)
 int
 vmmap_find_range(vmmap_t *map, uint32_t npages, int dir)
 {
-        NOT_YET_IMPLEMENTED("VM: vmmap_find_range");
-        return -1;
+	KASSERT(NULL!=map);
+	KASSERT(0<npages);
+	
+	int startvfn = -1;
+	vmarea_t *area;
+	
+	if(!list_empty(&(map->vmm_list))){
+		if(dir==VMMAP_DIR_HILO){
+			list_iterate_reverse(&(map->vmm_list), area, vmarea_t,vma_plink){
+                		if(area->vma_start - area->vma_end >= npages){
+					
+				}
+                	}list_iterate_end();
+		}else{
+			list_iterate_begin(&(map->vmm_list), area, vmarea_t,vma_plink){
+                		if(area->vma_end - area->vma_start >= npages){
+					
+				}
+			}list_iterate_end();
+		}
+	}	
+
+        /*NOT_YET_IMPLEMENTED("VM: vmmap_find_range");*/
+        return startvfn;
 }
 
 /* Find the vm_area that vfn lies in. Simply scan the address space
@@ -100,8 +153,22 @@ vmmap_find_range(vmmap_t *map, uint32_t npages, int dir)
 vmarea_t *
 vmmap_lookup(vmmap_t *map, uint32_t vfn)
 {
-        NOT_YET_IMPLEMENTED("VM: vmmap_lookup");
-        return NULL;
+	KASSERT(NULL!=map);
+	KASSERT(vfn>0);
+	
+	vmarea_t *vma = NULL;
+	if(!list_empty(&(map->vmm_list))){
+		vmarea_t *area;
+                list_iterate_begin(&(map->vmm_list), area, vmarea_t, vma_plink){
+                        if(area->vma_start <= vfn && area->vma_end >= vfn){
+				vma = area;
+				break;
+			}
+                }list_iterate_end();
+        }
+
+        /*NOT_YET_IMPLEMENTED("VM: vmmap_lookup");*/
+        return vma;
 }
 
 /* Allocates a new vmmap containing a new vmarea for each area in the
@@ -191,8 +258,23 @@ vmmap_remove(vmmap_t *map, uint32_t lopage, uint32_t npages)
 int
 vmmap_is_range_empty(vmmap_t *map, uint32_t startvfn, uint32_t npages)
 {
-        NOT_YET_IMPLEMENTED("VM: vmmap_is_range_empty");
-        return 0;
+	KASSERT(NULL!=map);
+        KASSERT(startvfn>0);
+	
+	int i=0;
+
+        if(!list_empty(&(map->vmm_list))){
+                vmarea_t *area;
+                list_iterate_begin(&(map->vmm_list), area, vmarea_t, vma_plink){
+                        if(area->vma_start <= startvfn && area->vma_end >= startvfn){
+                                i=1;
+                                break;
+                        }
+                }list_iterate_end();
+        }
+
+	/*NOT_YET_IMPLEMENTED("VM: vmmap_is_range_empty");*/
+        return i;
 }
 
 /* Read into 'buf' from the virtual address space of 'map' starting at
