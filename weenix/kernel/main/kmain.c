@@ -53,7 +53,7 @@
 #define TEST_8 8        /*  Reader and writer problem */
 #define TEST_9 9        /*  kshell testing */
 #define TEST_10 10      /*  Deadlock check when same thread again trying to lock the same mutex */
-#define TEST_11 11      /*  tests 400 test cases from vfstest.c file */
+#define TEST_11 11      /*  tests 506 test cases from vfstest.c file */
 #define TEST_12 12      /*  Self test cases */
 
 
@@ -343,25 +343,60 @@ void *extra_self_tests(int arg1, void *arg2)
                 do_mkdir("dir/dir4");  
    dbg(DBG_ERROR | DBG_VFS,"TEST: Directories are created\n");
         int fd;
-        char *buf="Testing file_1 for write operation";
-        char readbuf[25];
+        char *file2buf="File 2 write only test case";
+        char *file1buf="Testing file_1 for write operation";
+        char readbuf[150];
 
    dbg(DBG_ERROR | DBG_VFS,"TEST: Change directory to dir/dir1\n");
         do_chdir("dir/dir1");
-   dbg(DBG_ERROR | DBG_VFS,"TEST: Create file1.txt in dir/dir1\n");
+
+        /* file1.txt creation with O_CREAT|O_WRONLY  flag*/
+   dbg(DBG_ERROR | DBG_VFS,"TEST: Create file1.txt with O_CREAT|O_WRONLY flag in directory dir/dir1\n");
         fd = do_open("file1.txt", O_CREAT|O_WRONLY);
-        do_write(fd, buf, strlen(buf));
-        do_close(fd);      
+        do_write(fd, file1buf, strlen(file1buf));
+        do_close(fd);
+        
+        /* file2.txt creation with O_CREAT|O_RDONLY  flag*/
    dbg(DBG_ERROR | DBG_VFS,"TEST: Change directory to dir/dir2\n");
         do_chdir("/dir/dir2");
-        strcpy(buf,"Testing file_2 for read operation\n");
-
-   dbg(DBG_ERROR | DBG_VFS,"TEST: Create file2.txt in dir/dir2\n");
+        
+   dbg(DBG_ERROR | DBG_VFS,"TEST: Create file2.txt with O_CREAT | O_RDONLY flag  in directory dir/dir2\n");
         fd = do_open("file2.txt", O_CREAT | O_RDONLY);
         do_close(fd);
+        
+         /* Write into file2.txt using O_WRONLY flag*/
+   dbg(DBG_ERROR | DBG_VFS,"TEST: Write into file2.txt with O_WRONLY flag in directory dir/dir2\n");  
+        fd = do_open("file2.txt", O_WRONLY);
+        do_write(fd, file2buf, strlen(file2buf));
+        do_close(fd);
+   dbg(DBG_ERROR | DBG_VFS,"TEST: written chars: \"%s\" in file2.txt\n",file2buf);
+   
+        char *appendbuf=" Appending for O_WRONLY|O_APPEND mode";
+      /* Append into file2.txt using  O_WRONLY|O_APPEND  flag*/
+   dbg(DBG_ERROR | DBG_VFS,"TEST: Append into file2.txt with O_WRONLY|O_APPEND flag in directory dir/dir2\n");  
+        fd = do_open("file2.txt", O_WRONLY|O_APPEND);
+        do_write(fd, appendbuf, strlen(appendbuf));
+        do_close(fd);
+   dbg(DBG_ERROR | DBG_VFS,"TEST: Appending chars: \"%s\" in file2.txt\n",appendbuf);
+        fd = do_open("file2.txt", O_RDONLY);
+        memset(readbuf,0,sizeof(char)*150);
+        do_read(fd,readbuf,strlen(file2buf)+strlen(appendbuf));
+   dbg(DBG_ERROR | DBG_VFS,"TEST: After Appending text in file2.txt is: \"%s\" \n",readbuf);
+
+        char *append2buf=" Appending for O_RDWR|O_APPEND mode in file2";
+      /* Append into file2.txt using  O_RDWR|O_APPEND  flag*/
+   dbg(DBG_ERROR | DBG_VFS,"TEST: Append into file2.txt with O_RDWR|O_APPEND flag in directory dir/dir2\n");  
+        fd = do_open("file2.txt", O_RDWR|O_APPEND);
+        do_write(fd, append2buf, strlen(append2buf));
+        do_close(fd);
+   dbg(DBG_ERROR | DBG_VFS,"TEST: Appending chars: \"%s\" in file2.txt\n",append2buf);
+        fd = do_open("file2.txt", O_RDONLY);
+        memset(readbuf,0,sizeof(char)*150);
+        do_read(fd,readbuf,strlen(file2buf)+strlen(append2buf)+strlen(appendbuf));
+   dbg(DBG_ERROR | DBG_VFS,"TEST: After Appending text in file2.txt is: \"%s\" \n",readbuf);
 
    dbg(DBG_ERROR | DBG_VFS,"TEST:Linking Source directory => /dir/dir2, Destination directory => /dir/linkofdir2 \n");
-        do_chdir("/");   
+        do_chdir("/");
         do_link("dir/dir2","dir/linkofdir2");
 
    dbg(DBG_ERROR | DBG_VFS,"TEST:Linking Source file => /dir/dir1/file1.txt, to the Destination => /dir/linkoffile1 \n");
@@ -376,16 +411,15 @@ void *extra_self_tests(int arg1, void *arg2)
    dbg(DBG_ERROR | DBG_VFS,"TEST: Removing directory dir/dir4 \n");
         do_rmdir("dir/dir4");
 
-   dbg(DBG_ERROR | DBG_VFS,"TEST: reading 18 chars from file: /dir/linkoffile1 which is hard link of /dir/dir1/file1.txt \n");
-        fd = do_open("dir/linkoffile1", O_RDONLY);
-        memset(readbuf,0,sizeof(char)*25);
-        do_read(fd,readbuf,18);
+   dbg(DBG_ERROR | DBG_VFS,"TEST: reading 18 chars from file: /dir/linkoffile2 which is hard link of /dir/dir2/file2.txt \n");
+        fd = do_open("dir/linkoffile2", O_RDONLY);
+        memset(readbuf,0,sizeof(char)*150);
         do_close(fd);
    dbg(DBG_ERROR | DBG_VFS,"TEST: read 18 chars: \"%s\" from file: /dir/linkoffile1\n",readbuf);
    
-   dbg(DBG_ERROR | DBG_VFS,"TEST: reading file using lseek function on  /dir/linkoffile1 which is hard link of /dir/dir1/file2.txt \n");
-        memset(readbuf,0,sizeof(char)*25);
-        fd = do_open("dir/linkoffile1", O_RDONLY);
+   dbg(DBG_ERROR | DBG_VFS,"TEST: reading file using lseek function on  /dir/linkoffile2 which is hard link of /dir/dir2/file2.txt \n");
+        memset(readbuf,0,sizeof(char)*150);
+        fd = do_open("dir/linkoffile2", O_RDONLY);
         do_lseek(fd,-19,2);
         do_read(fd,readbuf,19);
         do_close(fd);
@@ -403,8 +437,14 @@ void *extra_self_tests(int arg1, void *arg2)
    dbg(DBG_ERROR | DBG_VFS,"TEST: custom file descriptor is :\"%d\" of file: /dir/dir2/file2.txt \n",fd2);
                 do_close(fd);        do_close(fd2);
 
+        /*  Testing stat
+        struct *statbuf;
+   dbg(DBG_ERROR | DBG_VFS,"TEST: Testing the stat system call for directory dir\n");
+        do_stat("dir",statbuf);
+   dbg(DBG_ERROR | DBG_VFS,"TEST: Output of stat for directory dir is :\"%s\" \n",statbuf);*/
+
         shellTest(); 
-                /*performs read operation      */         
+
      return NULL;
 }
 

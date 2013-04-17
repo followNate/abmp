@@ -99,11 +99,11 @@ getdent(const char *dir, dirent_t *dirent)
                         return -1;
                 }
                 if (0 != strcmp(".", dirent->d_name) && 0 != strcmp("..", dirent->d_name)) {
-			close(fd);
+                        close(fd);
                         return 1;
                 }
         }
-	
+
         close(fd);
         return 0;
 }
@@ -130,7 +130,7 @@ removeall(const char *dir)
 
                 if (0 > stat(dirent.d_name, &status)) {
                         goto error;
-		}
+                }
 
                 if (S_ISDIR(status.st_mode)) {
                         if (0 > removeall(dirent.d_name)) {
@@ -150,6 +150,7 @@ removeall(const char *dir)
         if (0 > rmdir(dir)) {
                 return errno;
         }
+
         close(fd);
         return 0;
 
@@ -169,7 +170,7 @@ vfstest_start(void)
         root_dir[0] = '\0';
         do {
                 sprintf(root_dir, "vfstest-%d", rand());
-		err = mkdir(root_dir, 0777);
+                err = mkdir(root_dir, 0777);
         } while (err != 0);
         printf("Created test root directory: ./%s\n", root_dir);
 }
@@ -349,29 +350,22 @@ vfstest_paths(void)
         syscall_success(mkdir(PATHS_TEST_DIR, 0777));
         syscall_success(chdir(PATHS_TEST_DIR));
 
-  
         syscall_fail(stat("", &s), EINVAL);
 
         paths_equal(".", ".");
         paths_equal("1/2/3", "1/2/3");
         paths_equal("4/5/6", "4/5/6");
- 
-        /* root directory */
 
+        /* root directory */
         paths_equal("/", "/");
-           
-  paths_equal("/", "/..");
- 
+        paths_equal("/", "/..");
         paths_equal("/", "/../");
-         
-    
-   paths_equal("/", "/../.");
+        paths_equal("/", "/../.");
 
         /* . and .. */
         paths_equal(".", "./.");
         paths_equal(".", "1/..");
         paths_equal(".", "1/../");
-        
         paths_equal(".", "1/2/../..");
         paths_equal(".", "1/2/../..");
         paths_equal(".", "1/2/3/../../..");
@@ -629,7 +623,6 @@ vfstest_read(void)
         test_assert(5 == ret, "write(%d, \"hello\", 5) returned %d", fd, ret);
         syscall_success(ret = lseek(fd, 0, SEEK_SET));
         test_assert(0 == ret, "lseek(%d, 0, SEEK_SET) returned %d", fd, ret);
-
         read_fd(fd, READ_BUFSIZE, "hello");
         syscall_success(close(fd));
 
@@ -798,6 +791,7 @@ vfstest_s5fs_vm(void)
 
         syscall_success(close(fd));
         syscall_success(close(newfd));
+
         /* Remove one, make sure the other remains */
         syscall_success(unlink("oldchld"));
         syscall_fail(mkdir("newchld", 0), EEXIST);
@@ -906,27 +900,30 @@ int main(int argc, char **argv)
 int vfstest_main(int argc, char **argv)
 #endif
 {
-       if (argc != 1) {
+        if (argc != 1) {
                 fprintf(stderr, "USAGE: vfstest\n");
                 return 1;
         }
-        int i=0;
+
         test_init();
         vfstest_start();
         syscall_success(chdir(root_dir));
-	vfstest_stat();
+
+        vfstest_stat();
         vfstest_chdir();
         vfstest_mkdir();
         vfstest_paths();
+        vfstest_fd();
         vfstest_open();
         vfstest_read();
         vfstest_getdents();
-        
+
 #ifdef __VM__
         vfstest_s5fs_vm();
 #endif
 
         /*vfstest_infinite();*/
+
         syscall_success(chdir(".."));
         vfstest_term();
         test_fini();

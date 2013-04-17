@@ -7,14 +7,14 @@ typedef struct mmobj_ops mmobj_ops_t;
 
 typedef struct mmobj {
         mmobj_ops_t        *mmo_ops;
-        int                 mmo_refcount;   /* mmo_refcount >= mmo_nrespages >= 0 */
+        int                 mmo_refcount;   /* mmo_refcount >= mmo_nrespages >= 0 no of pages pointing to this object + no of other vm obj pointing to this vm object*/
 
         /*
          * Members maintained by the pframe module; only the pframe module may
          * modify these, but others may read/access them:
          */
-        int                 mmo_nrespages;
-        list_t              mmo_respages;
+        int                 mmo_nrespages; /*no of resident pages in memory */
+        list_t              mmo_respages;  /* list of all resident pages in memory for this obj*/
         /*
          * For shadow objects, the mmo_bottom_obj member of the union should point
          * to the bottommost object in the shadow chain. For non-shadow objects, the
@@ -24,7 +24,7 @@ typedef struct mmobj {
         union {
                 list_t            mmo_vmas;
                 struct mmobj     *mmo_bottom_obj;
-        }                   mmo_un;
+              }mmo_un;
 
         /*
          * Note to self: field not used by mmobj code at all.. used

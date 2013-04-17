@@ -72,7 +72,7 @@ shadowd(int arg1, void *arg2)
                                                 /* iff the object has only one parent, and is not right under vm_area */
                                                 KASSERT(o != last);
                                                 if (o->mmo_refcount - o->mmo_nrespages == 1) {
-                                                        /* migrate all its pages to last, and remove it from the shadow tree */
+                                               /* migrate all its pages to last, and remove it from the shadow tree */
                                                         pframe_t *pf;
                                                         list_iterate_begin(&o->mmo_respages, pf, pframe_t, pf_olink) {
                                                                 /* Because the operations that could be
@@ -80,7 +80,7 @@ shadowd(int arg1, void *arg2)
                                                                  * to make pages busy are non-blocking,
                                                                  * we always expect to see non-busy pages. */
                                                                 KASSERT(!pframe_is_busy(pf));
-                                                                /* o has refcount 1+nrespages, so this won't delete it yet */
+                                                    /* o has refcount 1+nrespages, so this won't delete it yet */
                                                                 pframe_migrate(pf, last);
                                                         } list_iterate_end();
                                                         last->mmo_shadowed = o->mmo_shadowed;
