@@ -7,7 +7,7 @@ typedef struct mmobj_ops mmobj_ops_t;
 
 typedef struct mmobj {
         mmobj_ops_t        *mmo_ops;
-        int                 mmo_refcount;   /* mmo_refcount >= mmo_nrespages >= 0 no of pages pointing to this object including non residents*/
+        int                 mmo_refcount;   /* mmo_refcount >= mmo_nrespages >= 0 no of pages pointing to this object + no of other vm obj pointing to this vm object*/
 
         /*
          * Members maintained by the pframe module; only the pframe module may
