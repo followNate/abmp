@@ -69,12 +69,13 @@ shadow_create()
         mmobj_t *new_shadow_obj = (mmobj_t*)slab_obj_alloc(shadow_allocator);
 	if(new_shadow_obj)
 	{
-/*	        (new_shadow_obj)->mmo_ops = (shadow_mmobj_ops);*/
+	        mmobj_init(new_shadow_obj,&shadow_mmobj_ops);
+/*	        (new_shadow_obj)->mmo_ops = (shadow_mmobj_ops);
         	new_shadow_obj->mmo_refcount = 0;
         	new_shadow_obj->mmo_nrespages = 0;
-        	list_init(&(new_shadow_obj->mmo_respages));
+        	list_init(&(new_shadow_obj->mmo_respages)); 
+        	new_shadow_obj->mmo_shadowed = NULL; */
         	(new_shadow_obj)->mmo_un.mmo_bottom_obj = NULL;
-        	new_shadow_obj->mmo_shadowed = NULL;
         }
         	
     /*  NOT_YET_IMPLEMENTED("VM: shadow_create");  */
@@ -108,32 +109,29 @@ static void
 shadow_put(mmobj_t *o)
 {
         KASSERT(o && (0 < o->mmo_refcount) && (&shadow_mmobj_ops == o->mmo_ops));
-/*
+
 dbg(DBG_VNREF,"before shadow_put: object = 0x%p , reference_count =%d, nrespages=%d\n",o,o->mmo_refcount,o->mmo_nrespages);
-  */
-        if (o->mmo_nrespages == (o->mmo_refcount - 1))          
+  
+        if(o->mmo_nrespages == (o->mmo_refcount - 1))  
               {
                         /* Object has only one parent , look for all resident pages and clear one by one */
                     pframe_t *pf;
-                    if(!list_empty(&(o->mmo_respages)))
+                    if(!(list_empty(&(o->mmo_respages))))
                       {  
-                         list_iterate_begin(&(o->mmo_respages),pframe_t,pf,pf_olink)
+                         list_iterate_begin(&(o->mmo_respages), pf, pframe_t, pf_olink)
                             {
                                   /* If page is dirty call cleanup. */
-                                while(pframe_is_dirty(pf))
-                                {
-                                   while (pframe_is_busy(pf))  /* Wait for the page to become not busy. */
-                                        sched_sleep_on(&(pf->pf_waitq));
-                                   pframe_clean(pf);
-                                }
-                                     if(!pframe_is_dirty(pf))
-                                     {
-                                        while (pframe_is_busy(pf)) 
-                                            sched_sleep_on(&(pf->pf_waitq));
+               /*TO DO  unpin also */
+                                if (pframe_is_busy(pf)) {
+                                       sched_sleep_on(&pf->pf_waitq);
+                                } else if (pframe_is_dirty(pf)) {
+                                        pframe_clean(pf);
+                                } else {
+                                        /* it's not busy, it's clean, free it */
                                         pframe_free(pf);
-                                     }
+                                }
                              }list_iterate_end();
-                      }                     
+                      }
                 }
             o->mmo_refcount--;
 dbg(DBG_VNREF,"after shadow_put: object = 0x%p , reference_count =%d, nrespages=%d\n",o,o->mmo_refcount,o->mmo_nrespages);
@@ -141,9 +139,9 @@ dbg(DBG_VNREF,"after shadow_put: object = 0x%p , reference_count =%d, nrespages=
               {
                  o = NULL;
                  slab_obj_free(shadow_allocator, o);
-              }               
+              }
         
-        NOT_YET_IMPLEMENTED("VM: shadow_put");
+/*        NOT_YET_IMPLEMENTED("VM: shadow_put");*/
 }
 
 /* This function looks up the given page in this shadow object. The
@@ -156,7 +154,45 @@ dbg(DBG_VNREF,"after shadow_put: object = 0x%p , reference_count =%d, nrespages=
 static int
 shadow_lookuppage(mmobj_t *o, uint32_t pagenum, int forwrite, pframe_t **pf)
 {
-
+        
+        /* need to call pframe_get_resident for each frame in the object */
+        mmobj_t *temp = o; pframe_t *pg_frame; int flag=0;
+     
+            if(!forwrite) /* Readonly --- look for nearest object with this page */
+               {
+                 if(temp->mmo_shadowed)  /* object is shadow object */
+                  {
+                     while( temp->mmo_shadowed != NULL )
+                       {
+                          pg_frame = pframe_get_resident(temp,pagenum);
+                            if(pg_frame)
+                             {
+                               while(!pframe_is_busy(pg_frame))
+                                  {
+                                    *pf = pg_frame;
+                                    flag=1; break;
+                                  }
+                             }
+                       if(flag)break;
+                       temp = temp->mmo_shadowed;
+                       }
+                  }
+                  else{   /* object is not shadow object */
+                          pg_frame = pframe_get_resident(o,pagenum);
+                          if(pg_frame)
+                            {
+                                while(!pframe_is_busy(pg_frame))
+                                    {
+                                       *pf = pg_frame;
+                                        break;
+                                    }
+                            }
+                       }
+               }
+            
+            else{ /* TO DO may need to call shadow_fillpage */ }
+        
+        
         NOT_YET_IMPLEMENTED("VM: shadow_lookuppage");
         return 0;
 }
@@ -172,6 +208,7 @@ shadow_lookuppage(mmobj_t *o, uint32_t pagenum, int forwrite, pframe_t **pf)
 static int
 shadow_fillpage(mmobj_t *o, pframe_t *pf)
 {
+        
         NOT_YET_IMPLEMENTED("VM: shadow_fillpage");
         return 0;
 }
