@@ -206,7 +206,6 @@ pframe_get_resident(struct mmobj *o, uint32_t pagenum)
                         return pf;
                 }
         } list_iterate_end();
-
         return NULL;
 }
 

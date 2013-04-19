@@ -17,7 +17,7 @@ typedef struct vmmap {
 } vmmap_t;
 
 /* make sure you understand why mapping boundaries are in terms of frame
- * numbers and not addresses */
+ * numbers and not addresses */ 
 typedef struct vmarea {
         uint32_t       vma_start;    /* [starting vfn, */
         uint32_t       vma_end;      /*  ending vfn) */

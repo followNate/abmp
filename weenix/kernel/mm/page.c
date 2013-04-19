@@ -294,7 +294,8 @@ __page_join(struct pagegroup *group, int order, uintptr_t addr)
 }
 
 /**
- * Free a block of 2^order pages. Fills the memory with a special
+ * Free a block of 2^order pages. 
+ Fills the memory with a special
  * MM_POISON_FREE pattern.
  *
  * @param addr the start of the block being freed
