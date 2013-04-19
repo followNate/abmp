@@ -53,9 +53,28 @@ init_func(syscall_init);
  *  - return the number of bytes actually read, or if anything goes wrong
  *    set curthr->kt_errno and return -1
  */
-static int
-sys_read(read_args_t *arg)
+static int sys_read(read_args_t *arg)
 {
+		read_args_t reading;
+        if (copy_from_user(&reading, arg, sizeof(read_args_t)) < 0)     /* Copy from the user the read_args_t */
+        {
+                curthr->kt_errno = EFAULT;
+                return -1;
+        }
+        char *buffer = (char *)page_alloc();                            /* A temporary buffer */
+        
+        int no_of_bytes_read = do_read(reading.fd, reading.buf, reading.nbytes);      /* Calling do_read() */
+        
+        if (copy_to_user(&arg, reading.buf, sizeof(read_args_t)) < 0)   /* Copy to the user the read bytes */
+        {
+                curthr->kt_errno = EFAULT;
+                return -1;
+        }     
+        
+        page_free(buffer);												/* page_free() the buffer */
+        
+        return (no_of_bytes_read);									    /* Returns the no of bytes */
+        
         NOT_YET_IMPLEMENTED("VM: sys_read");
         return -1;
 }
@@ -63,9 +82,29 @@ sys_read(read_args_t *arg)
 /*
  * This function is almost identical to sys_read.  See comments above.
  */
-static int
-sys_write(write_args_t *arg)
+static int sys_write(write_args_t *arg)
 {
+        write_args_t writing;
+        if (copy_from_user(&writing, arg, sizeof(write_args_t)) < 0)    /* Copy from the user the read_args_t */
+        {
+                curthr->kt_errno = EFAULT;
+                return -1;
+        }
+        
+        char *buffer = (char *)page_alloc();                            /* A temporary buffer */
+        
+        int no_of_bytes_write = do_write(writing.fd, writing.buf, writing.nbytes);     /* Calling do_write() */
+        
+        if (copy_to_user(&arg, writing.buf, sizeof(read_args_t)) < 0)   /* Copy to the user the write bytes */
+        {
+                curthr->kt_errno = EFAULT;
+                return -1;
+        }    
+        
+        page_free(buffer);  											/* page_free() the buffer */
+        
+        return (no_of_bytes_write);								     	/* Returns the no of bytes */
+        
         NOT_YET_IMPLEMENTED("VM: sys_write");
         return -1;
 }
@@ -79,9 +118,17 @@ sys_write(write_args_t *arg)
  * buffer, not the number of dirents, which means that you'll need to loop
  * a max of something like count / sizeof(dirent_t) times.
  */
-static int
-sys_getdents(getdents_args_t *arg)
+static int sys_getdents(getdents_args_t *arg)
 {
+        getdents_args_t getdents;
+        if (copy_from_user(&getdents, arg, sizeof(getdents_args_t)) < 0)    /* Copy from the user the read_args_t */
+        {
+                curthr->kt_errno = EFAULT;
+                return -1;
+        }
+        
+        int fd = do_getdent(getdents.fd, getdents.dirp);
+        
         NOT_YET_IMPLEMENTED("VM: sys_getdents");
         return -1;
 }
