@@ -147,17 +147,17 @@ vmmap_find_range(vmmap_t *map, uint32_t npages, int dir)
 	if(!list_empty(&(map->vmm_list))){
 		if(dir==VMMAP_DIR_HILO){
 			list_iterate_reverse(&(map->vmm_list), area, vmarea_t,vma_plink){
-				i = vmmap_is_range_empty(map,area->vma_start,npages);
+				i = vmmap_is_range_empty(map,area->vma_start-(npages+1),area->vma_start);
 				if(i==0){
-					startvfn = area->vma_start;
+					startvfn = area->vma_start-(npages+1);
 					break;
 				}
                 	}list_iterate_end();
 		}else{
 			list_iterate_begin(&(map->vmm_list), area, vmarea_t,vma_plink){
-				i = vmmap_is_range_empty(map,area->vma_start,npages);
+				i = vmmap_is_range_empty(map,area->vma_end+1,npages);
                                 if(i==0){
-                                        startvfn = area->vma_start;
+                                        startvfn = area->vma_end+1;
                                         break;
                                 }
 			}list_iterate_end();
@@ -216,7 +216,7 @@ vmmap_clone(vmmap_t *map)
 			newarea->vma_prot = area->vma_prot;
 			newarea->vma_flags = area->vma_flags;
 			newarea->vma_vmmap = newmap;
-			/*not adding mmobj and steup vma_olink*/
+			/*not adding mmobj to cloned vmareas*/
 			vmmap_insert(newmap, newarea);
                 }list_iterate_end();		
 	}
@@ -297,7 +297,38 @@ vmmap_map(vmmap_t *map, vnode_t *file, uint32_t lopage, uint32_t npages,
 int
 vmmap_remove(vmmap_t *map, uint32_t lopage, uint32_t npages)
 {
-        NOT_YET_IMPLEMENTED("VM: vmmap_remove");
+	 if(!list_empty(&(map->vmm_list))){
+                vmarea_t *area;
+                list_iterate_begin(&(map->vmm_list), area, vmarea_t, vma_plink){
+	
+			if(area->vma_start < lopage && area->vma_end > lopage+npages){
+				/*split this vma into two new vma*/
+				vmarea_t *newvma = vmarea_alloc();
+				newvma->vma_start = lopage-(npages+1);
+				newvma->vma_end = area->vma_end;
+				area->vma_end = lopage-1;
+				newvma->vma_off = area->vma_off + npages;
+				newvma->vma_prot = area->vma_prot;
+				vmmap_insert(map, newvma);
+				newvma->vma_obj = area->vma_obj;	/*Doubt at this point revisit later*/
+				
+				/*check if there is file object associated with the old vmarea
+				*if there is one then increase its refcount by one
+				* ----- but HOW????*/
+				
+			}else if (area->vma_start < lopage && area->vma_end < lopage+npages){
+				area->vma_end = lopage -1;
+			}else if (area->vma_start > lopage && area->vma_end > lopage+npages){
+				area->vma_start = lopage+1;
+				area->vma_off = area->vma_off + npages;
+			}else{
+				list_remove(&(area->vma_plink));
+			}
+		
+		}list_iterate_end();
+	}
+
+        /*NOT_YET_IMPLEMENTED("VM: vmmap_remove");*/
         return -1;
 }
 
