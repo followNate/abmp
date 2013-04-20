@@ -147,15 +147,15 @@ vmmap_find_range(vmmap_t *map, uint32_t npages, int dir)
 	if(!list_empty(&(map->vmm_list))){
 		if(dir==VMMAP_DIR_HILO){
 			list_iterate_reverse(&(map->vmm_list), area, vmarea_t,vma_plink){
-				i = vmmap_is_range_empty(map,area->vma_start-(npages+1),area->vma_start);
+				i = vmmap_is_range_empty(map,area->vma_start-(npages),area->vma_start-1);
 				if(i==0){
-					startvfn = area->vma_start-(npages+1);
+					startvfn = area->vma_start-(npages);
 					break;
 				}
                 	}list_iterate_end();
 		}else{
 			list_iterate_begin(&(map->vmm_list), area, vmarea_t,vma_plink){
-				i = vmmap_is_range_empty(map,area->vma_end+1,npages);
+				i = vmmap_is_range_empty(map,area->vma_end+1,area->vma_end+npages);
                                 if(i==0){
                                         startvfn = area->vma_end+1;
                                         break;
@@ -163,7 +163,10 @@ vmmap_find_range(vmmap_t *map, uint32_t npages, int dir)
 			}list_iterate_end();
 		}
 	}else{
-		startvfn=1;
+		if(dir==VMMAP_DIR_HILO)
+		        startvfn=ADDR_TO_PN(USER_MEM_HIGH)-npages+1;
+		else
+		        startvfn=ADDR_TO_PN(USER_MEM_LOW);
 	}	
 
         /*NOT_YET_IMPLEMENTED("VM: vmmap_find_range");*/
@@ -301,16 +304,19 @@ vmmap_remove(vmmap_t *map, uint32_t lopage, uint32_t npages)
                 vmarea_t *area;
                 list_iterate_begin(&(map->vmm_list), area, vmarea_t, vma_plink){
 	
-			if(area->vma_start < lopage && area->vma_end > lopage+npages){
+			if(area->vma_start < lopage && area->vma_end > lopage+npages-1){
 				/*split this vma into two new vma*/
 				vmarea_t *newvma = vmarea_alloc();
-				newvma->vma_start = lopage-(npages+1);
+				newvma->vma_start = lopage+npages;
 				newvma->vma_end = area->vma_end;
 				area->vma_end = lopage-1;
 				newvma->vma_off = area->vma_off + npages;
 				newvma->vma_prot = area->vma_prot;
 				vmmap_insert(map, newvma);
-				newvma->vma_obj = area->vma_obj;	/*Doubt at this point revisit later*/
+				newvma->vma_obj = area->vma_obj;	
+				if(newvma->vma_obj)
+				        (newvma->vma_obj->mmo_ops->ref)(newvma->vma_obj);
+				/*Doubt at this point revisit later*/
 				
 				/*check if there is file object associated with the old vmarea
 				*if there is one then increase its refcount by one
