@@ -148,7 +148,7 @@ vmmap_find_range(vmmap_t *map, uint32_t npages, int dir)
 		if(dir==VMMAP_DIR_HILO){
 			list_iterate_reverse(&(map->vmm_list), area, vmarea_t,vma_plink){
 				i = vmmap_is_range_empty(map,area->vma_start-(npages),area->vma_start-1);
-				if(i==0){
+				if(i==1){
 					startvfn = area->vma_start-(npages);
 					break;
 				}
@@ -156,7 +156,7 @@ vmmap_find_range(vmmap_t *map, uint32_t npages, int dir)
 		}else{
 			list_iterate_begin(&(map->vmm_list), area, vmarea_t,vma_plink){
 				i = vmmap_is_range_empty(map,area->vma_end+1,area->vma_end+npages);
-                                if(i==0){
+                                if(i==1){
                                         startvfn = area->vma_end+1;
                                         break;
                                 }
@@ -254,8 +254,7 @@ vmmap_clone(vmmap_t *map)
  * If 'new' is non-NULL a pointer to the new vmarea_t should be stored in it.
  */
 int
-vmmap_map(vmmap_t *map, vnode_t *file, uint32_t lopage, uint32_t npages,
-          int prot, int flags, off_t off, int dir, vmarea_t **new)
+vmmap_map(vmmap_t *map, vnode_t *file, uint32_t lopage, uint32_t npages, int prot, int flags, off_t off, int dir, vmarea_t **new)
 {	KASSERT(NULL != map);
         KASSERT(0 < npages);
         KASSERT(!(~(PROT_NONE | PROT_READ | PROT_WRITE | PROT_EXEC) & prot));
@@ -264,8 +263,95 @@ vmmap_map(vmmap_t *map, vnode_t *file, uint32_t lopage, uint32_t npages,
         KASSERT((0 == lopage) || (ADDR_TO_PN(USER_MEM_HIGH) >= (lopage + npages)));
         KASSERT(PAGE_ALIGNED(off));
 	
-        NOT_YET_IMPLEMENTED("VM: vmmap_map");
-        return -1;
+	int start=0;
+	mmobj_t *newmmobj=NULL;
+	vmarea_t *newarea=NULL;
+	if(lopage==0)
+	{
+	        start=vmmap_find_range(map,npages,dir);
+	        if(start==-1)
+	                return -1;
+	        newarea=vmarea_alloc();
+	        if(newarea==NULL)
+	                return -1;
+	        else
+	        {
+	                newarea->vma_start = start;
+			newarea->vma_end = start+npages-1;
+			newarea->vma_off = off;
+			newarea->vma_prot = prot;
+			newarea->vma_flags = flags;
+			newarea->vma_vmmap = map;
+			/*not adding mmobj to cloned vmareas*/
+			vmmap_insert(map, newarea);
+			if(file)
+			{
+			       KASSERT(file->vn_ops!=NULL&&file->vn_ops->mmap!=NULL);
+			       int i=(file->vn_ops->mmap)(file,newarea,&newmmobj);
+			       if(i<0)
+			                return i;
+			}
+			else
+			{
+			        if(flags!=MAP_PRIVATE)
+        	                        newmmobj=anon_create();
+        	                else
+        	                        newmmobj=shadow_create();
+        	                        
+			        if(newmmobj==NULL)
+			                return -1;
+			}
+			
+			*new=newarea;
+	        }
+	        
+	        
+	}
+	else
+	{
+	        if(!vmmap_is_range_empty(map,lopage,npages))
+	        {
+	                if(vmmap_remove(map,lopage,npages)!=0)
+	                        return -1;
+	        }
+	        newarea=vmarea_alloc();
+	        if(newarea==NULL)
+	                return -1;
+	        else
+	        {
+	                newarea->vma_start = lopage;
+			newarea->vma_end = lopage+npages-1;
+			newarea->vma_off = off;
+			newarea->vma_prot = prot;
+			newarea->vma_flags = flags;
+			newarea->vma_vmmap = map;
+			/*not adding mmobj to cloned vmareas*/
+			vmmap_insert(map, newarea);
+			if(file)
+			{
+			       KASSERT(file->vn_ops!=NULL&&file->vn_ops->mmap!=NULL);
+			       int i=(file->vn_ops->mmap)(file,newarea,&newmmobj);
+			       if(i<0)
+			                return i;
+			}
+			else
+			{
+			        if(flags!=MAP_PRIVATE)
+        	                        newmmobj=anon_create();
+        	                else
+        	                        newmmobj=shadow_create();
+        	                        
+			        if(newmmobj==NULL)
+			                return -1;
+			}
+		}
+			
+			
+	}
+	        
+	*new=newarea;
+       /* NOT_YET_IMPLEMENTED("VM: vmmap_map");*/
+        return 0;
 }
 
 /*
@@ -322,20 +408,24 @@ vmmap_remove(vmmap_t *map, uint32_t lopage, uint32_t npages)
 				*if there is one then increase its refcount by one
 				* ----- but HOW????*/
 				
-			}else if (area->vma_start < lopage && area->vma_end < lopage+npages){
+			}else if (area->vma_start < lopage && area->vma_end <= lopage+npages-1&&area->vma_end>=lopage){
 				area->vma_end = lopage -1;
-			}else if (area->vma_start > lopage && area->vma_end > lopage+npages){
-				area->vma_start = lopage+1;
-				area->vma_off = area->vma_off + npages;
-			}else{
+			}else if (area->vma_start >= lopage && area->vma_end > lopage+npages-1&&area->vma_start <= lopage+npages-1){
+				area->vma_off = area->vma_off +lopage+npages-area->vma_start;
+				area->vma_start = lopage+npages;
+			}else if (area->vma_start >= lopage && area->vma_end <= lopage+npages-1){
 				list_remove(&(area->vma_plink));
+			}
+			else
+			{
+			        continue;
 			}
 		
 		}list_iterate_end();
 	}
 
         /*NOT_YET_IMPLEMENTED("VM: vmmap_remove");*/
-        return -1;
+        return 0;
 }
 
 /*
@@ -345,7 +435,7 @@ vmmap_remove(vmmap_t *map, uint32_t lopage, uint32_t npages)
 int
 vmmap_is_range_empty(vmmap_t *map, uint32_t startvfn, uint32_t npages)
 {
-	uint32_t endvfn = startvfn+npages;
+	uint32_t endvfn = startvfn+npages-1;
 	KASSERT((startvfn < endvfn) && (ADDR_TO_PN(USER_MEM_LOW) <= startvfn) && (ADDR_TO_PN(USER_MEM_HIGH) >= endvfn));
 		
 	int i=0;
@@ -353,11 +443,11 @@ vmmap_is_range_empty(vmmap_t *map, uint32_t startvfn, uint32_t npages)
         if(!list_empty(&(map->vmm_list))){
                 vmarea_t *area;
                 list_iterate_begin(&(map->vmm_list), area, vmarea_t, vma_plink){
-                        if(area->vma_start > endvfn && area->vma_end < startvfn){
-                                i=0;
-                                break;
+                        if(area->vma_start > endvfn || area->vma_end < startvfn){
+                                i=1;
                         }else{
-				i=1;
+				i=0;
+				break;
 			}
                 }list_iterate_end();
         }
