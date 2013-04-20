@@ -468,15 +468,34 @@ int
 vmmap_read(vmmap_t *map, const void *vaddr, void *buf, size_t count)
 {
 	uint32_t *vfn = (uint32_t*)vaddr;
+	
+	if(!list_empty(&(map->vmm_list))){
+                vmarea_t *area;
+                list_iterate_begin(&(map->vmm_list), area, vmarea_t, vma_plink){
+			if(area->vma_start <= *vfn && area->vma_end >=*vfn+count){
+				/*The range resides completely within the area*/
+				int i = 0;
+				while(i<count){
+					pframe_t *frame;
+					pframe_get(area->vma_obj,ADDR_TO_PN(*vfn+i),&frame);
+					
+					i++;
+				}
+				break;
+			}
+		}
+	}else{
+		return -EFAULT;
+	}
+
 	vmarea_t *vma = vmmap_lookup(map,*vfn);
-	KASSERT(NULL!=vma);
 	
 	if(vma){
-		if(vma->vma_end >= *vfn+count){
+		if(vma->vma_end <= *vfn+count){
 			
-		}else{
-			return -EFAULT;
 		}
+	}else{
+		return -EFAULT;
 	}
 
         /*NOT_YET_IMPLEMENTED("VM: vmmap_read");*/
