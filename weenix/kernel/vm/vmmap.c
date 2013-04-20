@@ -373,7 +373,6 @@ vmmap_read(vmmap_t *map, const void *vaddr, void *buf, size_t count)
 {
 	uint32_t *vfn = (uint32_t*)vaddr;
 	vmarea_t *vma = vmmap_lookup(map,*vfn);
-	KASSERT(NULL!=vma);
 	
 	if(vma){
 		if(vma->vma_end >= *vfn+count){
