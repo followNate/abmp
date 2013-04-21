@@ -476,9 +476,9 @@ vmmap_read(vmmap_t *map, const void *vaddr, void *buf, size_t count)
 			if(area->vma_start <= *vfn && area->vma_end >=*vfn+count){
 				/*The range resides completely within the area*/
 				while(i<count){
-					pframe_t *frame;
+					/*pframe_t *frame;
 					pframe_get(area->vma_obj,ADDR_TO_PN(*vfn+i),&frame);
-					memcpy(buf+i*PAGE_SIZE,frame->pf_addr,PAGE_SIZE);	
+					memcpy(buf+i*PAGE_SIZE,frame->pf_addr,PAGE_SIZE);*/	
 					i++;
 				}
 				break;
@@ -486,9 +486,9 @@ vmmap_read(vmmap_t *map, const void *vaddr, void *buf, size_t count)
 				/* [         *****]**** */
 				if(vmmap_lookup(map,area->vma_end+1)){
 					while(i<area->vma_end-*vfn){
-						pframe_t *frame;
+						/*pframe_t *frame;
                                         	pframe_get(area->vma_obj,ADDR_TO_PN(*vfn+i),&frame);
-                                        	memcpy(buf+i*PAGE_SIZE,frame->pf_addr,PAGE_SIZE);
+                                        	memcpy(buf+i*PAGE_SIZE,frame->pf_addr,PAGE_SIZE);*/
                                         	i++;
 					}
 					*vfn = *vfn+i;
@@ -499,9 +499,9 @@ vmmap_read(vmmap_t *map, const void *vaddr, void *buf, size_t count)
 				/* ***[****           ] */
 				if(vmmap_lookup(map,area->vma_start-1)){
 					while(i<*vfn-area->vma_start){
-                                                pframe_t *frame;
+                                                /*pframe_t *frame;
                                                 pframe_get(area->vma_obj,ADDR_TO_PN(*vfn+i),&frame);
-                                                memcpy(buf+i*PAGE_SIZE,frame->pf_addr,PAGE_SIZE);
+                                                memcpy(buf+i*PAGE_SIZE,frame->pf_addr,PAGE_SIZE);*/
                                                 i++;
                                         }
                                         *vfn = *vfn+i;
@@ -512,9 +512,9 @@ vmmap_read(vmmap_t *map, const void *vaddr, void *buf, size_t count)
 				/* ***[****************]***  */
 				if(vmmap_lookup(map,area->vma_start-1) && vmmap_lookup(map,area->vma_end+1)){
 					while(i < area->vma_end-area->vma_start){
-						pframe_t *frame;
+						/*pframe_t *frame;
                                                 pframe_get(area->vma_obj,ADDR_TO_PN(*vfn+i),&frame);
-                                                memcpy(buf+i*PAGE_SIZE,frame->pf_addr,PAGE_SIZE);
+                                                memcpy(buf+i*PAGE_SIZE,frame->pf_addr,PAGE_SIZE);*/
                                                 i++;
 					}
 					*vfn = *vfn+i;
@@ -523,6 +523,10 @@ vmmap_read(vmmap_t *map, const void *vaddr, void *buf, size_t count)
 				}
 			}
 		}list_iterate_end();
+		
+		/*read data to buf*/
+		memcpy(buf,vaddr,count);
+		
 	}else{
 		return -EFAULT;
 	}
@@ -551,9 +555,9 @@ vmmap_write(vmmap_t *map, void *vaddr, const void *buf, size_t count)
 			if(area->vma_start <= *vfn && area->vma_end >=*vfn+count){
 				/*The range resides completely within the area*/
 				while(i<count){
-					pframe_t *frame;
+					/*pframe_t *frame;
 					pframe_get(area->vma_obj,ADDR_TO_PN(*vfn+i),&frame);
-					memcpy(buf+i*PAGE_SIZE,frame->pf_addr,PAGE_SIZE);	
+					memcpy(buf+i*PAGE_SIZE,frame->pf_addr,PAGE_SIZE);*/
 					i++;
 				}
 				break;
@@ -561,9 +565,9 @@ vmmap_write(vmmap_t *map, void *vaddr, const void *buf, size_t count)
 				/* [         *****]**** */
 				if(vmmap_lookup(map,area->vma_end+1)){
 					while(i<area->vma_end-*vfn){
-						pframe_t *frame;
+						/*pframe_t *frame;
                                         	pframe_get(area->vma_obj,ADDR_TO_PN(*vfn+i),&frame);
-                                        	memcpy(buf+i*PAGE_SIZE,frame->pf_addr,PAGE_SIZE);
+                                        	memcpy(buf+i*PAGE_SIZE,frame->pf_addr,PAGE_SIZE);*/
                                         	i++;
 					}
 					*vfn = *vfn+i;
@@ -574,9 +578,9 @@ vmmap_write(vmmap_t *map, void *vaddr, const void *buf, size_t count)
 				/* ***[****           ] */
 				if(vmmap_lookup(map,area->vma_start-1)){
 					while(i<*vfn-area->vma_start){
-                                                pframe_t *frame;
+                                                /*pframe_t *frame;
                                                 pframe_get(area->vma_obj,ADDR_TO_PN(*vfn+i),&frame);
-                                                memcpy(buf+i*PAGE_SIZE,frame->pf_addr,PAGE_SIZE);
+                                                memcpy(buf+i*PAGE_SIZE,frame->pf_addr,PAGE_SIZE);*/
                                                 i++;
                                         }
                                         *vfn = *vfn+i;
@@ -587,9 +591,9 @@ vmmap_write(vmmap_t *map, void *vaddr, const void *buf, size_t count)
 				/* ***[****************]***  */
 				if(vmmap_lookup(map,area->vma_start-1) && vmmap_lookup(map,area->vma_end+1)){
 					while(i < area->vma_end-area->vma_start){
-						pframe_t *frame;
+						/*pframe_t *frame;
                                                 pframe_get(area->vma_obj,ADDR_TO_PN(*vfn+i),&frame);
-                                                memcpy(buf+i*PAGE_SIZE,frame->pf_addr,PAGE_SIZE);
+                                                memcpy(buf+i*PAGE_SIZE,frame->pf_addr,PAGE_SIZE);*/
                                                 i++;
 					}
 					*vfn = *vfn+i;
@@ -598,6 +602,8 @@ vmmap_write(vmmap_t *map, void *vaddr, const void *buf, size_t count)
 				}
 			}
 		}list_iterate_end();
+
+		memcpy(vaddr,buf,count);
 	}else{
 		return -EFAULT;
 	}
