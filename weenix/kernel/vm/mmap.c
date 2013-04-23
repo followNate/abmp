@@ -33,7 +33,14 @@
 int
 do_mmap(void *addr, size_t len, int prot, int flags,int fd, off_t off, void **ret)
 {
-        NOT_YET_IMPLEMENTED("VM: do_mmap");
+        /*if(fd == -EMFILE)
+        {
+			dbg(DBG_ERROR | DBG_VM,"ERROR: The current process pid= %d exceeds the maximum permissible number of files.\n",curproc->p_pid);
+			return -EMFILE;
+		}
+		
+		int fd = vmmap_map(curproc->p_vmmap, vnode_t *file, uint32_t lopage, uint32_t npages, int prot, int flags, off_t off, int dir, vmarea_t **new)
+       */ NOT_YET_IMPLEMENTED("VM: do_mmap");
         return -1;
 }
 
