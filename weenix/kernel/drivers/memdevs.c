@@ -108,6 +108,13 @@ zero_read(bytedev_t *dev, int offset, void *buf, int count)
 static int
 zero_mmap(vnode_t *file, vmarea_t *vma, mmobj_t **ret)
 {
+        int i = (file->vn_ops->mmap)(file, vmarea *vma, mmobj **ret);
+        if (i != 0)
+        {
+			dbg(DBG_ERROR | DBG_VM, "ERROR: zero_mmap: Zero_mmap failed\n");
+            return i; 
+		}
+		return i;
         NOT_YET_IMPLEMENTED("VM: zero_mmap");
         return -1;
 }
