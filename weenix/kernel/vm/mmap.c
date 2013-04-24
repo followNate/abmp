@@ -159,6 +159,8 @@ do_munmap(void *addr, size_t len)
 
 		/* Calling the function vmmap_remove */
 		int i = vmmap_remove(curproc->p_vmmap, 0, 0);
+		return 0;
+		
         NOT_YET_IMPLEMENTED("VM: do_munmap");
         return -1;
 }
