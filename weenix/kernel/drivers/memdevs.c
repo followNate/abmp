@@ -108,7 +108,7 @@ zero_read(bytedev_t *dev, int offset, void *buf, int count)
 static int
 zero_mmap(vnode_t *file, vmarea_t *vma, mmobj_t **ret)
 {
-        int i = (file->vn_ops->mmap)(file, vmarea *vma, mmobj **ret);
+        int i = (file->vn_cdev->cd_ops->mmap)(file, vmarea *vma, mmobj **ret);
         if (i != 0)
         {
 			vput(file);

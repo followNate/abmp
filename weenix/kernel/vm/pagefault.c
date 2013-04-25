@@ -97,6 +97,7 @@ handle_pagefault(uintptr_t vaddr, uint32_t cause)
 		/* Finding the correct page physical address */
 		uintptr_t paddr = pt_virt_to_phys(vaddr);
 		
+	
 		/* To place the new mapping into appropriate page table */
 		int map_correctpage = pt_map(curproc->p_pagedir, vaddr, paddr, PD_WRITE, PT_WRITE);
         

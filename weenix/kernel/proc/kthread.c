@@ -177,6 +177,7 @@ void kthread_exit(void *retval)
 kthread_t *
 kthread_clone(kthread_t *thr)
 {
+        
         NOT_YET_IMPLEMENTED("VM: kthread_clone");
         return NULL;
 }
