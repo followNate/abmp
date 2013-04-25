@@ -195,7 +195,7 @@ kthread_clone(kthread_t *thr)
         KASSERT(clone_thread->kt_kstack != NULL);
         
 		/* set the context of the clone thread */
-        context_setup(&(clone_thread->kt_ctx),func,arg1,arg2,(clone_thread->kt_kstack),DEFAULT_STACK_SIZE,(curproc->p_pagedir));          
+        context_setup(&(clone_thread->kt_ctx),NULL,0,0,(clone_thread->kt_kstack),DEFAULT_STACK_SIZE,(curproc->p_pagedir));          
         
         /* thread's process */
 		clone_thread->kt_proc = curproc;

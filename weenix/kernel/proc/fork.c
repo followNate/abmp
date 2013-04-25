@@ -52,6 +52,15 @@ fork_setup_stack(const regs_t *regs, void *kstack)
 int
 do_fork(struct regs *regs)
 {
-	NOT_YET_IMPLEMENTED("VM: do_fork");
+		/* Creating a new process named fork_process */
+		proc_t *fork_process = proc_create("fork_process");
+		
+		/* Copying the vmmap_t from parent process to child process */
+		fork_process->p_vmmap = vmmma_clone(curproc->p_vmmap);
+		/* Remember to check the reference counts on the underlying memory objects */
+		
+		
+		
+		NOT_YET_IMPLEMENTED("VM: do_fork");
         return 0;
 }
