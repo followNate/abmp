@@ -122,9 +122,10 @@ do_mmap(void *addr, size_t len, int prot, int flags,int fd, off_t off, void **re
 		tlb_flush(address);
 		
 		/* Calling the function vmmmap_map */
-		vmarea_t **new;
-		int i = vmmap_map(curproc->p_vmmap, curproc->p_files[fd]->f_vnode, 0, 0, prot, flags, off, NULL, new);
-		return i;
+
+		int i = vmmap_map(curproc->p_vmmap, curproc->p_files[fd]->f_vnode, 0, 0, prot, flags, off, NULL, (vmarea_t**)ret);
+		return 0;
+
        
 		NOT_YET_IMPLEMENTED("VM: do_mmap");
         return -1;

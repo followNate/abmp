@@ -57,7 +57,8 @@
 #define TEST_12 12      /*  Self test cases */
 
 
-static int curtest = TEST_9;
+static int curtest = TEST_0;
+
 
 GDB_DEFINE_HOOK(boot)
 GDB_DEFINE_HOOK(initialized)
@@ -180,9 +181,13 @@ static void *idleproc_run(int arg1, void *arg2)
 
 #ifdef __VFS__
         curproc->p_cwd=vfs_root_vn;
+        vref(vfs_root_vn);
+        if(initthr!=NULL)
+        {
         initthr->kt_proc->p_cwd=vfs_root_vn;
         vref(vfs_root_vn);
-        vref(vfs_root_vn);
+        }
+
         KASSERT(do_mkdir("/dev") == 0);
         KASSERT(do_mknod("/dev/null", S_IFCHR, MKDEVID(1, 0)) == 0);
         KASSERT(do_mknod("/dev/zero", S_IFCHR, MKDEVID(1, 1)) == 0);
@@ -223,10 +228,12 @@ static void *idleproc_run(int arg1, void *arg2)
                 panic("vfs shutdown FAILED!!\n");
 
 #endif
-
+dbg_print("weenix: vfs shutdown...\n");
         /* Shutdown the pframe system */
 #ifdef __S5FS__
+        
         pframe_shutdown();
+        
 #endif
 
         dbg_print("\nweenix: halted cleanly!\n");
@@ -326,7 +333,7 @@ static void *initproc_run(int arg1, void *arg2)
         while(!list_empty(&curproc->p_children))
         {
                 pid_t child = do_waitpid(-1, 0, &status);
-                dbg(DBG_INIT,"Process %d cleaned successfully\n", child);
+                /*dbg(DBG_INIT,"Process %d cleaned successfully\n", child);*/
         }
         
         return NULL;

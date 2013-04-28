@@ -52,6 +52,7 @@ fork_setup_stack(const regs_t *regs, void *kstack)
 int
 do_fork(struct regs *regs)
 {
+
 		/* Creating a new process named fork_process */
 		proc_t *child_process = proc_create("child_process");
 		
@@ -122,5 +123,9 @@ do_fork(struct regs *regs)
 		kthread_t *child_thread = kthread_create(child_process, NULL, 0, 0);
 		/*child_thread->kt_ctx->c_esp = fork_setup_stack(regs, void *kstack)*/
 		NOT_YET_IMPLEMENTED("VM: do_fork");
+
+	
+	NOT_YET_IMPLEMENTED("VM: do_fork");
+
         return 0;
 }
