@@ -114,6 +114,9 @@ do_mmap(void *addr, size_t len, int prot, int flags,int fd, off_t off, void **re
             return -EACCES; 
 		}
 		
+		/* Given in google group */
+		
+		
 		/* Flushing the TLB */
 		int address = (uintptr_t)addr;
 		tlb_flush(address);
@@ -121,7 +124,7 @@ do_mmap(void *addr, size_t len, int prot, int flags,int fd, off_t off, void **re
 		/* Calling the function vmmmap_map */
 		vmarea_t **new;
 		int i = vmmap_map(curproc->p_vmmap, curproc->p_files[fd]->f_vnode, 0, 0, prot, flags, off, NULL, new);
-		return 0;
+		return i;
        
 		NOT_YET_IMPLEMENTED("VM: do_mmap");
         return -1;

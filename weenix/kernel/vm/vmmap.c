@@ -388,7 +388,8 @@ vmmap_remove(vmmap_t *map, uint32_t lopage, uint32_t npages)
 {
 	 if(!list_empty(&(map->vmm_list))){
                 vmarea_t *area;
-                list_iterate_begin(&(map->vmm_list), area, vmarea_t, vma_plink){
+                list_iterate_begin(&(map->vmm_list), area, vmarea_t, vma_plink)
+                {
 	
 			if(area->vma_start < lopage && area->vma_end > lopage+npages-1){
 				/*split this vma into two new vma*/
