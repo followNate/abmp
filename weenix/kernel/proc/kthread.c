@@ -108,7 +108,7 @@ void
 kthread_destroy(kthread_t *t)
 {
         KASSERT(t && t->kt_kstack);
-        dbg(DBG_THR,"The thread of process %s (PID=%d) is destroyed\n",t->kt_proc->p_comm,t->kt_proc->p_pid);
+        dbg_print("The thread of process %s (PID=%d) is destroyed\n",t->kt_proc->p_comm,t->kt_proc->p_pid);
         free_stack(t->kt_kstack);
         if (list_link_is_linked(&t->kt_plink))
                 list_remove(&t->kt_plink);
@@ -132,14 +132,14 @@ void kthread_cancel(kthread_t *kthr, void *retval)
         KASSERT(NULL != kthr);
         if(kthr == curthr)
         {
-                dbg(DBG_THR,"Current thread (thread of process %d) is cancelled \n",kthr->kt_proc->p_pid);
+                dbg_print("Current thread (thread of process %d) is cancelled \n",kthr->kt_proc->p_pid);
                 kthread_exit(retval);             
         }
         else 
         {
                 kthr->kt_retval=retval;
                 sched_cancel(kthr);
-                dbg(DBG_THR,"The thread of process %d is scheduled to be cancelled \n",kthr->kt_proc->p_pid);
+                /*dbg(DBG_THR,"The thread of process %d is scheduled to be cancelled \n",kthr->kt_proc->p_pid);*/
         }
        /* NOT_YET_IMPLEMENTED("PROCS: kthread_cancel");*/
 }
@@ -161,7 +161,7 @@ void kthread_exit(void *retval)
         KASSERT(curthr->kt_proc == curproc);
         curthr->kt_retval = retval;
         curthr->kt_state = KT_EXITED;
-        dbg(DBG_THR,"Exiting Current thread (thread of process %d)\n",curthr->kt_proc->p_pid);
+        dbg_print("Exiting Current thread (thread of process %d)\n",curthr->kt_proc->p_pid);
         proc_thread_exited(retval);
         
        /* NOT_YET_IMPLEMENTED("PROCS: kthread_exit");*/
