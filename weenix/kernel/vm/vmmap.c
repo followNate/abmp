@@ -115,7 +115,7 @@ vmmap_insert(vmmap_t *map, vmarea_t *newvma)
 	}else{
 		list_insert_head(&(map->vmm_list),&(newvma->vma_plink));
 	}
-
+	
         /*NOT_YET_IMPLEMENTED("VM: vmmap_insert");*/
 }
 
@@ -218,7 +218,6 @@ vmmap_clone(vmmap_t *map)
 			newarea->vma_off = area->vma_off;
 			newarea->vma_prot = area->vma_prot;
 			newarea->vma_flags = area->vma_flags;
-			newarea->vma_vmmap = newmap;
 			/*not adding mmobj to cloned vmareas*/
 			vmmap_insert(newmap, newarea);
                 }list_iterate_end();		
@@ -281,7 +280,6 @@ vmmap_map(vmmap_t *map, vnode_t *file, uint32_t lopage, uint32_t npages, int pro
 			newarea->vma_off = off;
 			newarea->vma_prot = prot;
 			newarea->vma_flags = flags;
-			newarea->vma_vmmap = map;
 			/*not adding mmobj to cloned vmareas*/
 			vmmap_insert(map, newarea);
 			if(file)
@@ -324,7 +322,6 @@ vmmap_map(vmmap_t *map, vnode_t *file, uint32_t lopage, uint32_t npages, int pro
 			newarea->vma_off = off;
 			newarea->vma_prot = prot;
 			newarea->vma_flags = flags;
-			newarea->vma_vmmap = map;
 			/*not adding mmobj to cloned vmareas*/
 			vmmap_insert(map, newarea);
 			if(file)
@@ -349,7 +346,7 @@ vmmap_map(vmmap_t *map, vnode_t *file, uint32_t lopage, uint32_t npages, int pro
 			
 	}
 	        
-	*new=newarea;
+	new=&newarea;
        /* NOT_YET_IMPLEMENTED("VM: vmmap_map");*/
         return 0;
 }
@@ -436,10 +433,10 @@ vmmap_remove(vmmap_t *map, uint32_t lopage, uint32_t npages)
 int
 vmmap_is_range_empty(vmmap_t *map, uint32_t startvfn, uint32_t npages)
 {
-	uint32_t endvfn = startvfn+npages-1;
+	uint32_t endvfn = startvfn+PN_TO_ADDR(npages)-1;
 	KASSERT((startvfn < endvfn) && (ADDR_TO_PN(USER_MEM_LOW) <= startvfn) && (ADDR_TO_PN(USER_MEM_HIGH) >= endvfn));
 		
-	int i=0;
+	int i=1;
 
         if(!list_empty(&(map->vmm_list))){
                 vmarea_t *area;

@@ -351,7 +351,7 @@ void ut_vmmap(){
 } 
 
 void *usrland_test(int arg1, void *arg2){
-	const char* filename="/bin/uname";
+	const char* filename="/sbin/init";
 	char argv = (char)arg1;
 	kernel_execve(filename,NULL,NULL);
 	return NULL;
