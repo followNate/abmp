@@ -55,9 +55,10 @@
 #define TEST_10 10      /*  Deadlock check when same thread again trying to lock the same mutex */
 #define TEST_11 11      /*  tests 506 test cases from vfstest.c file */
 #define TEST_12 12      /*  Self test cases */
+#define TEST_13 13	/*  Unit testing VM map.c*/
 
 
-static int curtest = TEST_0;
+static int curtest = TEST_13;
 
 
 GDB_DEFINE_HOOK(boot)
@@ -297,6 +298,9 @@ void dead_own();
 void shellTest();
 void vfs_test_setup();
 void add_tests();
+void ut_vmmap();
+void *usrland_test();
+
 
 kmutex_t m1;
 kmutex_t m2;
@@ -326,6 +330,7 @@ static void *initproc_run(int arg1, void *arg2)
 		case 10: dead_own(); break;
 		case 11: vfs_test_setup(); break;
 		case 12: add_tests(); break;
+		case 13: ut_vmmap(); break;
 		
 	}
                 
@@ -337,6 +342,19 @@ static void *initproc_run(int arg1, void *arg2)
         }
         
         return NULL;
+}
+
+void ut_vmmap(){
+	proc_t *ut_vmmap_proc = proc_create("ut_vmmap_proc");
+        kthread_t *add_test_thread = kthread_create(ut_vmmap_proc,usrland_test,1,NULL);
+        sched_make_runnable(add_test_thread);
+} 
+
+void *usrland_test(int arg1, void *arg2){
+	const char* filename="/bin/uname";
+	char argv = (char)arg1;
+	kernel_execve(filename,NULL,NULL);
+	return NULL;
 }
 
 void *extra_self_tests(int arg1, void *arg2)
