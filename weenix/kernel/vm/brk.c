@@ -56,7 +56,7 @@
 int
 do_brk(void *addr, void **ret)
 {
-     
+		
         
         NOT_YET_IMPLEMENTED("VM: do_brk");
         return 0;
