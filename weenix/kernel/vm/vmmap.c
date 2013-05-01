@@ -340,6 +340,7 @@ vmmap_map(vmmap_t *map, vnode_t *file, uint32_t lopage, uint32_t npages, int pro
         	                        
 			        if(newmmobj==NULL)
 			                return -1;
+				newarea->vma_obj=newmmobj;
 			}
 		}
 			
@@ -553,9 +554,11 @@ vmmap_write(vmmap_t *map, void *vaddr, const void *buf, size_t count)
 	
 	vmarea_t *area = vmmap_lookup(map,vfn);
 	if(area){
-		pframe_t *frame = pframe_get_resident(area->vma_obj,vfn);
-		uintptr_t paddr =  pt_virt_to_phys((uintptr_t)frame->pf_addr);
-		memcpy(&paddr,buf,count);
+		pframe_t *frame;
+		int i = pframe_get(area->vma_obj,vfn,&frame);
+		/*uintptr_t paddr = pt_virt_to_phys((uintptr_t)frame->pf_addr);
+		memcpy(&paddr,buf,count);*/
+		memcpy(frame->pf_addr,buf,count);
 	}else{
 		return -EFAULT;
 	}	

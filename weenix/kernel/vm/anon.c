@@ -53,11 +53,15 @@ anon_init()
 mmobj_t *
 anon_create()
 {
-mmobj_t *new_anon_obj = (mmobj_t*)slab_obj_alloc(anon_allocator);
-	if(new_anon_obj)
-	   mmobj_init(new_anon_obj,&anon_mmobj_ops);
+	mmobj_t *new_anon_obj = (mmobj_t*)slab_obj_alloc(anon_allocator);
+	if(new_anon_obj){
+	   	mmobj_init(new_anon_obj,&anon_mmobj_ops);
+		/*MOHIT:setting the refcount to 1 when creating 
+		 *anonymous object*/
+		new_anon_obj->mmo_refcount++;
+	}	
 	
-/*        NOT_YET_IMPLEMENTED("VM: anon_create");*/
+	/*NOT_YET_IMPLEMENTED("VM: anon_create");*/
         return new_anon_obj;
 }
 
@@ -69,10 +73,10 @@ mmobj_t *new_anon_obj = (mmobj_t*)slab_obj_alloc(anon_allocator);
 static void
 anon_ref(mmobj_t *o)
 {
-         KASSERT(o && (0 < o->mmo_refcount) && (&anon_mmobj_ops == o->mmo_ops));
-dbg(DBG_VNREF,"before anon_ref: object = 0x%p , reference_count =%d, nrespages=%d\n",o,o->mmo_refcount,o->mmo_nrespages);
+        KASSERT(o && (0 < o->mmo_refcount) && (&anon_mmobj_ops == o->mmo_ops));
+	dbg(DBG_VNREF,"before anon_ref: object = 0x%p , reference_count =%d, nrespages=%d\n",o,o->mmo_refcount,o->mmo_nrespages);
         o->mmo_refcount++;
-dbg(DBG_VNREF,"after anon_ref: object = 0x%p , reference_count =%d, nrespages=%d\n",o,o->mmo_refcount,o->mmo_nrespages);
+	dbg(DBG_VNREF,"after anon_ref: object = 0x%p , reference_count =%d, nrespages=%d\n",o,o->mmo_refcount,o->mmo_nrespages);
         /*NOT_YET_IMPLEMENTED("VM: anon_ref");*/
 }
 
@@ -88,10 +92,11 @@ static void
 anon_put(mmobj_t *o)
 {
         KASSERT(o && (0 < o->mmo_refcount) && (&anon_mmobj_ops == o->mmo_ops));
-dbg(DBG_VNREF,"before shadow_put: object = 0x%p , reference_count =%d, nrespages=%d\n",o,o->mmo_refcount,o->mmo_nrespages);
-          if(o->mmo_nrespages == (o->mmo_refcount - 1))  
+	dbg(DBG_VNREF,"before shadow_put: object = 0x%p , reference_count =%d, nrespages=%d\n",o,o->mmo_refcount,o->mmo_nrespages);
+        if(o->mmo_nrespages == (o->mmo_refcount - 1))  
               {
-                        /* Object has only one parent , look for all resident pages and clear one by one */
+                    /* Object has only one parent , look for all 
+			*resident pages and clear one by one */
                     pframe_t *pf;
                     if(!(list_empty(&(o->mmo_respages))))
                       {  
@@ -111,15 +116,15 @@ dbg(DBG_VNREF,"before shadow_put: object = 0x%p , reference_count =%d, nrespages
                              }list_iterate_end();
                       }
                 }
-            o->mmo_refcount--;
-dbg(DBG_VNREF,"after shadow_put: object = 0x%p , reference_count =%d, nrespages=%d\n",o,o->mmo_refcount,o->mmo_nrespages);
-          if(0 == o->mmo_refcount && 0 == o->mmo_nrespages )
-              {
+        o->mmo_refcount--;
+	dbg(DBG_VNREF,"after shadow_put: object = 0x%p , reference_count =%d, nrespages=%d\n",o,o->mmo_refcount,o->mmo_nrespages);
+        if(0 == o->mmo_refcount && 0 == o->mmo_nrespages )
+        {
                  o = NULL;
                  slab_obj_free(anon_allocator, o);
-              }
+        }
         
-/*        NOT_YET_IMPLEMENTED("VM: shadow_put");*/
+	/* NOT_YET_IMPLEMENTED("VM: shadow_put");*/
 
 }
 
@@ -128,16 +133,15 @@ dbg(DBG_VNREF,"after shadow_put: object = 0x%p , reference_count =%d, nrespages=
 static int
 anon_lookuppage(mmobj_t *o, uint32_t pagenum, int forwrite, pframe_t **pf)
 {
-
-                pframe_t *pg_frame = pframe_get_resident(o,pagenum);
-                            if(pg_frame)
-                             {
-                               while(!pframe_is_busy(pg_frame))
-                                  {
-                                    *pf = pg_frame;
-                                    break;
-                                  }
-                             }
+	 pframe_t *pg_frame = pframe_get_resident(o,pagenum);
+        if(pg_frame)
+        {
+        	while(!pframe_is_busy(pg_frame))
+                {
+                	*pf = pg_frame;
+                        break;
+                }
+        }
         /*NOT_YET_IMPLEMENTED("VM: anon_lookuppage");*/
         return 0;
 }
@@ -155,14 +159,15 @@ anon_fillpage(mmobj_t *o, pframe_t *pf)
 static int
 anon_dirtypage(mmobj_t *o, pframe_t *pf)
 {
-       if(pframe_is_busy(pf))
-               pframe_clear_busy(pf);
+	if(pframe_is_busy(pf))
+      		pframe_clear_busy(pf);
         if(!(pframe_is_dirty(pf)))
-               pframe_set_dirty(pf);
+              	pframe_set_dirty(pf);
    /*NOT_YET_IMPLEMENTED("VM: shadow_dirtypage");*/
-   if(pframe_is_dirty(pf))
-        return 0;
-   else return -1;
+   	if(pframe_is_dirty(pf))
+        	return 0;
+   	else 
+		return -1;
 }
 
 static int
