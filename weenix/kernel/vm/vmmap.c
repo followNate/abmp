@@ -466,6 +466,7 @@ vmmap_is_range_empty(vmmap_t *map, uint32_t startvfn, uint32_t npages)
 int
 vmmap_read(vmmap_t *map, const void *vaddr, void *buf, size_t count)
 {
+	/*MOHIT: TODO revisit this function later*/
 	uint32_t vfn = ADDR_TO_PN(vaddr);
 
         vmarea_t *area = vmmap_lookup(map,vfn);
@@ -494,10 +495,8 @@ vmmap_read(vmmap_t *map, const void *vaddr, void *buf, size_t count)
 int
 vmmap_write(vmmap_t *map, void *vaddr, const void *buf, size_t count)
 {
-	/*MOHIT: here we are getting vaddr which is the virtual address we need
-	 * to covert it to page number to identify the vmarea in which this 
-	 * this address lies*/
-	
+	/*MOHIT: TODO revisit this function again*/
+		
 	uint32_t vfn = ADDR_TO_PN(vaddr);
 	uint32_t size = count/PAGE_SIZE==0?1:count/PAGE_SIZE;
 	
