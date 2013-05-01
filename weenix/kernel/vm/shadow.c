@@ -236,19 +236,19 @@ shadow_fillpage(mmobj_t *o, pframe_t *pf)
         pframe_t *src_pf, *dest_pf;
         KASSERT(pframe_is_busy(pf));
         KASSERT(!pframe_is_pinned(pf));
-dbg(DBG_VNREF,"Fillpage: destinaiton object: 0x%p, source pf->pf_obj: 0%p, pf->pf_pagenum: %d\n",o,pf->pf_obj,pf->pf_pagenum);
-                /* look for the source page frame */
+	dbg(DBG_VNREF,"Fillpage: destinaiton object: 0x%p, source pf->pf_obj: 0%p, pf->pf_pagenum: %d\n",o,pf->pf_obj,pf->pf_pagenum);
+        /* look for the source page frame */
         int ret = shadow_lookuppage(pf->pf_obj,pf->pf_pagenum,0,&src_pf);
-                /* allocate new page for given object */
+        /* allocate new page for given object */
         KASSERT(ret && "FILLPAGE: Could not find the source page frame\n");
         
-ret = pframe_get(o,pf->pf_pagenum,&dest_pf); /* pframe_get also fills page if allocated new one not sure how! */
+	ret = pframe_get(o,pf->pf_pagenum,&dest_pf); /* pframe_get also fills page if allocated new one not sure how! */
         KASSERT(ret && "FILLPAGE: Could not get the destination page frame\n");
           
-          /* TO DO not sure how to copy from source to dest ! may be as follows.*/
+        /* TO DO not sure how to copy from source to dest ! may be as follows.*/
         dest_pf->pf_addr = src_pf->pf_addr;
           
- /*       NOT_YET_IMPLEMENTED("VM: shadow_fillpage");*/
+ 	/* NOT_YET_IMPLEMENTED("VM: shadow_fillpage");*/
         return 0;
 }
 
