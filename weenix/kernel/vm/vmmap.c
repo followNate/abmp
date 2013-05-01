@@ -466,70 +466,19 @@ vmmap_is_range_empty(vmmap_t *map, uint32_t startvfn, uint32_t npages)
 int
 vmmap_read(vmmap_t *map, const void *vaddr, void *buf, size_t count)
 {
-	uint32_t *vfn = (uint32_t*)vaddr;
-	uint32_t i = 0;
-	
-	if(!list_empty(&(map->vmm_list))){
-                vmarea_t *area;
-                list_iterate_begin(&(map->vmm_list), area, vmarea_t, vma_plink){
-			if(area->vma_start <= *vfn && area->vma_end >=*vfn+count){
-				/*The range resides completely within the area*/
-				while(i<count){
-					/*pframe_t *frame;
-					pframe_get(area->vma_obj,ADDR_TO_PN(*vfn+i),&frame);
-					memcpy(buf+i*PAGE_SIZE,frame->pf_addr,PAGE_SIZE);*/	
-					i++;
-				}
-				break;
-			}else if(area->vma_start<=*vfn && area->vma_end>=*vfn && area->vma_end<*vfn+count){
-				/* [         *****]**** */
-				if(vmmap_lookup(map,area->vma_end+1)){
-					while(i<area->vma_end-*vfn){
-						/*pframe_t *frame;
-                                        	pframe_get(area->vma_obj,ADDR_TO_PN(*vfn+i),&frame);
-                                        	memcpy(buf+i*PAGE_SIZE,frame->pf_addr,PAGE_SIZE);*/
-                                        	i++;
-					}
-					*vfn = *vfn+i;
-				}else{
-					return -EFAULT;
-				}
-			}else if(area->vma_start >=*vfn && area->vma_start<=*vfn+count && area->vma_end>*vfn+count){
-				/* ***[****           ] */
-				if(vmmap_lookup(map,area->vma_start-1)){
-					while(i<*vfn-area->vma_start){
-                                                /*pframe_t *frame;
-                                                pframe_get(area->vma_obj,ADDR_TO_PN(*vfn+i),&frame);
-                                                memcpy(buf+i*PAGE_SIZE,frame->pf_addr,PAGE_SIZE);*/
-                                                i++;
-                                        }
-                                        *vfn = *vfn+i;
-				}else{
-					return -EFAULT;
-				}
-			}else if(area->vma_start>=*vfn && area->vma_end<=*vfn+count){
-				/* ***[****************]***  */
-				if(vmmap_lookup(map,area->vma_start-1) && vmmap_lookup(map,area->vma_end+1)){
-					while(i < area->vma_end-area->vma_start){
-						/*pframe_t *frame;
-                                                pframe_get(area->vma_obj,ADDR_TO_PN(*vfn+i),&frame);
-                                                memcpy(buf+i*PAGE_SIZE,frame->pf_addr,PAGE_SIZE);*/
-                                                i++;
-					}
-					*vfn = *vfn+i;
-				}else{
-					return -EFAULT;
-				}
-			}
-		}list_iterate_end();
-		
-		/*read data to buf*/
-		memcpy(buf,vaddr,count);
-		
-	}else{
-		return -EFAULT;
-	}
-	
+	uint32_t vfn = ADDR_TO_PN(vaddr);
+
+        vmarea_t *area = vmmap_lookup(map,vfn);
+        if(area){
+                pframe_t *frame;
+                int i = pframe_get(area->vma_obj,vfn,&frame);
+                /*uintptr_t paddr = pt_virt_to_phys((uintptr_t)frame->pf_addr);
+                memcpy(&paddr,buf,count);*/
+                memcpy(buf,frame->pf_addr,count);
+        }else{
+                return -EFAULT;
+        }       
+        
         /*NOT_YET_IMPLEMENTED("VM: vmmap_read");*/
         return 0;
 }
