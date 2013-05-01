@@ -76,6 +76,7 @@ shadow_create()
         	list_init(&(new_shadow_obj->mmo_respages)); 
         	new_shadow_obj->mmo_shadowed = NULL; */
         	(new_shadow_obj)->mmo_un.mmo_bottom_obj = NULL;
+        	new_shadow_obj->refcount++;
         }
         	
     /*  NOT_YET_IMPLEMENTED("VM: shadow_create");  */

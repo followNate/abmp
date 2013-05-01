@@ -150,6 +150,7 @@ vmmap_find_range(vmmap_t *map, uint32_t npages, int dir)
 				i = vmmap_is_range_empty(map,area->vma_start-(npages),area->vma_start-1);
 				if(i==1){
 					startvfn = area->vma_start-(npages);
+
 					break;
 				}
                 	}list_iterate_end();
@@ -301,8 +302,7 @@ vmmap_map(vmmap_t *map, vnode_t *file, uint32_t lopage, uint32_t npages, int pro
 			}
 			
 			*new=newarea;
-	        }
-	        
+	        }	        
 	        
 	}
 	else

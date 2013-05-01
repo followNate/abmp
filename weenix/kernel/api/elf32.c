@@ -66,7 +66,7 @@ static int _elf32_map_segment(vmmap_t *map, vnode_t *file, int32_t memoff, const
                 dbg(DBG_ELF, "ERROR: segment address and offset are not aligned correctly\n");
                 return -ENOEXEC;
         }
-
+        
         int perms = 0;
         if (PF_R & segment->p_flags) {
                 perms |= PROT_READ;
