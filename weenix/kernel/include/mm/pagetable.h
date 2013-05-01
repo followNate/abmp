@@ -35,7 +35,7 @@ uintptr_t pt_phys_tmp_map(uintptr_t paddr);
  * defined limit to the number of pages available and using too many
  * will cause the kernel to panic. */
 uintptr_t pt_phys_perm_map(uintptr_t paddr, uint32_t count);
-
+`
 /* Looks up the given virtual address (vaddr) in the current page
  * directory, in order to find the matching physical memory address it
  * points to. vaddr MUST have a mapping in the current page directory,
