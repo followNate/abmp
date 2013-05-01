@@ -276,7 +276,7 @@ vmmap_map(vmmap_t *map, vnode_t *file, uint32_t lopage, uint32_t npages, int pro
 	        else
 	        {
 	                newarea->vma_start = start;
-			newarea->vma_end = start+npages-1;
+			newarea->vma_end = start+npages;
 			newarea->vma_off = off;
 			newarea->vma_prot = prot;
 			newarea->vma_flags = flags;
@@ -318,7 +318,7 @@ vmmap_map(vmmap_t *map, vnode_t *file, uint32_t lopage, uint32_t npages, int pro
 	        else
 	        {
 	                newarea->vma_start = lopage;
-			newarea->vma_end = lopage+npages-1;
+			newarea->vma_end = lopage+npages;
 			newarea->vma_off = off;
 			newarea->vma_prot = prot;
 			newarea->vma_flags = flags;
@@ -388,12 +388,12 @@ vmmap_remove(vmmap_t *map, uint32_t lopage, uint32_t npages)
                 list_iterate_begin(&(map->vmm_list), area, vmarea_t, vma_plink)
                 {
 	
-			if(area->vma_start < lopage && area->vma_end > lopage+npages-1){
+			if(area->vma_start < lopage && area->vma_end > lopage+npages){
 				/*split this vma into two new vma*/
 				vmarea_t *newvma = vmarea_alloc();
 				newvma->vma_start = lopage+npages;
 				newvma->vma_end = area->vma_end;
-				area->vma_end = lopage-1;
+				area->vma_end = lopage;/*-1;*/
 				newvma->vma_off = area->vma_off + npages;
 				newvma->vma_prot = area->vma_prot;
 				vmmap_insert(map, newvma);
@@ -406,12 +406,12 @@ vmmap_remove(vmmap_t *map, uint32_t lopage, uint32_t npages)
 				*if there is one then increase its refcount by one
 				* ----- but HOW????*/
 				
-			}else if (area->vma_start < lopage && area->vma_end <= lopage+npages-1&&area->vma_end>=lopage){
-				area->vma_end = lopage -1;
-			}else if (area->vma_start >= lopage && area->vma_end > lopage+npages-1&&area->vma_start <= lopage+npages-1){
+			}else if (area->vma_start < lopage && area->vma_end <= lopage+npages&&area->vma_end>=lopage){
+				area->vma_end = lopage;/* -1;*/
+			}else if (area->vma_start >= lopage && area->vma_end > lopage+npages&&area->vma_start <= lopage+npages){
 				area->vma_off = area->vma_off +lopage+npages-area->vma_start;
 				area->vma_start = lopage+npages;
-			}else if (area->vma_start >= lopage && area->vma_end <= lopage+npages-1){
+			}else if (area->vma_start >= lopage && area->vma_end <= lopage+npages){
 				list_remove(&(area->vma_plink));
 			}
 			else
@@ -433,7 +433,7 @@ vmmap_remove(vmmap_t *map, uint32_t lopage, uint32_t npages)
 int
 vmmap_is_range_empty(vmmap_t *map, uint32_t startvfn, uint32_t npages)
 {
-	uint32_t endvfn = startvfn+PN_TO_ADDR(npages)-1;
+	uint32_t endvfn = startvfn+npages;
 	KASSERT((startvfn < endvfn) && (ADDR_TO_PN(USER_MEM_LOW) <= startvfn) && (ADDR_TO_PN(USER_MEM_HIGH) >= endvfn));
 		
 	int i=1;
@@ -441,7 +441,7 @@ vmmap_is_range_empty(vmmap_t *map, uint32_t startvfn, uint32_t npages)
         if(!list_empty(&(map->vmm_list))){
                 vmarea_t *area;
                 list_iterate_begin(&(map->vmm_list), area, vmarea_t, vma_plink){
-                        if(area->vma_start > endvfn || area->vma_end < startvfn){
+                        if(area->vma_start > endvfn || area->vma_end <= startvfn){
                                 i=1;
                         }else{
 				i=0;
@@ -544,67 +544,21 @@ vmmap_read(vmmap_t *map, const void *vaddr, void *buf, size_t count)
 int
 vmmap_write(vmmap_t *map, void *vaddr, const void *buf, size_t count)
 {
-	uint32_t *vfn = (uint32_t*)vaddr;
-	uint32_t i = 0;
+	/*MOHIT: here we are getting vaddr which is the virtual address we need
+	 * to covert it to page number to identify the vmarea in which this 
+	 * this address lies*/
 	
-	if(!list_empty(&(map->vmm_list))){
-                vmarea_t *area;
-                list_iterate_begin(&(map->vmm_list), area, vmarea_t, vma_plink){
-			if(area->vma_start <= *vfn && area->vma_end >=*vfn+count){
-				/*The range resides completely within the area*/
-				while(i<count){
-					/*pframe_t *frame;
-					pframe_get(area->vma_obj,ADDR_TO_PN(*vfn+i),&frame);
-					memcpy(buf+i*PAGE_SIZE,frame->pf_addr,PAGE_SIZE);*/
-					i++;
-				}
-				break;
-			}else if(area->vma_start<=*vfn && area->vma_end>=*vfn && area->vma_end<*vfn+count){
-				/* [         *****]**** */
-				if(vmmap_lookup(map,area->vma_end+1)){
-					while(i<area->vma_end-*vfn){
-						/*pframe_t *frame;
-                                        	pframe_get(area->vma_obj,ADDR_TO_PN(*vfn+i),&frame);
-                                        	memcpy(buf+i*PAGE_SIZE,frame->pf_addr,PAGE_SIZE);*/
-                                        	i++;
-					}
-					*vfn = *vfn+i;
-				}else{
-					return -EFAULT;
-				}
-			}else if(area->vma_start >=*vfn && area->vma_start<=*vfn+count && area->vma_end>*vfn+count){
-				/* ***[****           ] */
-				if(vmmap_lookup(map,area->vma_start-1)){
-					while(i<*vfn-area->vma_start){
-                                                /*pframe_t *frame;
-                                                pframe_get(area->vma_obj,ADDR_TO_PN(*vfn+i),&frame);
-                                                memcpy(buf+i*PAGE_SIZE,frame->pf_addr,PAGE_SIZE);*/
-                                                i++;
-                                        }
-                                        *vfn = *vfn+i;
-				}else{
-					return -EFAULT;
-				}
-			}else if(area->vma_start>=*vfn && area->vma_end<=*vfn+count){
-				/* ***[****************]***  */
-				if(vmmap_lookup(map,area->vma_start-1) && vmmap_lookup(map,area->vma_end+1)){
-					while(i < area->vma_end-area->vma_start){
-						/*pframe_t *frame;
-                                                pframe_get(area->vma_obj,ADDR_TO_PN(*vfn+i),&frame);
-                                                memcpy(buf+i*PAGE_SIZE,frame->pf_addr,PAGE_SIZE);*/
-                                                i++;
-					}
-					*vfn = *vfn+i;
-				}else{
-					return -EFAULT;
-				}
-			}
-		}list_iterate_end();
-
-		memcpy(vaddr,buf,count);
+	uint32_t vfn = ADDR_TO_PN(vaddr);
+	uint32_t size = count/PAGE_SIZE==0?1:count/PAGE_SIZE;
+	
+	vmarea_t *area = vmmap_lookup(map,vfn);
+	if(area){
+		pframe_t *frame = pframe_get_resident(area->vma_obj,vfn);
+		uintptr_t paddr =  pt_virt_to_phys((uintptr_t)frame->pf_addr);
+		memcpy(&paddr,buf,count);
 	}else{
 		return -EFAULT;
-	}
+	}	
 	
         /*NOT_YET_IMPLEMENTED("VM: vmmap_write");*/
         return 0;
