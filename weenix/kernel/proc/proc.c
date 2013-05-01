@@ -234,7 +234,7 @@ proc_cleanup(int status)
 		
 	KASSERT(NULL != curproc->p_pproc);
 	sched_wakeup_on(&curproc->p_pproc->p_wait);
-        dbg(DBG_PROC,"Cleaning Complete: Process with PID=%d\n",curproc->p_pid);
+        dbg_print("Cleaning Complete: Process with PID=%d, %d\n",curproc->p_pid, curproc->p_pproc->p_pid);
 	/*NOT_YET_IMPLEMENTED("PROCS: proc_cleanup");*/
 
 }
@@ -269,18 +269,6 @@ proc_kill(proc_t *p, int status)
               }
         }
 	
-	/*link any child of this process with the parent*/
-	if(!list_empty(&p->p_children)){
-		KASSERT(NULL != proc_initproc);
-		proc_t *child;		
-		list_iterate_begin(&p->p_children,child,proc_t,p_child_link)
-		{
-        	        list_remove(&(child->p_child_link));
-        		list_insert_tail(&(proc_initproc->p_children),&(child->p_child_link));
-        		child->p_pproc=proc_initproc;
-        		dbg(DBG_PROC,"The process with PID %d is now reparented under INIT PROCESS \n",child->p_pid);
-                }list_iterate_end();               	
-	}
 	
 	/* signalling waiting parent process*/
 	KASSERT(NULL != p->p_pproc);
@@ -299,7 +287,7 @@ proc_kill(proc_t *p, int status)
 	p->p_state = PROC_DEAD;
 	p->p_status = status;
 	sched_wakeup_on(&p->p_wait);/*As Now it has no child left*/
-	dbg(DBG_PROC,"Killing Process with PID=%d Complete\n",p->p_pid);
+	/*dbg(DBG_PROC,"Killing Process with PID=%d Complete\n",p->p_pid);*/
 }
 
 /*
@@ -396,10 +384,10 @@ pid_t do_waitpid(pid_t pid, int options, int *status)
         kthread_t *cur_proc_thd;
         KASSERT(options == 0);
         KASSERT(curproc!=NULL);
-        dbg(DBG_PROC,"Process with PID=%d waiting for childs to die\n",curproc->p_pid);
-       
+        /*dbg(DBG_PROC,"Process with PID=%d waiting for childs to die\n",curproc->p_pid);*/
         if(list_empty(&(curproc->p_children)))
         { 
+               
                 return -ECHILD;
         }
         else
@@ -414,15 +402,26 @@ pid_t do_waitpid(pid_t pid, int options, int *status)
                                 KASSERT(p!=NULL);
                                 if(p->p_state==PROC_DEAD)
                                 {
-                                        KASSERT(-1 == pid || p->p_pid == pid);
+                                        KASSERT(-1 == pid || p->p_pid == pid);                          
+                                       
+                                        if(curproc->p_pid==0)
+                                        {
+                                                if(p->p_pid==2)
+                                                {
+                                                        closed_pid=p->p_pid;
+                                                        goto END;
+                                                }
+                                        }
                                         i=1;
+                                       
                                         closed_pid=p->p_pid;
                                         *status=(p->p_status);
+                                        
                                         list_remove(&(p->p_list_link));
                                         list_iterate_begin(&(p->p_threads), cur_proc_thd, kthread_t, kt_plink)
                                         {
                                                 KASSERT(KT_EXITED == cur_proc_thd->kt_state);
-						kthread_destroy(cur_proc_thd);
+                                                kthread_destroy(cur_proc_thd);
                                         } list_iterate_end();
 					KASSERT(NULL != p->p_pagedir);
                                         pt_destroy_pagedir(p->p_pagedir);
@@ -441,7 +440,6 @@ pid_t do_waitpid(pid_t pid, int options, int *status)
                 {
                        list_iterate_begin(&(curproc->p_children), p,proc_t,p_child_link)
                        {
-                                KASSERT(p!=NULL);
                                 if(p->p_pid==pid) 
                                 {       
                                         i=1;
@@ -459,6 +457,8 @@ pid_t do_waitpid(pid_t pid, int options, int *status)
 							kthread_destroy(cur_proc_thd);
                                                 } list_iterate_end();
 						KASSERT(NULL != p->p_pagedir);
+						
+                                                
                                                 pt_destroy_pagedir(p->p_pagedir);
                                                 list_remove(&(p->p_child_link));
                                                 slab_obj_free(proc_allocator,p);
@@ -494,6 +494,7 @@ do_exit(int status)
         proc_kill(curproc,status);
         /*NOT_YET_IMPLEMENTED("PROCS: do_exit");
         exit from the current thread*/
+       
 }
 
 

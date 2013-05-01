@@ -55,9 +55,11 @@
 #define TEST_10 10      /*  Deadlock check when same thread again trying to lock the same mutex */
 #define TEST_11 11      /*  tests 506 test cases from vfstest.c file */
 #define TEST_12 12      /*  Self test cases */
+#define TEST_13 13	/*  Unit testing VM map.c*/
 
 
-static int curtest = TEST_9;
+static int curtest = TEST_13;
+
 
 GDB_DEFINE_HOOK(boot)
 GDB_DEFINE_HOOK(initialized)
@@ -180,9 +182,13 @@ static void *idleproc_run(int arg1, void *arg2)
 
 #ifdef __VFS__
         curproc->p_cwd=vfs_root_vn;
+        vref(vfs_root_vn);
+        if(initthr!=NULL)
+        {
         initthr->kt_proc->p_cwd=vfs_root_vn;
         vref(vfs_root_vn);
-        vref(vfs_root_vn);
+        }
+
         KASSERT(do_mkdir("/dev") == 0);
         KASSERT(do_mknod("/dev/null", S_IFCHR, MKDEVID(1, 0)) == 0);
         KASSERT(do_mknod("/dev/zero", S_IFCHR, MKDEVID(1, 1)) == 0);
@@ -223,10 +229,12 @@ static void *idleproc_run(int arg1, void *arg2)
                 panic("vfs shutdown FAILED!!\n");
 
 #endif
-
+dbg_print("weenix: vfs shutdown...\n");
         /* Shutdown the pframe system */
 #ifdef __S5FS__
+        
         pframe_shutdown();
+        
 #endif
 
         dbg_print("\nweenix: halted cleanly!\n");
@@ -290,6 +298,9 @@ void dead_own();
 void shellTest();
 void vfs_test_setup();
 void add_tests();
+void ut_vmmap();
+void *usrland_test();
+
 
 kmutex_t m1;
 kmutex_t m2;
@@ -319,6 +330,7 @@ static void *initproc_run(int arg1, void *arg2)
 		case 10: dead_own(); break;
 		case 11: vfs_test_setup(); break;
 		case 12: add_tests(); break;
+		case 13: ut_vmmap(); break;
 		
 	}
                 
@@ -326,10 +338,24 @@ static void *initproc_run(int arg1, void *arg2)
         while(!list_empty(&curproc->p_children))
         {
                 pid_t child = do_waitpid(-1, 0, &status);
-                dbg(DBG_INIT,"Process %d cleaned successfully\n", child);
+                /*dbg(DBG_INIT,"Process %d cleaned successfully\n", child);*/
         }
         
         return NULL;
+}
+
+void ut_vmmap(){
+	proc_t *ut_vmmap_proc = proc_create("ut_vmmap_proc");
+        kthread_t *add_test_thread = kthread_create(ut_vmmap_proc,usrland_test,1,NULL);
+        sched_make_runnable(add_test_thread);
+} 
+
+void *usrland_test(int arg1, void *arg2){
+	const char* filename="/sbin/init";
+	char *argv[] = { NULL };
+    	char *envp[] = { NULL };
+	kernel_execve(filename,argv,envp);
+	return NULL;
 }
 
 void *extra_self_tests(int arg1, void *arg2)

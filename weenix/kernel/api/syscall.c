@@ -61,7 +61,7 @@ static int sys_read(read_args_t *arg)
                 curthr->kt_errno = EFAULT;
                 return -1;
         }
-        char *buffer = (char *)page_alloc();                            /* A temporary buffer */
+        reading.buf = page_alloc();                            /* A temporary buffer */
         
         int no_of_bytes_read = do_read(reading.fd, reading.buf, reading.nbytes);      /* Calling do_read() */
         
@@ -71,12 +71,14 @@ static int sys_read(read_args_t *arg)
                 return -1;
         }     
         
-        page_free(buffer);												/* page_free() the buffer */
+        page_free(reading.buf);	
+        /* page_free() the buffer */
         
-        return (no_of_bytes_read);									    /* Returns the no of bytes */
+        return(no_of_bytes_read);
+        /* Returns the no of bytes */
         
-        NOT_YET_IMPLEMENTED("VM: sys_read");
-        return -1;
+        /*NOT_YET_IMPLEMENTED("VM: sys_read");
+        return -1;*/
 }
 
 /*
@@ -91,7 +93,8 @@ static int sys_write(write_args_t *arg)
                 return -1;
         }
         
-        char *buffer = (char *)page_alloc();                            /* A temporary buffer */
+        writing.buf= page_alloc();                       
+             /* A temporary buffer */
         
         int no_of_bytes_write = do_write(writing.fd, writing.buf, writing.nbytes);     /* Calling do_write() */
         
@@ -101,12 +104,14 @@ static int sys_write(write_args_t *arg)
                 return -1;
         }    
         
-        page_free(buffer);  											/* page_free() the buffer */
+        page_free(writing.buf); 
+        /* page_free() the buffer */
         
-        return (no_of_bytes_write);								     	/* Returns the no of bytes */
+        return (no_of_bytes_write);	
+        /* Returns the no of bytes 
         
         NOT_YET_IMPLEMENTED("VM: sys_write");
-        return -1;
+        return -1;*/
 }
 
 /*
@@ -126,11 +131,24 @@ static int sys_getdents(getdents_args_t *arg)
                 curthr->kt_errno = EFAULT;
                 return -1;
         }
+        int i=0,j=0,max_count=0;
+        if(getdents.count<=sizeof(dirent_t))
+        {
+                max_count=getdents.count;
+        }
+        else
+                getdents.count=sizeof(dirent_t);
         
-        int fd = do_getdent(getdents.fd, getdents.dirp);
-        
+        while(i<max_count)
+        {
+                j=do_getdent(getdents.fd, getdents.dirp);
+                if(j<0)
+                        return j;
+                        
+                i++;                
+        }
         NOT_YET_IMPLEMENTED("VM: sys_getdents");
-        return -1;
+        return j;
 }
 
 #ifdef __MOUNTING__

@@ -1,3 +1,4 @@
+
 #include "config.h"
 #include "globals.h"
 
@@ -177,6 +178,43 @@ void kthread_exit(void *retval)
 kthread_t *
 kthread_clone(kthread_t *thr)
 {
+		/* kthread_create() cannot be called as all the members of the struct
+		kthread will be initailized which goea against the definition given 
+		above. So we start from the basic used in kthread_create() */
+       
+		KASSERT(NULL != curproc);
+		
+		/* allocate a slab to a thread */
+        kthread_t *clone_thread = slab_obj_alloc(kthread_allocator);
+        KASSERT(clone_thread != NULL);
+   
+		/*empty the slab contents */
+        memset(clone_thread, 0, sizeof(kthread_t));
+
+		/* allocate the stack for new thread */
+        clone_thread->kt_kstack = alloc_stack();
+        KASSERT(clone_thread->kt_kstack != NULL);
+        
+		/* set the context of the clone thread */
+        context_setup(&(clone_thread->kt_ctx),NULL,0,0,(clone_thread->kt_kstack),DEFAULT_STACK_SIZE,(curproc->p_pagedir));          
+        
+       
+        
+        
+        /* thread's process */
+		clone_thread->kt_proc = curproc;
+       
+        /* set the current state of new thread */
+        clone_thread->kt_wchan = NULL;
+        clone_thread->kt_state = KT_RUN;
+		clone_thread->kt_cancelled = 0;
+		
+        /* insert the thread link into process list */
+        list_insert_head(&(curproc->p_threads),&(clone_thread->kt_plink));
+            
+        dbg(DBG_THR,"A clone thread is created for process %s (PID=%d)\n",curproc->p_comm,curproc->p_pid);
+       
+        return clone_thread;
         NOT_YET_IMPLEMENTED("VM: kthread_clone");
         return NULL;
 }
@@ -225,3 +263,4 @@ kthread_reapd_run(int arg1, void *arg2)
         return (void *) 0;
 }
 #endif
+
