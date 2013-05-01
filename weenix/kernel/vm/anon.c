@@ -149,18 +149,18 @@ anon_lookuppage(mmobj_t *o, uint32_t pagenum, int forwrite, pframe_t **pf)
 /* The following three functions should not be difficult. */
 /*@author Mohit Aggarwal*/
 static int
-anon_fillpage(mmobj_t *o, pframe_t *pf)
+anon_fillpage(mmobj_t *o,        pframe_t *pf)
 {
  	/*first get the page  pf->pf_obj and pf->pf_pagenum*/
 	pframe_t *page = pframe_get_resident(pf->pf_obj,pf->pf_pagenum);
 	if(page){
 		/*fill the page with data and marked it a pinned*/
 		memcpy(pf->pf_addr,page->pf_addr,PAGE_SIZE);
-		if(!pframe_is_pinned(pf)){
-			pframe_pin(pf);
+		if(!pframe_is_pinned(page)){
+			pframe_pin(page);
 		}
 	}else{
-		dbg(DBG_VNREF|DBG_ERROR, "No resident page found for given object = 0x%p and  page number=0x%p",pf->pf_obj,pf->pf_addr);
+dbg(DBG_VNREF|DBG_ERROR, "No resident page found for given object = 0x%p and  page number=0x%p",pf->pf_obj,pf->pf_addr);
 		return -EFAULT;
 	}	
         /*NOT_YET_IMPLEMENTED("VM: anon_fillpage");*/

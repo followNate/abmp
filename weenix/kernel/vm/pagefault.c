@@ -67,7 +67,7 @@ handle_pagefault(uintptr_t vaddr, uint32_t cause)
         /* Check the protection of the vmarea to PROT_WRITE and if cause is
         other than FAULT_WRITE kill the process */
         if (faulted_vmarea->vma_prot & PROT_WRITE)
-        {
+                {
 			if (!(cause & FAULT_WRITE))
 			{
 				proc_kill(curproc, EFAULT);
@@ -99,7 +99,7 @@ handle_pagefault(uintptr_t vaddr, uint32_t cause)
 		
 	
 		/* To place the new mapping into appropriate page table */
-		int map_correctpage = pt_map(curproc->p_pagedir, vaddr, paddr, PD_WRITE, PT_WRITE);
+int map_correctpage = pt_map(curproc->p_pagedir, vaddr, paddr, PD_WRITE, PT_WRITE);
         
         NOT_YET_IMPLEMENTED("VM: handle_pagefault");
 }

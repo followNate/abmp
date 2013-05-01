@@ -76,7 +76,7 @@ shadow_create()
         	list_init(&(new_shadow_obj->mmo_respages)); 
         	new_shadow_obj->mmo_shadowed = NULL; */
         	(new_shadow_obj)->mmo_un.mmo_bottom_obj = NULL;
-        	new_shadow_obj->refcount++;
+        	new_shadow_obj->mmo_refcount++;
         }
         	
     /*  NOT_YET_IMPLEMENTED("VM: shadow_create");  */
@@ -121,7 +121,7 @@ dbg(DBG_VNREF,"before shadow_put: object = 0x%p , reference_count =%d, nrespages
                       {  
                          list_iterate_begin(&(o->mmo_respages), pf, pframe_t, pf_olink)
                             {
-                                  /* If page is dirty call cleanup. */
+                                  /* unpin, check busy, check dirty: cleanup -- and free */
                                 while(pframe_is_pinned(pf))
                                         pframe_unpin(pf);
                                 if (pframe_is_busy(pf)){
@@ -179,9 +179,9 @@ dbg(DBG_VNREF,"lookuppage: searching for object: 0x%p, pagenum: %d, with forwrit
                        if(flag)break;
                        temp = temp->mmo_shadowed;                       
                        }
-                       if(!flag) /* look into the bottom most object which is not shadow obj*/
+                       if(!flag) /* look into the bottom most object of the chain*/
                        {
-                         temp = o->mmo_un.mmo_bottom_obj;
+                         temp = mmobj_bottom_obj(o);
                          pg_frame = pframe_get_resident(temp,pagenum);
                             if(pg_frame)
                              {

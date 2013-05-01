@@ -388,7 +388,7 @@ vmmap_remove(vmmap_t *map, uint32_t lopage, uint32_t npages)
                 vmarea_t *area;
                 list_iterate_begin(&(map->vmm_list), area, vmarea_t, vma_plink)
                 {
-	
+/*@bik shouldn't it be <= if(area->vma_start<=lopage && area->vma_end>lopage+npages) */ 
 			if(area->vma_start < lopage && area->vma_end > lopage+npages){
 				/*split this vma into two new vma*/
 				vmarea_t *newvma = vmarea_alloc();
@@ -398,9 +398,11 @@ vmmap_remove(vmmap_t *map, uint32_t lopage, uint32_t npages)
 				newvma->vma_off = area->vma_off + npages;
 				newvma->vma_prot = area->vma_prot;
 				vmmap_insert(map, newvma);
-				newvma->vma_obj = area->vma_obj;	
+				newvma->vma_obj = area->vma_obj;
+				newvma->vma_flags = area->vma_flags;
 				if(newvma->vma_obj)
 				        (newvma->vma_obj->mmo_ops->ref)(newvma->vma_obj);
+				
 				/*Doubt at this point revisit later*/
 				
 				/*check if there is file object associated with the old vmarea
