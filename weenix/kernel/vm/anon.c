@@ -133,7 +133,7 @@ anon_put(mmobj_t *o)
 static int
 anon_lookuppage(mmobj_t *o, uint32_t pagenum, int forwrite, pframe_t **pf)
 {
-	 pframe_t *pg_frame = pframe_get_resident(o,pagenum);
+	pframe_t *pg_frame = pframe_get_resident(o,pagenum);
         if(pg_frame)
         {
         	while(!pframe_is_busy(pg_frame))
@@ -147,32 +147,60 @@ anon_lookuppage(mmobj_t *o, uint32_t pagenum, int forwrite, pframe_t **pf)
 }
 
 /* The following three functions should not be difficult. */
-
+/*@author Mohit Aggarwal*/
 static int
 anon_fillpage(mmobj_t *o, pframe_t *pf)
 {
- 
-        NOT_YET_IMPLEMENTED("VM: anon_fillpage");
+ 	/*first get the page  pf->pf_obj and pf->pf_pagenum*/
+	pframe_t *page = pframe_get_resident(pf->pf_obj,pf->pf_pagenum);
+	if(page){
+		/*fill the page with data and marked it a pinned*/
+		memcpy(pf->pf_addr,page->pf_addr,PAGE_SIZE);
+		if(!pframe_is_pinned(pf)){
+			pframe_pin(pf);
+		}
+	}else{
+		dbg(DBG_VNREF|DBG_ERROR, "No resident page found for given object = 0x%p and  page number=0x%p",pf->pf_obj,pf->pf_addr);
+		return -EFAULT;
+	}	
+        /*NOT_YET_IMPLEMENTED("VM: anon_fillpage");*/
         return 0;
 }
 
 static int
 anon_dirtypage(mmobj_t *o, pframe_t *pf)
 {
-	if(pframe_is_busy(pf))
+	/*if(pframe_is_busy(pf))
       		pframe_clear_busy(pf);
         if(!(pframe_is_dirty(pf)))
-              	pframe_set_dirty(pf);
+              	pframe_set_dirty(pf);*/
    /*NOT_YET_IMPLEMENTED("VM: shadow_dirtypage");*/
-   	if(pframe_is_dirty(pf))
+   	/*if(pframe_is_dirty(pf))
         	return 0;
    	else 
-		return -1;
+		return -1;*/
+	/*MOHIT: IMHO the anonymous memory objects doesn't have any file
+	 * to read and write, therefore this function should simply return 0*/
+	return 0;
 }
 
 static int
 anon_cleanpage(mmobj_t *o, pframe_t *pf)
 {
-        NOT_YET_IMPLEMENTED("VM: anon_cleanpage");
-        return -1;
+	/*MOHIT: Even though we are writing the content at pf->pf_addr to the
+	 * page identified by the pf->pf_obj and pf->pf_pagenum, we still don't
+	 * have to do any preparation to write this data back to disk as 
+	 * anonymous memory object doesn't have any associated file. This makes
+	 * me wonder whether we really need to do any operation in this function???
+	 * open question to all!!!*/
+	
+	pframe_t *page = pframe_get_resident(pf->pf_obj,pf->pf_pagenum);
+	if(page){
+		memcpy(page->pf_addr,pf->pf_addr,PAGE_SIZE);
+	}else{
+		return -EFAULT;
+	}
+	
+        /*NOT_YET_IMPLEMENTED("VM: anon_cleanpage");*/
+        return 0;
 }
