@@ -55,23 +55,28 @@ init_func(syscall_init);
  */
 static int sys_read(read_args_t *arg)
 {
-		read_args_t reading;
+	read_args_t reading;
         if (copy_from_user(&reading, arg, sizeof(read_args_t)) < 0)     /* Copy from the user the read_args_t */
         {
                 curthr->kt_errno = EFAULT;
                 return -1;
         }
-        reading.buf = page_alloc();                            /* A temporary buffer */
+        void *temporary_buffer = page_alloc();/* A temporary buffer */
         
-        int no_of_bytes_read = do_read(reading.fd, reading.buf, reading.nbytes);      /* Calling do_read() */
+        int no_of_bytes_read = do_read(reading.fd, temporary_buffer, reading.nbytes);      /* Calling do_read() */
+        if(no_of_bytes_read<0)
+        {
+                curthr->kt_errno = -no_of_bytes_read;
+                return -1;    
+        }
         
-        if (copy_to_user(&arg, reading.buf, sizeof(read_args_t)) < 0)   /* Copy to the user the read bytes */
+        if (copy_to_user(arg->buf, temporary_buffer, no_of_bytes_read) < 0)   /* Copy to the user the read bytes */
         {
                 curthr->kt_errno = EFAULT;
                 return -1;
         }     
         
-        page_free(reading.buf);	
+        page_free(temporary_buffer);	
         /* page_free() the buffer */
         
         return(no_of_bytes_read);
@@ -93,18 +98,23 @@ static int sys_write(write_args_t *arg)
                 return -1;
         }
         
-        writing.buf= page_alloc();                       
+        void *temporary_buffer = page_alloc();                  
              /* A temporary buffer */
-        
-        int no_of_bytes_write = do_write(writing.fd, writing.buf, writing.nbytes);     /* Calling do_write() */
-        
-        if (copy_to_user(&arg, writing.buf, sizeof(read_args_t)) < 0)   /* Copy to the user the write bytes */
+        if (copy_from_user(temporary_buffer, arg->buf, writing.nbytes) < 0) 
         {
                 curthr->kt_errno = EFAULT;
                 return -1;
-        }    
+        }
+    
+        int no_of_bytes_write = do_write(writing.fd, temporary_buffer, writing.nbytes);     /* Calling do_write() */
         
-        page_free(writing.buf); 
+        if(no_of_bytes_write<0)
+        {
+                curthr->kt_errno = -no_of_bytes_write;
+                return -1;    
+        }
+        
+        page_free(temporary_buffer); 
         /* page_free() the buffer */
         
         return (no_of_bytes_write);	
@@ -143,12 +153,14 @@ static int sys_getdents(getdents_args_t *arg)
         {
                 j=do_getdent(getdents.fd, getdents.dirp);
                 if(j<0)
-                        return j;
-                        
+                {
+                        curthr->kt_errno = -j;
+                        return -1;
+                }        
                 i++;                
         }
-        NOT_YET_IMPLEMENTED("VM: sys_getdents");
-        return j;
+        /*NOT_YET_IMPLEMENTED("VM: sys_getdents");*/
+        return max_count;
 }
 
 #ifdef __MOUNTING__
