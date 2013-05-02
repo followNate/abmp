@@ -172,11 +172,8 @@ dbg(DBG_VNREF,"lookuppage: searching for object: 0x%p, pagenum: %d, with forwrit
                              {
                                while(!pframe_is_busy(pg_frame))
                                   {     
-                                     if(pg_frame){
                                     *pf = pg_frame;
-                                     flag=1; break;
-                                     }
-                                     else return -1;
+                                     flag=1; break;                                     
                                   }
                              }
                        if(flag)break;
@@ -190,11 +187,8 @@ dbg(DBG_VNREF,"lookuppage: searching for object: 0x%p, pagenum: %d, with forwrit
                              {
                                while(!pframe_is_busy(pg_frame))
                                   {
-                                     if(pg_frame){
                                     *pf = pg_frame;
                                      break;
-                                     }
-                                     else return -1; 
                                   }
                              }
                        }
@@ -206,21 +200,16 @@ dbg(DBG_VNREF,"lookuppage: searching for object: 0x%p, pagenum: %d, with forwrit
                             {
                                 while(!pframe_is_busy(pg_frame))
                                     {
-                                        if(pg_frame){
                                        *pf = pg_frame;
                                         break;
-                                        }
-                                        else return -1;
                                     }
                             }
                        }
                }            
-            else{ /* page lookup for write operation */
+            else{
+                    /* page lookup for write operation */
                     pframe_get(o,pagenum,&pg_frame);
-                     if(pg_frame){
-                      *pf = pg_frame;
-                       }
-                       else return -1;
+                    *pf = pg_frame;
                 }
         
        if(*pf){
@@ -288,22 +277,17 @@ dbg(DBG_VNREF,"Fillpage: destinaiton object: 0x%p, source pf->pf_obj: 0%p, pf->p
 static int
 shadow_cleanpage(mmobj_t *o, pframe_t *pf)
 {
-        pframe_t *src_pf, *dest_pf;
-        
-        int ret = pframe_get(o,pf->pf_pagenum,&src_pf);
-        KASSERT(ret && "CLEANUP: Could not find the source page frame\n");
-        ret = shadow_lookuppage(pf->pf_obj,pf->pf_pagenum,0,&dest_pf);
+        pframe_t *src_pf, *dest_pf;        
+
+        int  ret = shadow_lookuppage(o->mmo_shadowed,pf->pf_pagenum,0,&dest_pf);
         KASSERT(ret && "CLEANUP: Could not find the destination page frame\n");
-        while(pframe_is_pinned(src_pf))
-                pframe_unpin(src_pf);
-        while(!pframe_is_busy(src_pf))
-              {        
-                if(pframe_is_dirty(src_pf))
-                        pframe_clear_dirty(src_pf);
-                dest_pf->pf_addr = src_pf->pf_addr;
-                pframe_free(src_pf);
-                break;
-              }
+        if(dest_pf){
+                       while(pframe_is_pinned(pf))
+                        pframe_unpin(pf);
+                        memcpy(pf,dest_pf,PAGE_SIZE);
+                        pframe_free(pf);
+                      }
+        else return -1;
        /* NOT_YET_IMPLEMENTED("VM: shadow_cleanpage");*/
         return 0;
 }
