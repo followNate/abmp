@@ -171,9 +171,12 @@ dbg(DBG_VNREF,"lookuppage: searching for object: 0x%p, pagenum: %d, with forwrit
                             if(pg_frame)
                              {
                                while(!pframe_is_busy(pg_frame))
-                                  {
+                                  {     
+                                     if(pg_frame){
                                     *pf = pg_frame;
                                      flag=1; break;
+                                     }
+                                     else return -1;
                                   }
                              }
                        if(flag)break;
@@ -187,27 +190,38 @@ dbg(DBG_VNREF,"lookuppage: searching for object: 0x%p, pagenum: %d, with forwrit
                              {
                                while(!pframe_is_busy(pg_frame))
                                   {
+                                     if(pg_frame){
                                     *pf = pg_frame;
                                      break;
+                                     }
+                                     else return -1; 
                                   }
                              }
                        }
                   }
-                  if(!(o->mmo_shadowed)) 
+                  if(!(o->mmo_shadowed))
                       {   /* object is not shadow object */
                           pg_frame = pframe_get_resident(o,pagenum);
                           if(pg_frame)
                             {
                                 while(!pframe_is_busy(pg_frame))
                                     {
+                                        if(pg_frame){
                                        *pf = pg_frame;
                                         break;
+                                        }
+                                        else return -1;
                                     }
                             }
                        }
-               }
-            
-            else{ /* TO DO may need to call shadow_fillpage  s*/ }
+               }            
+            else{ /* page lookup for write operation */
+                    pframe_get(o,pagenum,&pg_frame);
+                     if(pg_frame){
+                      *pf = pg_frame;
+                       }
+                       else return -1;
+                }
         
        if(*pf){
 dbg(DBG_VNREF,"lookuppage: Returning page frame with pf->pf_obj: 0x%p, pf->pf_pagenum: %d, with forwrite: %d \n",o,pagenum,forwrite);
@@ -239,16 +253,18 @@ shadow_fillpage(mmobj_t *o, pframe_t *pf)
         KASSERT(!pframe_is_pinned(pf));
 	dbg(DBG_VNREF,"Fillpage: destinaiton object: 0x%p, source pf->pf_obj: 0%p, pf->pf_pagenum: %d\n",o,pf->pf_obj,pf->pf_pagenum);
         /* look for the source page frame */
-        int ret = shadow_lookuppage(pf->pf_obj,pf->pf_pagenum,0,&src_pf);
-        /* allocate new page for given object */
-        KASSERT(ret && "FILLPAGE: Could not find the source page frame\n");
+        int ret = shadow_lookuppage(o->mmo_shadowed,pf->pf_pagenum,0,&src_pf);
+        if(ret == 0)
+             {
+                if(src_pf){
+        		memcpy(src_pf->pf_addr,pf->pf_addr,PAGE_SIZE);
+        	}else{
+        		return -EFAULT;
+                }          
+             
+             }
+         else return -1;
         
-	ret = pframe_get(o,pf->pf_pagenum,&dest_pf); /* pframe_get also fills page if allocated new one not sure how! */
-        KASSERT(ret && "FILLPAGE: Could not get the destination page frame\n");
-          
-        /* TO DO not sure how to copy from source to dest ! may be as follows.*/
-        dest_pf->pf_addr = src_pf->pf_addr;
-          
  	/* NOT_YET_IMPLEMENTED("VM: shadow_fillpage");*/
         return 0;
 }
