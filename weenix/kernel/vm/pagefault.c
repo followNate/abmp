@@ -60,50 +60,92 @@ handle_pagefault(uintptr_t vaddr, uint32_t cause)
         5. FAULT_EXEC-Fault if access is PROT_EXEC
         NOTE: FAULT_READ cannnot take place in OS
         */
-        
+        uint32_t page_addr = (uint32_t)ADDR_TO_PN(vaddr);
         /* Find the vmarea that cause the page faulting */
-        vmarea_t *faulted_vmarea= vmmap_lookup(curproc->p_vmmap, vaddr);
+        vmarea_t *faulted_vmarea= vmmap_lookup(curproc->p_vmmap, page_addr);
         
         /* Check the protection of the vmarea to PROT_WRITE and if cause is
         other than FAULT_WRITE kill the process */
         if(!faulted_vmarea){ proc_kill(curproc, EFAULT); return;}
         
-        if (faulted_vmarea->vma_prot & PROT_WRITE)
+        if ((cause & FAULT_WRITE))
+        {
+                if (!(faulted_vmarea->vma_prot & PROT_WRITE))
                 {
-			if (!(cause & FAULT_WRITE))
-			{
-				proc_kill(curproc, EFAULT);
-			}
+				proc_kill(curproc, EFAULT); return;
 		}
-		
+	}
 		/* Check the protection of the vmarea to PROT_EXEC and if cause is
         other than FAULT_EXEC kill the process */
-        if (faulted_vmarea->vma_prot & PROT_EXEC)
+        if (cause & FAULT_EXEC)
         {
-			if (!(cause & FAULT_EXEC))
+			if (!(faulted_vmarea->vma_prot & PROT_EXEC))
 			{
-				proc_kill(curproc, EFAULT);
+				proc_kill(curproc, EFAULT);return;
 			}
-		}
+	}
 		
 		/* Check the protection of the vmarea to PROT_NONE and if cause is
         other than FAULT_RESERVED kill the process */
-         if (faulted_vmarea->vma_prot & PROT_NONE)
+        if (cause & FAULT_RESERVED)
         {
-			if (!(cause & FAULT_RESERVED))
+			if (faulted_vmarea->vma_prot ==PROT_NONE)
 			{
-				proc_kill(curproc, EFAULT);
+				proc_kill(curproc, EFAULT);return;
 			}
-		}
-		
+	}
+	 if (cause & FAULT_PRESENT)
+        {
+			if (!(faulted_vmarea->vma_prot & PROT_READ))
+			{
+				proc_kill(curproc, EFAULT);return;
+			}
+	}	
 		/* Finding the correct page physical address */
-		uintptr_t paddr = pt_virt_to_phys(vaddr);
-		
-	
-		/* To place the new mapping into appropriate page table */
-int map_correctpage = pt_map(curproc->p_pagedir, vaddr, paddr, PD_WRITE, PT_WRITE);
+
+        dbg_print("gggg\n");
+        pframe_t *needed_frm = NULL;
+        mmobj_t *obj = faulted_vmarea->vma_obj;
+        dbg_print("gggg\n");
+        if(!obj->mmo_shadowed)
+        { 
+        dbg_print("ssss\n");
         
+                int ret=0;
+                ret=obj->mmo_ops->lookuppage(obj, page_addr, 1, &needed_frm);
+                dbg_print("ssss\n");
+                if(ret<0)
+                {
+                        dbg_print("ERR\n");
+                        return;
+                }
+               
+               /* pframe_set_busy(needed_frm);
+                ret = needed_frm->pf_obj->mmo_ops->fillpage(needed_frm->pf_obj, needed_frm);
+                pframe_clear_busy(needed_frm);
+                dbg_print("ssss\n");*/
+        }
+        else
+        {
+         /*   shadow_lookuppage(obj, page_addr, 1, &needed_frm);
+                shadow_fillpage(obj, needed_frm);
+           */     
+        }
+
         
+        dbg_print("gggg\n");
+    /*pframe_get(obj, vfn, &resFrame);*/
+
+    /*Call pt_map to have the new mapping placed into the appropriate page table.*/
+
+    uintptr_t paddr = pt_virt_to_phys(vaddr);
+    
+
+    pagedir_t *pageTable = pt_get();
+     dbg_print("gggg\n");
+    /*uint32_t ptflags = ((pframe_t*)page_addr)->pf_flags;*/
+ dbg_print("gggg\n");
+    pt_map(pageTable, page_addr, ADDR_TO_PN(paddr), PROT_WRITE|PROT_READ|PROT_EXEC, PROT_WRITE|PROT_READ|PROT_EXEC);
         
         NOT_YET_IMPLEMENTED("VM: handle_pagefault");
 }
