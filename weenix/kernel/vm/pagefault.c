@@ -67,7 +67,7 @@ handle_pagefault(uintptr_t vaddr, uint32_t cause)
         /* Check the protection of the vmarea to PROT_WRITE and if cause is
         other than FAULT_WRITE kill the process */
         if(!faulted_vmarea){ proc_kill(curproc, EFAULT); return;}
-        
+
         if (faulted_vmarea->vma_prot & PROT_WRITE)
                 {
 			if (!(cause & FAULT_WRITE))
@@ -96,9 +96,11 @@ handle_pagefault(uintptr_t vaddr, uint32_t cause)
 			}
 		}
 		
+	
+	
+	
 		/* Finding the correct page physical address */
-		uintptr_t paddr = pt_virt_to_phys(vaddr);
-		
+		uintptr_t paddr = pt_virt_to_phys(vaddr);		
 	
 		/* To place the new mapping into appropriate page table */
 int map_correctpage = pt_map(curproc->p_pagedir, vaddr, paddr, PD_WRITE, PT_WRITE);
