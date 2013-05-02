@@ -17,6 +17,7 @@ define pagetable
 		kinfo pt_mapping_info current_pagedir
 	end
 end
+
 document pagetable
 Without arguments displays current page table mappings in the form
 "[vstart, vend) => [pstart, pend)". Takes an optional integer argument

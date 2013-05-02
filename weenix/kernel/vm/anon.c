@@ -133,6 +133,7 @@ anon_put(mmobj_t *o)
 static int
 anon_lookuppage(mmobj_t *o, uint32_t pagenum, int forwrite, pframe_t **pf)
 {
+	dbg_print("In Anon \n");
 	pframe_t *pg_frame = pframe_get_resident(o,pagenum);
         if(pg_frame)
         {
@@ -142,6 +143,7 @@ anon_lookuppage(mmobj_t *o, uint32_t pagenum, int forwrite, pframe_t **pf)
                         break;
                 }
         }
+        
         
         /*NOT_YET_IMPLEMENTED("VM: anon_lookuppage");*/
         return 0;

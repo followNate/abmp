@@ -264,6 +264,7 @@ vmmap_map(vmmap_t *map, vnode_t *file, uint32_t lopage, uint32_t npages, int pro
         KASSERT(PAGE_ALIGNED(off));
 	
 	int start=0;
+
 	mmobj_t *newmmobj=NULL;
 	vmarea_t *newarea=NULL;
 	if(lopage==0)
@@ -289,19 +290,21 @@ vmmap_map(vmmap_t *map, vnode_t *file, uint32_t lopage, uint32_t npages, int pro
 			       int i=(file->vn_ops->mmap)(file,newarea,&newmmobj);
 			       if(i<0)
 			                return i;
+       			       newarea->vma_obj = newmmobj;
 			}
 			else
 			{
-			        if(flags!=MAP_PRIVATE)
+			        if(flags!=MAP_PRIVATE)			        
         	                        newmmobj=anon_create();
         	                else
         	                        newmmobj=shadow_create();
         	                        
 			        if(newmmobj==NULL)
 			                return -1;
+      			       newarea->vma_obj = newmmobj;
 			}
 			
-			*new=newarea;
+			
 	        }	        
 	        
 	}
@@ -330,6 +333,7 @@ vmmap_map(vmmap_t *map, vnode_t *file, uint32_t lopage, uint32_t npages, int pro
 			       int i=(file->vn_ops->mmap)(file,newarea,&newmmobj);
 			       if(i<0)
 			                return i;
+       			       newarea->vma_obj = newmmobj;
 			}
 			else
 			{
