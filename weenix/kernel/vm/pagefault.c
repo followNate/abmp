@@ -63,7 +63,9 @@ handle_pagefault(uintptr_t vaddr, uint32_t cause)
         uint32_t page_addr = (uint32_t)ADDR_TO_PN(vaddr);
      
         vmarea_t *faulted_vmarea= vmmap_lookup(curproc->p_vmmap, ADDR_TO_PN(vaddr));
-
+        mmobj_t *obj = faulted_vmarea->vma_obj;
+        dbg_print("== anon object = 0x%p \n",obj);
+        
         if(faulted_vmarea==NULL){ 
                 dbg(DBG_TEST,"Null vmarea recieved\n"); 
                 proc_kill(curproc, EFAULT); 
@@ -109,23 +111,29 @@ handle_pagefault(uintptr_t vaddr, uint32_t cause)
 
         dbg_print("gggg\n");
         pframe_t *needed_frm = NULL;
-        mmobj_t *obj = faulted_vmarea->vma_obj;
+
         dbg_print("gggg\n");
        if(obj->mmo_shadowed == NULL)
         { 
         dbg_print("ssss\n");
-        
+
                 int ret=0;
-                ret=obj->mmo_ops->lookuppage(obj, page_addr, 0, &needed_frm);
+                ret=obj->mmo_ops->lookuppage(obj, obj->mmo_nrespages, 0, &needed_frm);
                 dbg_print("ssss\n");
+
                 if(ret<0)
                 {
                         dbg_print("ERR\n");
                         return;
                 }
-               
+
                 pframe_set_busy(needed_frm);
                 ret = needed_frm->pf_obj->mmo_ops->fillpage(needed_frm->pf_obj, needed_frm);
+                if(ret<0)
+                {
+                        dbg_print("ERR\n");
+                        return;
+                }
                 pframe_clear_busy(needed_frm);
                 dbg_print("ssss\n");
         }/*
@@ -149,7 +157,7 @@ handle_pagefault(uintptr_t vaddr, uint32_t cause)
      dbg_print("gggg\n");
     /*uint32_t ptflags = ((pframe_t*)page_addr)->pf_flags;*/
  dbg_print("gggg\n");
-    pt_map(pageTable, page_addr, ADDR_TO_PN(paddr), PROT_WRITE|PROT_READ|PROT_EXEC, PROT_WRITE|PROT_READ|PROT_EXEC);
+    pt_map(pageTable, vaddr, paddr, PROT_WRITE|PROT_READ|PROT_EXEC, PROT_WRITE|PROT_READ|PROT_EXEC);
         
         NOT_YET_IMPLEMENTED("VM: handle_pagefault");
 }

@@ -58,8 +58,9 @@ anon_create()
 	   	mmobj_init(new_anon_obj,&anon_mmobj_ops);
 		/*MOHIT:setting the refcount to 1 when creating 
 		 *anonymous object*/
+	        dbg_print("Creating anon object = 0x%p \n",new_anon_obj);
 		new_anon_obj->mmo_refcount++;
-	}	
+	}
 	
 	/*NOT_YET_IMPLEMENTED("VM: anon_create");*/
         return new_anon_obj;

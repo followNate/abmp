@@ -72,6 +72,7 @@ shadow_create()
 	        mmobj_init(new_shadow_obj,&shadow_mmobj_ops);
         	(new_shadow_obj)->mmo_un.mmo_bottom_obj = NULL;
         	new_shadow_obj->mmo_refcount++;
+        	dbg_print("Creating shadow object = 0x%p \n",new_shadow_obj);
         }
         	
     /*  NOT_YET_IMPLEMENTED("VM: shadow_create");  */
