@@ -142,6 +142,7 @@ anon_lookuppage(mmobj_t *o, uint32_t pagenum, int forwrite, pframe_t **pf)
                         break;
                 }
         }
+        
         /*NOT_YET_IMPLEMENTED("VM: anon_lookuppage");*/
         return 0;
 }
@@ -149,7 +150,7 @@ anon_lookuppage(mmobj_t *o, uint32_t pagenum, int forwrite, pframe_t **pf)
 /* The following three functions should not be difficult. */
 /*@author Mohit Aggarwal*/
 static int
-anon_fillpage(mmobj_t *o,        pframe_t *pf)
+anon_fillpage(mmobj_t *o,pframe_t *pf)
 {
  	/*first get the page  pf->pf_obj and pf->pf_pagenum*/
 	pframe_t *page = pframe_get_resident(pf->pf_obj,pf->pf_pagenum);

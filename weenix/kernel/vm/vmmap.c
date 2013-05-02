@@ -183,10 +183,10 @@ vmmap_lookup(vmmap_t *map, uint32_t vfn)
 	KASSERT(NULL!=map);
 	
 	vmarea_t *vma = NULL;
-	if(!list_empty(&(map->vmm_list))){
+	if(!list_empty(&(map->vmm_list))){        
 		vmarea_t *area;
                 list_iterate_begin(&(map->vmm_list), area, vmarea_t, vma_plink){
-                        if(area->vma_start <= vfn && area->vma_end >= vfn){
+                        if(area->vma_start <= vfn && area->vma_end > vfn){  /*shud be > only */     
 				vma = area;
 				break;
 			}
@@ -194,7 +194,7 @@ vmmap_lookup(vmmap_t *map, uint32_t vfn)
         }
 
         /*NOT_YET_IMPLEMENTED("VM: vmmap_lookup");*/
-        return vma;
+        return vma;     
 }
 
 /* Allocates a new vmmap containing a new vmarea for each area in the

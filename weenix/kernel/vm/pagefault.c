@@ -62,11 +62,22 @@ handle_pagefault(uintptr_t vaddr, uint32_t cause)
         */
         
         /* Find the vmarea that cause the page faulting */
-        vmarea_t *faulted_vmarea= vmmap_lookup(curproc->p_vmmap, vaddr);
         
         /* Check the protection of the vmarea to PROT_WRITE and if cause is
-        other than FAULT_WRITE kill the process */
-        if(!faulted_vmarea){ proc_kill(curproc, EFAULT); return;}
+        other than FAULT_WRITE kill the process 
+        dbg_print("I AM HEREEERERE %d\n",(uint32_t)(vaddr));
+
+      	if(list_empty(&(curproc->p_vmmap->vmm_list))){         dbg_print("EMPTYYY !! \n"); }
+dbg_print("ADDr= %d  ADDR TO PN = %d, PN=%d\n",vaddr,ADDR_TO_PN(vaddr),(uint32_t)PN_TO_ADDR(ADDR_TO_PN(vaddr))); */
+
+        vmarea_t *faulted_vmarea= vmmap_lookup(curproc->p_vmmap, ADDR_TO_PN(vaddr));
+
+        if(faulted_vmarea==NULL){ 
+                dbg(DBG_TEST,"Null vmarea recieved\n"); 
+                proc_kill(curproc, EFAULT); 
+                return;
+             }
+
 
         if (faulted_vmarea->vma_prot & PROT_WRITE)
                 {
@@ -96,9 +107,7 @@ handle_pagefault(uintptr_t vaddr, uint32_t cause)
 			}
 		}
 		
-	
-	
-	
+		
 		/* Finding the correct page physical address */
 		uintptr_t paddr = pt_virt_to_phys(vaddr);		
 	
