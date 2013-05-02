@@ -70,11 +70,6 @@ shadow_create()
 	if(new_shadow_obj)
 	{
 	        mmobj_init(new_shadow_obj,&shadow_mmobj_ops);
-/*	        (new_shadow_obj)->mmo_ops = (shadow_mmobj_ops);
-        	new_shadow_obj->mmo_refcount = 0;
-        	new_shadow_obj->mmo_nrespages = 0;
-        	list_init(&(new_shadow_obj->mmo_respages)); 
-        	new_shadow_obj->mmo_shadowed = NULL; */
         	(new_shadow_obj)->mmo_un.mmo_bottom_obj = NULL;
         	new_shadow_obj->mmo_refcount++;
         }
@@ -92,10 +87,10 @@ static void
 shadow_ref(mmobj_t *o)
 {
         KASSERT(o && (0 < o->mmo_refcount) && (&shadow_mmobj_ops == o->mmo_ops));
-dbg(DBG_VNREF,"before shadow_ref: object = 0x%p , reference_count =%d, nrespages=%d\n",o,o->mmo_refcount,o->mmo_nrespages);
+	dbg(DBG_VNREF,"before shadow_ref: object = 0x%p , reference_count =%d, nrespages=%d\n",o,o->mmo_refcount,o->mmo_nrespages);
         o->mmo_refcount++;
-dbg(DBG_VNREF,"after shadow_ref: object = 0x%p , reference_count =%d, nrespages=%d\n",o,o->mmo_refcount,o->mmo_nrespages);
-     /* NOT_YET_IMPLEMENTED("VM: shadow_ref"); */
+	dbg(DBG_VNREF,"after shadow_ref: object = 0x%p , reference_count =%d, nrespages=%d\n",o,o->mmo_refcount,o->mmo_nrespages);
+     	/*NOT_YET_IMPLEMENTED("VM: shadow_ref"); */
 }
 
 /*
@@ -111,7 +106,7 @@ shadow_put(mmobj_t *o)
 {
         KASSERT(o && (0 < o->mmo_refcount) && (&shadow_mmobj_ops == o->mmo_ops));
 
-dbg(DBG_VNREF,"before shadow_put: object = 0x%p , reference_count =%d, nrespages=%d\n",o,o->mmo_refcount,o->mmo_nrespages);
+	dbg(DBG_VNREF,"before shadow_put: object = 0x%p , reference_count =%d, nrespages=%d\n",o,o->mmo_refcount,o->mmo_nrespages);
   
         if(o->mmo_nrespages == (o->mmo_refcount - 1))  
               {

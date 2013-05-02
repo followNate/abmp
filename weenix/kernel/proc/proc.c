@@ -153,6 +153,8 @@ dbg(DBG_FORK,"Process %s (PID=%d) is Created and parent process is \"%s\" (PID=%
 		 new_proc_t->p_cwd=NULL;
         }         
         /* Create the vmmap in address space of current process */
+	vmmap_t *map = vmmap_create();
+	new_proc_t->p_vmmap = map;
         
         /*NOT_YET_IMPLEMENTED("PROCS: proc_create");*/
         return new_proc_t;      

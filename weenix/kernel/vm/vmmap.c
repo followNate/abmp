@@ -470,18 +470,34 @@ vmmap_read(vmmap_t *map, const void *vaddr, void *buf, size_t count)
 {
 	/*MOHIT: TODO revisit this function later*/
 	uint32_t vfn = ADDR_TO_PN(vaddr);
+        uint32_t size = count/PAGE_SIZE==0?1:count%PAGE_SIZE==0?count/PAGE_SIZE:(count/PAGE_SIZE)+1;
+        int i=0;
 
-        vmarea_t *area = vmmap_lookup(map,vfn);
-        if(area){
+        /*First iterate through the list to get correct vmareas*/
+         if(!list_empty(&(map->vmm_list))){
+                vmarea_t *area;
                 pframe_t *frame;
-                int i = pframe_get(area->vma_obj,vfn,&frame);
-                /*uintptr_t paddr = pt_virt_to_phys((uintptr_t)frame->pf_addr);
-                memcpy(&paddr,buf,count);*/
-                memcpy(buf,frame->pf_addr,count);
+                while(size>0){
+                        area = vmmap_lookup(map,vfn);
+                        if(!area){
+                                return -EFAULT;
+                        }
+                        /*pframe_lookup(area->vma_obj,vfn,1,&frame);*/
+                        pframe_get(area->vma_obj,vfn,&frame);
+                        if(frame){
+                                char *charBuf = (char*)buf;
+                                memcpy(charBuf+i*PAGE_SIZE,frame->pf_addr,count-i*PAGE_SIZE);
+                                i+=PAGE_SIZE;
+                                size--;
+                                vfn+=1;
+                        }else{
+                                return -EFAULT;
+                        }
+                }
         }else{
                 return -EFAULT;
-        }       
-        
+        }        
+
         /*NOT_YET_IMPLEMENTED("VM: vmmap_read");*/
         return 0;
 }
@@ -500,18 +516,34 @@ vmmap_write(vmmap_t *map, void *vaddr, const void *buf, size_t count)
 	/*MOHIT: TODO revisit this function again*/
 		
 	uint32_t vfn = ADDR_TO_PN(vaddr);
-	uint32_t size = count/PAGE_SIZE==0?1:count/PAGE_SIZE;
+	uint32_t size = count/PAGE_SIZE==0?1:count%PAGE_SIZE==0?count/PAGE_SIZE:(count/PAGE_SIZE)+1;
+	int i=0;
 	
-	vmarea_t *area = vmmap_lookup(map,vfn);
-	if(area){
+	/*First iterate through the list to get correct vmareas*/
+	 if(!list_empty(&(map->vmm_list))){
+                vmarea_t *area;
 		pframe_t *frame;
-		int i = pframe_get(area->vma_obj,vfn,&frame);
-		/*uintptr_t paddr = pt_virt_to_phys((uintptr_t)frame->pf_addr);
-		memcpy(&paddr,buf,count);*/
-		memcpy(frame->pf_addr,buf,count);
+                while(size>0){
+			area = vmmap_lookup(map,vfn);
+			if(!area){
+				return -EFAULT;
+			}
+			/*pframe_lookup(area->vma_obj,vfn,1,&frame);*/
+			pframe_get(area->vma_obj,vfn,&frame);
+			if(frame){
+				char *charBuf = (char*)buf;
+				memcpy(frame->pf_addr,charBuf+i*PAGE_SIZE,count-i*PAGE_SIZE);
+				i+=PAGE_SIZE;
+				size--;
+				vfn+=1;
+			}else{
+				return -EFAULT;
+			}
+		}
 	}else{
 		return -EFAULT;
 	}	
+	
 	
         /*NOT_YET_IMPLEMENTED("VM: vmmap_write");*/
         return 0;
