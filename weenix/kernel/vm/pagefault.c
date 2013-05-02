@@ -113,12 +113,10 @@ handle_pagefault(uintptr_t vaddr, uint32_t cause)
         pframe_t *needed_frm = NULL;
 
         dbg_print("gggg\n");
-       if(obj->mmo_shadowed == NULL)
-        { 
         dbg_print("ssss\n");
 
                 int ret=0;
-                ret=obj->mmo_ops->lookuppage(obj, obj->mmo_nrespages, 0, &needed_frm);
+                ret=obj->mmo_ops->lookuppage(obj, obj->mmo_nrespages, 1, &needed_frm);
                 dbg_print("ssss\n");
 
                 if(ret<0)
@@ -135,8 +133,10 @@ handle_pagefault(uintptr_t vaddr, uint32_t cause)
                         return;
                 }
                 pframe_clear_busy(needed_frm);
+
+
                 dbg_print("ssss\n");
-        }/*
+/*
         else
         {
             shadow_lookuppage(obj, page_addr, 1, &needed_frm);
@@ -157,7 +157,8 @@ handle_pagefault(uintptr_t vaddr, uint32_t cause)
      dbg_print("gggg\n");
     /*uint32_t ptflags = ((pframe_t*)page_addr)->pf_flags;*/
  dbg_print("gggg\n");
-    pt_map(pageTable, vaddr, paddr, PROT_WRITE|PROT_READ|PROT_EXEC, PROT_WRITE|PROT_READ|PROT_EXEC);
-        
+    pt_map(pageTable, (uint32_t)PAGE_ALIGN_DOWN(vaddr), (uint32_t)PAGE_ALIGN_DOWN(paddr), PROT_WRITE|PROT_READ|PROT_EXEC, PROT_WRITE|PROT_READ|PROT_EXEC);
+
+ 
         NOT_YET_IMPLEMENTED("VM: handle_pagefault");
 }
