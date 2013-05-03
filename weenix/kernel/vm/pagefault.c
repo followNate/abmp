@@ -65,8 +65,8 @@ handle_pagefault(uintptr_t vaddr, uint32_t cause)
         vmarea_t *faulted_vmarea= vmmap_lookup(curproc->p_vmmap, ADDR_TO_PN(vaddr));
         mmobj_t *obj = faulted_vmarea->vma_obj;
 
-dbg_print("== anon object = 0x%p ,area = 0x%p, pagenum = %d\n",obj,faulted_vmarea,ADDR_TO_PN(vaddr));
-        
+	dbg_print("== anon object = 0x%p ,area = 0x%p, pagenum = %d vaddr= %d\n",obj,faulted_vmarea,ADDR_TO_PN(vaddr),vaddr);
+
         if(faulted_vmarea==NULL){ 
                 dbg(DBG_TEST,"Null vmarea recieved\n"); 
                 proc_kill(curproc, EFAULT); 
@@ -111,19 +111,19 @@ dbg_print("== anon object = 0x%p ,area = 0x%p, pagenum = %d\n",obj,faulted_vmare
 		/* Finding the correct page physical address */
 
                 pframe_t *needed_frm = NULL;
-                int ret=0;
-                  
+                int ret=0;                
                 ret=pframe_get(obj,page_addr,&needed_frm);
                 if(ret<0)
                 {
                         return;
                 }
+                
                 pframe_clear_busy(needed_frm);
 
-    uintptr_t paddr = pt_virt_to_phys(vaddr);
-    pagedir_t *pageTable = pt_get();
+                uintptr_t paddr = pt_virt_to_phys(vaddr);
+                pagedir_t *pageTable = pt_get();
 
-pt_map(pageTable, (uint32_t)PAGE_ALIGN_UP(vaddr), (uint32_t)PAGE_ALIGN_UP(paddr), PROT_WRITE|PROT_READ|PROT_EXEC, PROT_WRITE|PROT_READ|PROT_EXEC);
+		pt_map(pageTable, (uint32_t)PAGE_ALIGN_UP(vaddr), (uint32_t)PAGE_ALIGN_UP(paddr), PROT_WRITE|PROT_READ|PROT_EXEC, PROT_WRITE|PROT_READ|PROT_EXEC);
 
 
 
