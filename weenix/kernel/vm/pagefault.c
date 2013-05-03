@@ -64,8 +64,8 @@ handle_pagefault(uintptr_t vaddr, uint32_t cause)
      
         vmarea_t *faulted_vmarea= vmmap_lookup(curproc->p_vmmap, ADDR_TO_PN(vaddr));
         mmobj_t *obj = faulted_vmarea->vma_obj;
-
-dbg_print("== anon object = 0x%p ,area = 0x%p, pagenum = %d vaddr= %d\n",obj,faulted_vmarea,ADDR_TO_PN(vaddr),vaddr);
+        
+dbg_print("== anon object = 0x%p ,area = 0x%p, pagenum = %d vaddr= %d\n",obj,faulted_vmarea,PAGE_OFFSET(page_addr),vaddr);
 
         
         if(faulted_vmarea==NULL){ 
@@ -113,7 +113,7 @@ dbg_print("== anon object = 0x%p ,area = 0x%p, pagenum = %d vaddr= %d\n",obj,fau
 
                 pframe_t *needed_frm = NULL;
                 int ret=0;                
-                ret=pframe_get(obj,page_addr,&needed_frm);
+                ret=pframe_get(obj,PAGE_OFFSET(page_addr),&needed_frm);
                 if(ret<0)
                 {
                         return;
