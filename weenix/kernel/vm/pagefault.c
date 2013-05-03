@@ -66,7 +66,6 @@ handle_pagefault(uintptr_t vaddr, uint32_t cause)
         mmobj_t *obj = faulted_vmarea->vma_obj;
 
 dbg_print("== anon object = 0x%p ,area = 0x%p, pagenum = %d\n",obj,faulted_vmarea,ADDR_TO_PN(vaddr));
-                proc_kill(curproc, EFAULT);
         
         if(faulted_vmarea==NULL){ 
                 dbg(DBG_TEST,"Null vmarea recieved\n"); 
