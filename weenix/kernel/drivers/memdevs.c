@@ -109,6 +109,7 @@ static int
 zero_mmap(vnode_t *file, vmarea_t *vma, mmobj_t **ret)
 {
         int i = (file->vn_cdev->cd_ops->mmap)(file, vmarea *vma, mmobj **ret);
+        dbg_print("inside zero_mmap\n");
         if (i != 0)
         {
 			vput(file);

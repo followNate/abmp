@@ -66,6 +66,7 @@ shadow_init()
 mmobj_t *
 shadow_create()
 {
+        dbg_print("creating SHADOOWW \n");
         mmobj_t *new_shadow_obj = (mmobj_t*)slab_obj_alloc(shadow_allocator);
 	if(new_shadow_obj)
 	{

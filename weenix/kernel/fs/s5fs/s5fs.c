@@ -338,15 +338,6 @@ s5fs_write(vnode_t *vnode, off_t offset, const void *buf, size_t len)
 static int
 s5fs_mmap(vnode_t *file, vmarea_t *vma, mmobj_t **ret)
 {
-		int i = (file->vn_ops->mmap)(file, vmarea *vma, mmobj **ret);
-        if (i != 0)
-        {
-			vput(file);
-			dbg(DBG_ERROR | DBG_VM, "ERROR: zero_mmap: Zero_mmap failed\n");
-            return i; 
-		}
-		vref(file);
-		return i;
 		
 		NOT_YET_IMPLEMENTED("VM: s5fs_mmap");
 

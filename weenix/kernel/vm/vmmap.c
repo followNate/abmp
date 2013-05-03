@@ -181,12 +181,13 @@ vmarea_t *
 vmmap_lookup(vmmap_t *map, uint32_t vfn)
 {
 	KASSERT(NULL!=map);
-	
+
 	vmarea_t *vma = NULL;
 	if(!list_empty(&(map->vmm_list))){        
 		vmarea_t *area;
                 list_iterate_begin(&(map->vmm_list), area, vmarea_t, vma_plink){
-                        if(area->vma_start <= vfn && area->vma_end > vfn){  /*shud be > only */     
+dbg_print("area =0x%p,obj= 0x%p,  Start = %d, End= %d \n",area,area->vma_obj,area->vma_start,area->vma_end);
+                        if(area->vma_start <= vfn && area->vma_end > vfn){  /*shud be > only */
 				vma = area;
 				break;
 			}
@@ -288,13 +289,20 @@ vmmap_map(vmmap_t *map, vnode_t *file, uint32_t lopage, uint32_t npages, int pro
 			{
 			       KASSERT(file->vn_ops!=NULL&&file->vn_ops->mmap!=NULL);
 			       int i=(file->vn_ops->mmap)(file,newarea,&newmmobj);
-			       if(i<0)
-			                return i;
-       			       newarea->vma_obj = newmmobj;
+			       if(i<0){
+			                return i;}
+			       else{
+			       mmobj_t *shadow;
+			       if((shadow = shadow_create()) !=NULL){
+			       shadow->mmo_shadowed = newmmobj;
+			       newmmobj->mmo_ops->ref(newmmobj);
+     			       newarea->vma_obj = shadow;       			       
+       			       }
+       			       }
 			}
 			else
 			{
-			        if(flags!=MAP_PRIVATE)			        
+			        if(flags!=MAP_PRIVATE)
         	                        newmmobj=anon_create();
         	                else
         	                        newmmobj=shadow_create();
@@ -302,6 +310,7 @@ vmmap_map(vmmap_t *map, vnode_t *file, uint32_t lopage, uint32_t npages, int pro
 			        if(newmmobj==NULL)
 			                return -1;
       			       newarea->vma_obj = newmmobj;
+       			       newmmobj->mmo_ops->ref(newmmobj);
 			}
 			
 			
@@ -331,9 +340,17 @@ vmmap_map(vmmap_t *map, vnode_t *file, uint32_t lopage, uint32_t npages, int pro
 			{
 			       KASSERT(file->vn_ops!=NULL&&file->vn_ops->mmap!=NULL);
 			       int i=(file->vn_ops->mmap)(file,newarea,&newmmobj);
-			       if(i<0)
+			       if(i<0){
 			                return i;
-       			       newarea->vma_obj = newmmobj;
+			              }
+			       else{     
+			       mmobj_t *shadow;
+			       if((shadow = shadow_create()) !=NULL){
+			       shadow->mmo_shadowed = newmmobj;
+			       newmmobj->mmo_ops->ref(newmmobj);
+       			       newarea->vma_obj = shadow;       			       
+       			       }
+       			       }
 			}
 			else
 			{
@@ -345,6 +362,7 @@ vmmap_map(vmmap_t *map, vnode_t *file, uint32_t lopage, uint32_t npages, int pro
 			        if(newmmobj==NULL)
 			                return -1;
 				newarea->vma_obj=newmmobj;
+				newmmobj->mmo_ops->ref(newmmobj);
 			}
 		}
 			

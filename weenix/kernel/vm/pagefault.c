@@ -64,8 +64,8 @@ handle_pagefault(uintptr_t vaddr, uint32_t cause)
      
         vmarea_t *faulted_vmarea= vmmap_lookup(curproc->p_vmmap, ADDR_TO_PN(vaddr));
         mmobj_t *obj = faulted_vmarea->vma_obj;
-        dbg_print("== anon object = 0x%p \n",obj);
-        
+dbg_print("== anon object = 0x%p ,area = 0x%p, pagenum = %d\n",obj,faulted_vmarea,ADDR_TO_PN(vaddr));
+                proc_kill(curproc, EFAULT);
         if(faulted_vmarea==NULL){ 
                 dbg(DBG_TEST,"Null vmarea recieved\n"); 
                 proc_kill(curproc, EFAULT); 
@@ -77,7 +77,7 @@ handle_pagefault(uintptr_t vaddr, uint32_t cause)
                 if (!(faulted_vmarea->vma_prot & PROT_WRITE))
 
                 {
-				proc_kill(curproc, EFAULT); return;
+	        	proc_kill(curproc, EFAULT); return;
 		}
 	}
 		/* Check the protection of the vmarea to PROT_EXEC and if cause is
@@ -109,23 +109,16 @@ handle_pagefault(uintptr_t vaddr, uint32_t cause)
 	}	
 		/* Finding the correct page physical address */
 
-        dbg_print("gggg\n");
         pframe_t *needed_frm = NULL;
-
-        dbg_print("gggg\n");
-        dbg_print("ssss\n");
-
                 int ret=0;
-                ret=obj->mmo_ops->lookuppage(obj, obj->mmo_nrespages, 1, &needed_frm);
-                dbg_print("ssss\n");
-
+                ret=pframe_get(obj,page_addr,&needed_frm);
                 if(ret<0)
                 {
                         dbg_print("ERR\n");
                         return;
                 }
 
-                pframe_set_busy(needed_frm);
+/*                pframe_set_busy(needed_frm);
                 ret = needed_frm->pf_obj->mmo_ops->fillpage(needed_frm->pf_obj, needed_frm);
                 if(ret<0)
                 {
@@ -133,32 +126,12 @@ handle_pagefault(uintptr_t vaddr, uint32_t cause)
                         return;
                 }
                 pframe_clear_busy(needed_frm);
-
-
-                dbg_print("ssss\n");
-/*
-        else
-        {
-            shadow_lookuppage(obj, page_addr, 1, &needed_frm);
-                shadow_fillpage(obj, needed_frm);
-           
-        }*/
-
-        
-        dbg_print("gggg\n");
-    /*pframe_get(obj, vfn, &resFrame);*/
-
-    /*Call pt_map to have the new mapping placed into the appropriate page table.*/
-
+*/
     uintptr_t paddr = pt_virt_to_phys(vaddr);
-    
-
     pagedir_t *pageTable = pt_get();
-     dbg_print("gggg\n");
-    /*uint32_t ptflags = ((pframe_t*)page_addr)->pf_flags;*/
- dbg_print("gggg\n");
-    pt_map(pageTable, (uint32_t)PAGE_ALIGN_DOWN(vaddr), (uint32_t)PAGE_ALIGN_DOWN(paddr), PROT_WRITE|PROT_READ|PROT_EXEC, PROT_WRITE|PROT_READ|PROT_EXEC);
 
- 
+pt_map(pageTable, (uint32_t)PAGE_ALIGN_UP(vaddr), (uint32_t)PAGE_ALIGN_UP(paddr), PROT_WRITE|PROT_READ|PROT_EXEC, PROT_WRITE|PROT_READ|PROT_EXEC);
+
         NOT_YET_IMPLEMENTED("VM: handle_pagefault");
 }
+
