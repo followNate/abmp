@@ -113,6 +113,7 @@ handle_pagefault(uintptr_t vaddr, uint32_t cause)
         pframe_t *needed_frm = NULL;
          mmobj_t *area_mmobj = faulted_vmarea->vma_obj;
 
+
         pframe_t *pf;
         int i= page_addr-faulted_vmarea->vma_start;
         
@@ -127,7 +128,7 @@ handle_pagefault(uintptr_t vaddr, uint32_t cause)
         dbg_print("fff %p Ox%p 0x%p\n",(area_mmobj->mmo_nrespages),pf->pf_addr,(USER_MEM_HIGH));
         dbg_print("gggg %d\n", needed_frm);
        /*if(obj->mmo_shadowed == NULL)*/
-        { 
+        
         dbg_print("ssss\n");
 
                 /*int ret=0;
@@ -145,9 +146,9 @@ handle_pagefault(uintptr_t vaddr, uint32_t cause)
                         dbg_print("ERR\n");
                         return;
                 }
-                
+
                 dbg_print("ssss\n");
-        }/*
+/*
         else
         {
             shadow_lookuppage(obj, page_addr, 1, &needed_frm);
@@ -165,10 +166,12 @@ handle_pagefault(uintptr_t vaddr, uint32_t cause)
     dbg_print("bbb\n");
 
     pagedir_t *pageTable = pt_get();
+
    
 dbg_print("bbb\n");
     uint32_t ptflags = (pf)->pf_flags;
 
         pt_map(pageTable,(uintptr_t)PAGE_ALIGN_DOWN(vaddr),(uintptr_t)pf->pf_addr, ptflags, ptflags);
+
         NOT_YET_IMPLEMENTED("VM: handle_pagefault");
 }
