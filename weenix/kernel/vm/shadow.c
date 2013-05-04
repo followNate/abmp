@@ -141,7 +141,6 @@ dbg(DBG_VM,"GRADING: I've made it ! May I have 2 points please ! \n");
 dbg(DBG_VNREF,"after shadow_put: object = 0x%p , reference_count =%d, nrespages=%d\n",o,o->mmo_refcount,o->mmo_nrespages);
           if(0 == o->mmo_refcount && 0 == o->mmo_nrespages )
               {
-                 o = NULL;
                  slab_obj_free(shadow_allocator, o);
               }
         
@@ -294,6 +293,10 @@ shadow_cleanpage(mmobj_t *o, pframe_t *pf)
 
         int  ret = shadow_lookuppage(o->mmo_shadowed,pf->pf_pagenum,0,&dest_pf);
         if(dest_pf){
+		if(pframe_is_busy(pf)){
+			pframe_clear_busy(pf);
+			sched_broadcast_on(&pf->pf_waitq);
+		}
                        while(pframe_is_pinned(pf))
                         pframe_unpin(pf);
                         memcpy(dest_pf,pf,PAGE_SIZE);

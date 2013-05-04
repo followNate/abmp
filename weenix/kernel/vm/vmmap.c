@@ -80,6 +80,7 @@ vmmap_destroy(vmmap_t *map)
 		list_iterate_begin(&(map->vmm_list), area, vmarea_t, vma_plink){
 			area->vma_obj->mmo_ops->put(area->vma_obj);
 			list_remove(&(area->vma_plink));
+			vmarea_free(area);
 		}list_iterate_end();
 	}
 	map->vmm_proc = NULL;
@@ -414,6 +415,7 @@ vmmap_map(vmmap_t *map, vnode_t *file, uint32_t lopage, uint32_t npages, int pro
 	}
 	        
 	new=&newarea;
+	new =new;
        /* NOT_YET_IMPLEMENTED("VM: vmmap_map");*/
         return 0;
 }
