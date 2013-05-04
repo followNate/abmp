@@ -237,8 +237,13 @@ proc_cleanup(int status)
 	KASSERT(NULL != curproc->p_pproc);
 	sched_wakeup_on(&curproc->p_pproc->p_wait);
         dbg_print("Cleaning Complete: Process with PID=%d, %d\n",curproc->p_pid, curproc->p_pproc->p_pid);
+	
+	vmmap_t *map = curproc->p_vmmap;
+	if(map){
+		vmmap_destroy(map);
+	}
 	/*NOT_YET_IMPLEMENTED("PROCS: proc_cleanup");*/
-
+	
 }
 
 /*

@@ -76,6 +76,7 @@ vmmap_destroy(vmmap_t *map)
 	if(!list_empty(&(map->vmm_list))){
 		vmarea_t * area;
 		list_iterate_begin(&(map->vmm_list), area, vmarea_t, vma_plink){
+			
 			list_remove(&(area->vma_plink));
 		}list_iterate_end();
 	}
