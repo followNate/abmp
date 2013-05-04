@@ -51,6 +51,8 @@
 void
 handle_pagefault(uintptr_t vaddr, uint32_t cause)
 {
+
+
         /* This function is called from mm/pagetable.c
         There are 5 types of faults:-
         1. FAULT_USER-Fault from user space
@@ -63,9 +65,14 @@ handle_pagefault(uintptr_t vaddr, uint32_t cause)
         uint32_t page_addr = (uint32_t)ADDR_TO_PN(vaddr);
      
         vmarea_t *faulted_vmarea= vmmap_lookup(curproc->p_vmmap, ADDR_TO_PN(vaddr));
-        mmobj_t *obj = faulted_vmarea->vma_obj;
-
-	dbg_print("== anon object = 0x%p ,area = 0x%p, pagenum = %d vaddr= %d\n",obj,faulted_vmarea,ADDR_TO_PN(vaddr),vaddr);
+       	if(faulted_vmarea==NULL){
+                dbg(DBG_PGTBL|DBG_ERROR,"A fault occured while fetching the vmarea for virtual address 0x%u\nKilling the process!!!\n",vaddr);
+                proc_kill(curproc, EFAULT);
+                return;
+        }
+	mmobj_t *obj = faulted_vmarea->vma_obj;
+ 
+dbg_print("== anon object = 0x%p ,area = 0x%p, pagenum = %d vaddr= %d\n",obj,faulted_vmarea,PAGE_OFFSET(page_addr),vaddr);
 
         if(faulted_vmarea==NULL){ 
                 dbg(DBG_TEST,"Null vmarea recieved\n"); 
@@ -112,7 +119,7 @@ handle_pagefault(uintptr_t vaddr, uint32_t cause)
 
                 pframe_t *needed_frm = NULL;
                 int ret=0;                
-                ret=pframe_get(obj,page_addr,&needed_frm);
+                ret=pframe_get(obj,PAGE_OFFSET(vaddr),&needed_frm);
                 if(ret<0)
                 {
                         return;
@@ -120,13 +127,16 @@ handle_pagefault(uintptr_t vaddr, uint32_t cause)
                 
                 pframe_clear_busy(needed_frm);
 
-                uintptr_t paddr = pt_virt_to_phys(vaddr);
-                pagedir_t *pageTable = pt_get();
+                uintptr_t paddr = pt_virt_to_phys((uint32_t)needed_frm->pf_addr);
+               
+		pt_set(curproc->p_pagedir);
+		pagedir_t *pageTable = pt_get();
 
-		pt_map(pageTable, (uint32_t)PAGE_ALIGN_UP(vaddr), (uint32_t)PAGE_ALIGN_UP(paddr), PROT_WRITE|PROT_READ|PROT_EXEC, PROT_WRITE|PROT_READ|PROT_EXEC);
-
-
+		/*pt_map(pageTable, (uint32_t)PAGE_ALIGN_DOWN(vaddr), (uint32_t)PAGE_ALIGN_DOWN(paddr), PROT_WRITE|PROT_READ|PROT_EXEC, PROT_WRITE|PROT_READ|PROT_EXEC);*/
+	pt_map(pageTable, (uintptr_t)PN_TO_ADDR(ADDR_TO_PN(vaddr)), paddr, PD_PRESENT|PD_WRITE|PD_USER, PT_PRESENT|PT_WRITE|PT_USER);
+	sched_broadcast_on(&needed_frm->pf_waitq);
 
         NOT_YET_IMPLEMENTED("VM: handle_pagefault");
+
 }
 

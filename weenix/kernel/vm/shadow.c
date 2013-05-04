@@ -177,9 +177,7 @@ dbg(DBG_VNREF,"lookuppage: searching for object: 0x%p, pagenum: %d, with forwrit
                        }
                        if(flag==0) /* look into the bottom most object of the chain*/
                        {
-                         temp = mmobj_bottom_obj(o);
-                        
-                         pg_frame = pframe_get_resident(temp,pagenum);
+                         pg_frame = pframe_get_resident(o,pagenum);
                             if(pg_frame)
                              {
                                if (pframe_is_busy(pg_frame))
@@ -187,9 +185,12 @@ dbg(DBG_VNREF,"lookuppage: searching for object: 0x%p, pagenum: %d, with forwrit
                                        
                                 *pf =pg_frame;
                              }
+                              else {
+                                pframe_get(o,PAGE_OFFSET(pagenum),pf);
+                            }
                        }
                   }
-                  if(!(o->mmo_shadowed))
+                  if(o->mmo_shadowed==NULL)
                       {   /* object is not shadow object */
                       dbg_print("RES pages = %d \n",o->mmo_nrespages);
                           pg_frame = pframe_get_resident(o,pagenum);
@@ -197,10 +198,12 @@ dbg(DBG_VNREF,"lookuppage: searching for object: 0x%p, pagenum: %d, with forwrit
                             {
                                 if (pframe_is_busy(pg_frame))
                                        sched_sleep_on(&pg_frame->pf_waitq);
-                                       
-                                *pf =pg_frame;
+                                       *pf =pg_frame;
                             }
-                       }
+                             else {
+                                pframe_get(o,pagenum,pf);
+                            }
+                     }
                }            
             else{
                     /* page lookup for write operation */
@@ -238,12 +241,14 @@ shadow_fillpage(mmobj_t *o, pframe_t *pf)
         KASSERT(!pframe_is_pinned(pf));
 	dbg(DBG_VNREF,"Fillpage: destinaiton object: 0x%ppf->pf_pagenum: %d\n",o,pf->pf_pagenum);
         /* look for the source page frame */
+        pframe_set_dirty(pf);
         int ret = shadow_lookuppage(o->mmo_shadowed,pf->pf_pagenum,0,&src_pf);
         if(ret == 0)
              {
                 if(src_pf){
         		memcpy(pf->pf_addr,src_pf->pf_addr,PAGE_SIZE);
         	}else{
+        	        pframe_clear_dirty(pf);
         		return -EFAULT;
                 }          
              

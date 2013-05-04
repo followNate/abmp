@@ -588,7 +588,6 @@ vlookuppage(mmobj_t *o, uint32_t pagenum, int forwrite, pframe_t **pf)
 {
         KASSERT(NULL != pf);
         KASSERT(NULL != o);
-        dbg_print("in vnode lookup obj= 0x%p , FILE = %d Page size = %d\n",o,(uint32_t) mmobj_to_vnode(o)->vn_len,pagenum * PAGE_SIZE);
         if ((uint32_t) mmobj_to_vnode(o)->vn_len <= pagenum * PAGE_SIZE) {
                 return -EINVAL;
         }

@@ -226,6 +226,7 @@ static pframe_t *
 pframe_alloc(mmobj_t *o, uint32_t pagenum)
 {
         pframe_t *pf;
+        dbg_print("alloccc\n");
         if (NULL == (pf = slab_obj_alloc(pframe_allocator))) {
                 dbg(DBG_PFRAME, "WARNING: not enough kernel memory\n");
                 return NULL;
