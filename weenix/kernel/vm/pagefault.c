@@ -123,8 +123,9 @@ dbg_print("== anon object = 0x%p ,area = 0x%p, pagenum = %d vaddr= %d\n",obj,fau
 
                 uintptr_t paddr = pt_virt_to_phys(vaddr);
                 pagedir_t *pageTable = pt_get();
-
-pt_map(pageTable, (uint32_t)PAGE_ALIGN_UP(vaddr), (uint32_t)PAGE_ALIGN_UP(paddr), PROT_WRITE|PROT_READ|PROT_EXEC, PROT_WRITE|PROT_READ|PROT_EXEC);
+pt_map(pageTable, (uint32_t)PAGE_ALIGN_UP(vaddr),(uint32_t)PAGE_ALIGN_UP(paddr), PD_USER|PD_PRESENT|PD_WRITE, PT_USER|PT_PRESENT|PT_WRITE);
+/*
+pt_map(pageTable, (uint32_t)PAGE_ALIGN_UP(vaddr), (uint32_t)PAGE_ALIGN_UP(paddr), PROT_WRITE|PROT_READ|PROT_EXEC, PROT_WRITE|PROT_READ|PROT_EXEC);*/
 
 
 
