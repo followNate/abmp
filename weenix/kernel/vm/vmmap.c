@@ -76,6 +76,7 @@ vmmap_destroy(vmmap_t *map)
 	if(!list_empty(&(map->vmm_list))){
 		vmarea_t * area;
 		list_iterate_begin(&(map->vmm_list), area, vmarea_t, vma_plink){
+			area->vma_obj->mmo_ops->put(area->vma_obj);
 			list_remove(&(area->vma_plink));
 		}list_iterate_end();
 	}
@@ -186,7 +187,7 @@ vmmap_lookup(vmmap_t *map, uint32_t vfn)
 	if(!list_empty(&(map->vmm_list))){        
 		vmarea_t *area;
                 list_iterate_begin(&(map->vmm_list), area, vmarea_t, vma_plink){
-dbg_print("area =0x%p,obj= 0x%p,  Start = %d, End= %d \n",area,area->vma_obj,area->vma_start,area->vma_end);
+/*dbg_print("area =0x%p,obj= 0x%p,  Start = %d, End= %d \n",area,area->vma_obj,area->vma_start,area->vma_end);*/
                         if(area->vma_start <= vfn && area->vma_end > vfn){  /*shud be > only */
 				vma = area;
 				break;
