@@ -155,9 +155,9 @@ anon_lookuppage(mmobj_t *o, uint32_t pagenum, int forwrite, pframe_t **pf)
 static int
 anon_fillpage(mmobj_t *o,pframe_t *pf)
 {
-	KASSERT(pframe_is_busy(pf));
-	KASSERT(!pframe_is_pinned(pf)); 
-	/*first get the page  pf->pf_obj and pf->pf_pagenum*/
+ 	KASSERT(pframe_is_busy(pf));
+ 	KASSERT(!pframe_is_pinned(pf));
+ 	/*first get the page  pf->pf_obj and pf->pf_pagenum*/
 	pframe_t *page = pframe_get_resident(pf->pf_obj,pf->pf_pagenum);
 	if(page){
 		/*fill the page with data and marked it a pinned*/

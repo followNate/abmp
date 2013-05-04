@@ -129,14 +129,12 @@ dbg_print("== anon object = 0x%p ,area = 0x%p, pagenum = %d vaddr= %d\n",obj,fau
 
                 uintptr_t paddr = pt_virt_to_phys((uint32_t)needed_frm->pf_addr);
                
-		pt_set(curproc->p_pagedir);
-		pagedir_t *pageTable = pt_get();
 
-		/*pt_map(pageTable, (uint32_t)PAGE_ALIGN_DOWN(vaddr), (uint32_t)PAGE_ALIGN_DOWN(paddr), PROT_WRITE|PROT_READ|PROT_EXEC, PROT_WRITE|PROT_READ|PROT_EXEC);*/
-	pt_map(pageTable, (uintptr_t)PN_TO_ADDR(ADDR_TO_PN(vaddr)), paddr, PD_PRESENT|PD_WRITE|PD_USER, PT_PRESENT|PT_WRITE|PT_USER);
+
+	pt_map(curproc->p_pagedir, (uintptr_t)PN_TO_ADDR(ADDR_TO_PN(vaddr)), paddr, PD_PRESENT|PD_WRITE|PD_USER, PT_PRESENT|PT_WRITE|PT_USER);
 	sched_broadcast_on(&needed_frm->pf_waitq);
 
-        NOT_YET_IMPLEMENTED("VM: handle_pagefault");
+        /*NOT_YET_IMPLEMENTED("VM: handle_pagefault");*/
 
 }
 

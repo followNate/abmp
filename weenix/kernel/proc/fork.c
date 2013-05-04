@@ -52,7 +52,9 @@ fork_setup_stack(const regs_t *regs, void *kstack)
 int
 do_fork(struct regs *regs)
 {
-
+		KASSERT (regs != NULL);
+		KASSERT (curproc != NULL);
+		KASSERT (curproc->p_state == PROC_RUNNING);
 		/* Creating a new process named fork_process */
 		proc_t *child_process = proc_create("child_process");
 		

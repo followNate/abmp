@@ -211,7 +211,7 @@ kthread_clone(kthread_t *thr)
 		
         /* insert the thread link into process list */
         list_insert_head(&(curproc->p_threads),&(clone_thread->kt_plink));
-            
+        KASSERT(KT_RUN == thr->kt_state);
         dbg(DBG_THR,"A clone thread is created for process %s (PID=%d)\n",curproc->p_comm,curproc->p_pid);
        
         return clone_thread;
