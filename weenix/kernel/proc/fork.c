@@ -129,7 +129,7 @@ do_fork(struct regs *regs)
 		
 		KASSERT(child_process->p_state == PROC_RUNNING);
 		KASSERT(child_process->p_pagedir !=NULL);
-		KASSERT(child_process->kt_stack != NULL);
+		KASSERT(child_thread->kt_kstack != NULL);
 		
 		/* thread's process */
 	    child_thread->kt_proc = child_process; 
