@@ -58,7 +58,7 @@
 #define TEST_13 13	/*  Unit testing VM map.c*/
 
 
-static int curtest = TEST_13;
+static int curtest = TEST_9;
 
 
 GDB_DEFINE_HOOK(boot)

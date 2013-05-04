@@ -185,36 +185,33 @@ kthread_clone(kthread_t *thr)
 		KASSERT(NULL != curproc);
 		
 		/* allocate a slab to a thread */
-        kthread_t *clone_thread = slab_obj_alloc(kthread_allocator);
-        KASSERT(clone_thread != NULL);
+        thr = slab_obj_alloc(kthread_allocator);
+        KASSERT(thr != NULL);
    
 		/*empty the slab contents */
-        memset(clone_thread, 0, sizeof(kthread_t));
+        memset(thr, 0, sizeof(kthread_t));
 
 		/* allocate the stack for new thread */
-        clone_thread->kt_kstack = alloc_stack();
-        KASSERT(clone_thread->kt_kstack != NULL);
+        thr->kt_kstack = alloc_stack();
+        KASSERT(thr->kt_kstack != NULL);
         
 		/* set the context of the clone thread */
-        context_setup(&(clone_thread->kt_ctx),NULL,0,0,(clone_thread->kt_kstack),DEFAULT_STACK_SIZE,(curproc->p_pagedir));          
-        
+        context_setup(&(thr->kt_ctx),NULL,0,0,(thr->kt_kstack),DEFAULT_STACK_SIZE,(curproc->p_pagedir));          
        
-        
-        
-        /* thread's process */
-		clone_thread->kt_proc = curproc;
        
+		
+		
         /* set the current state of new thread */
-        clone_thread->kt_wchan = NULL;
-        clone_thread->kt_state = KT_RUN;
-		clone_thread->kt_cancelled = 0;
+        thr->kt_wchan = NULL;
+        thr->kt_state = KT_RUN;
+		thr->kt_cancelled = 0;
 		
         /* insert the thread link into process list */
-        list_insert_head(&(curproc->p_threads),&(clone_thread->kt_plink));
+        list_insert_head(&(curproc->p_threads),&(thr->kt_plink));
         KASSERT(KT_RUN == thr->kt_state);
         dbg(DBG_THR,"A clone thread is created for process %s (PID=%d)\n",curproc->p_comm,curproc->p_pid);
        
-        return clone_thread;
+        return thr;
         NOT_YET_IMPLEMENTED("VM: kthread_clone");
         return NULL;
 }
