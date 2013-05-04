@@ -136,7 +136,6 @@ shadow_put(mmobj_t *o)
 dbg(DBG_VNREF,"after shadow_put: object = 0x%p , reference_count =%d, nrespages=%d\n",o,o->mmo_refcount,o->mmo_nrespages);
           if(0 == o->mmo_refcount && 0 == o->mmo_nrespages )
               {
-                 o = NULL;
                  slab_obj_free(shadow_allocator, o);
               }
         
