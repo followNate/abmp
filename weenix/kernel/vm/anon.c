@@ -40,7 +40,10 @@ void
 anon_init()
 {
         anon_allocator = slab_allocator_create("anonobj", sizeof(mmobj_t));
-        KASSERT(NULL != anon_allocator && "failed to create anonobj allocator!\n");
+        dbg(DBG_VM,"GRADING: KASSERT(NULL != anon_allocator) is going getting invoked right now ! \n");
+        KASSERT(NULL != anon_allocator);
+        dbg(DBG_VM,"GRADING: I've made it ! May I have 2 points please ! \n");
+        
 /*        NOT_YET_IMPLEMENTED("VM: anon_init");*/
 }
 
@@ -74,7 +77,10 @@ anon_create()
 static void
 anon_ref(mmobj_t *o)
 {
-        KASSERT(o && (0 < o->mmo_refcount) && (&anon_mmobj_ops == o->mmo_ops));
+	dbg(DBG_VM,"GRADING: KASSERT(o && (0 < o->mmo_refcount) && (&anon_mmobj_ops == o->mmo_ops)) is going getting invoked right now ! \n");
+    KASSERT(o && (0 < o->mmo_refcount) && (&anon_mmobj_ops == o->mmo_ops));
+	dbg(DBG_VM,"GRADING: I've made it ! May I have 2 points please ! \n");
+	
 	dbg(DBG_VNREF,"before anon_ref: object = 0x%p , reference_count =%d, nrespages=%d\n",o,o->mmo_refcount,o->mmo_nrespages);
         o->mmo_refcount++;
 	dbg(DBG_VNREF,"after anon_ref: object = 0x%p , reference_count =%d, nrespages=%d\n",o,o->mmo_refcount,o->mmo_nrespages);
@@ -92,7 +98,10 @@ anon_ref(mmobj_t *o)
 static void
 anon_put(mmobj_t *o)
 {
-        KASSERT(o && (0 < o->mmo_refcount) && (&anon_mmobj_ops == o->mmo_ops));
+	dbg(DBG_VM,"GRADING: KASSERT(o && (0 < o->mmo_refcount) && (&anon_mmobj_ops == o->mmo_ops)) is going getting invoked right now ! \n");
+    KASSERT(o && (0 < o->mmo_refcount) && (&anon_mmobj_ops == o->mmo_ops));
+	dbg(DBG_VM,"GRADING: I've made it ! May I have 2 points please ! \n");
+	
 	dbg(DBG_VNREF,"before shadow_put: object = 0x%p , reference_count =%d, nrespages=%d\n",o,o->mmo_refcount,o->mmo_nrespages);
         if(o->mmo_nrespages == (o->mmo_refcount - 1))  
               {
@@ -155,8 +164,14 @@ anon_lookuppage(mmobj_t *o, uint32_t pagenum, int forwrite, pframe_t **pf)
 static int
 anon_fillpage(mmobj_t *o,pframe_t *pf)
 {
+	dbg(DBG_VM,"GRADING: KASSERT(pframe_is_busy(pf)) is going getting invoked right now ! \n");
  	KASSERT(pframe_is_busy(pf));
+ 	dbg(DBG_VM,"GRADING: I've made it ! May I have 2 points please ! \n");
+ 	
+ 	dbg(DBG_VM,"GRADING: KASSERT(!pframe_is_pinned(pf)) is going getting invoked right now ! \n");
  	KASSERT(!pframe_is_pinned(pf));
+ 	dbg(DBG_VM,"GRADING: I've made it ! May I have 2 points please ! \n");
+ 	
  	/*first get the page  pf->pf_obj and pf->pf_pagenum*/
 	pframe_t *page = pframe_get_resident(pf->pf_obj,pf->pf_pagenum);
 	if(page){
