@@ -121,8 +121,34 @@ do_fork(struct regs *regs)
 		/* Flush the TLB */
 		tlb_flush_all();
 		
-		/* Create a thread of the chilf process */
-		kthread_t *child_thread = kthread_create(child_process, NULL, 0, 0);
+		/* Create a thread of the child process */
+		kthread_t *child_thread = kthread_create(child_process, NULL, 0, NULL);
+		
+		/* Call kthread_clone to set up new stack and context of the theread of the child process */
+		child_thread = kthread_clone(curthr);
+		
+		KASSERT(child_process->p_state == PROC_RUNNING);
+		KASSERT(child_process->p_pagedir !=NULL);
+		KASSERT(child_process->kt_stack != NULL);
+		
+		/* thread's process */
+	    child_thread->kt_proc = child_process; 
+		
+		/* Set up the following child process's thread context and the rest are set up by kthread_clone */
+		(child_thread->kt_ctx).c_eip = (uint32_t)userland_entry;
+		(child_thread->kt_ctx).c_esp = fork_setup_stack(regs, child_thread->kt_kstack);
+		
+		/* Set the child working directory to parent working directory */
+		child_process->p_cwd = curproc->p_cwd;
+		
+		
+		
+		
+		/* On sucess return 0 */
+		return 0;
+		
+		
+		
 		/*child_thread->kt_ctx->c_esp = fork_setup_stack(regs, void *kstack)*/
 		NOT_YET_IMPLEMENTED("VM: do_fork");
 
