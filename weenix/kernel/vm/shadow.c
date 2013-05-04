@@ -284,6 +284,10 @@ shadow_cleanpage(mmobj_t *o, pframe_t *pf)
 
         int  ret = shadow_lookuppage(o->mmo_shadowed,pf->pf_pagenum,0,&dest_pf);
         if(dest_pf){
+		if(pframe_is_busy(pf)){
+			pframe_clear_busy(pf);
+			sched_broadcast_on(&pf->pf_waitq);
+		}
                        while(pframe_is_pinned(pf))
                         pframe_unpin(pf);
                         memcpy(dest_pf,pf,PAGE_SIZE);
