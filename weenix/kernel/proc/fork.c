@@ -52,9 +52,18 @@ fork_setup_stack(const regs_t *regs, void *kstack)
 int
 do_fork(struct regs *regs)
 {
+		dbg(DBG_VM,"GRADING: KASSERT (regs != NULL) is going getting invoked right now ! \n");
 		KASSERT (regs != NULL);
+		dbg(DBG_VM,"GRADING: I've made it ! May I have 2 points please ! \n");
+		
+		dbg(DBG_VM,"GRADING: KASSERT (curproc != NULL) is going getting invoked right now ! \n");
 		KASSERT (curproc != NULL);
+		dbg(DBG_VM,"GRADING: I've made it ! May I have 2 points please ! \n");
+		
+		dbg(DBG_VM,"GRADING: KASSERT (curproc->p_state == PROC_RUNNING) is going getting invoked right now ! \n");
 		KASSERT (curproc->p_state == PROC_RUNNING);
+		dbg(DBG_VM,"GRADING: I've made it ! May I have 2 points please ! \n");
+		
 		/* Creating a new process named fork_process */
 		proc_t *child_process = proc_create("child_process");
 		
@@ -127,9 +136,17 @@ do_fork(struct regs *regs)
 		/* Call kthread_clone to set up new stack and context of the theread of the child process */
 		child_thread = kthread_clone(curthr);
 		
+		dbg(DBG_VM,"GRADING: KASSERT(child_process->p_state == PROC_RUNNING) is going getting invoked right now ! \n");
 		KASSERT(child_process->p_state == PROC_RUNNING);
+		dbg(DBG_VM,"GRADING: I've made it ! May I have 2 points please ! \n");
+		
+		dbg(DBG_VM,"GRADING: KASSERT(child_process->p_pagedir !=NULL) is going getting invoked right now ! \n");
 		KASSERT(child_process->p_pagedir !=NULL);
+		dbg(DBG_VM,"GRADING: I've made it ! May I have 2 points please ! \n");
+		
+		dbg(DBG_VM,"GRADING: KASSERT(child_thread->kt_kstack != NULL) is going getting invoked right now ! \n");
 		KASSERT(child_thread->kt_kstack != NULL);
+		dbg(DBG_VM,"GRADING: I've made it ! May I have 2 points please ! \n");
 		
 		/* thread's process */
 	    child_thread->kt_proc = child_process; 

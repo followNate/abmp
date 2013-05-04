@@ -53,7 +53,9 @@ void
 shadow_init()
 {
         shadow_allocator = slab_allocator_create("sahdowobj", sizeof(mmobj_t));
-        KASSERT(NULL != shadow_allocator && "failed to create shadowobj allocator!\n");
+        dbg(DBG_VM,"GRADING: KASSERT(NULL != shadow_allocator) is going getting invoked right now ! \n");
+        KASSERT(NULL != shadow_allocator);
+        dbg(DBG_VM,"GRADING: I've made it ! May I have 2 points please ! \n");
 /*        NOT_YET_IMPLEMENTED("VM: shadow_init");*/
 }
 
@@ -88,7 +90,9 @@ shadow_create()
 static void
 shadow_ref(mmobj_t *o)
 {
-        KASSERT(o && (0 < o->mmo_refcount) && (&shadow_mmobj_ops == o->mmo_ops));
+	dbg(DBG_VM,"GRADING: KASSERT(o && (0 < o->mmo_refcount) && (&shadow_mmobj_ops == o->mmo_ops)) is going getting invoked right now ! \n");
+    KASSERT(o && (0 < o->mmo_refcount) && (&shadow_mmobj_ops == o->mmo_ops));
+    dbg(DBG_VM,"GRADING: I've made it ! May I have 2 points please ! \n");
 	dbg(DBG_VNREF,"before shadow_ref: object = 0x%p , reference_count =%d, nrespages=%d\n",o,o->mmo_refcount,o->mmo_nrespages);
         o->mmo_refcount++;
 	dbg(DBG_VNREF,"after shadow_ref: object = 0x%p , reference_count =%d, nrespages=%d\n",o,o->mmo_refcount,o->mmo_nrespages);
@@ -106,8 +110,9 @@ shadow_ref(mmobj_t *o)
 static void
 shadow_put(mmobj_t *o)
 {
+	dbg(DBG_VM,"GRADING: KASSERT(o && (0 < o->mmo_refcount) && (&shadow_mmobj_ops == o->mmo_ops)) is going getting invoked right now ! \n");
         KASSERT(o && (0 < o->mmo_refcount) && (&shadow_mmobj_ops == o->mmo_ops));
-
+dbg(DBG_VM,"GRADING: I've made it ! May I have 2 points please ! \n");
 	dbg(DBG_VNREF,"before shadow_put: object = 0x%p , reference_count =%d, nrespages=%d\n",o,o->mmo_refcount,o->mmo_nrespages);
   
         if(o->mmo_nrespages == (o->mmo_refcount - 1))  
@@ -236,8 +241,13 @@ static int
 shadow_fillpage(mmobj_t *o, pframe_t *pf)
 {
         pframe_t *src_pf, *dest_pf;
+        dbg(DBG_VM,"GRADING:  KASSERT(pframe_is_busy(pf)) is going getting invoked right now ! \n");
         KASSERT(pframe_is_busy(pf));
+        dbg(DBG_VM,"GRADING: I've made it ! May I have 2 points please ! \n");
+        
+        dbg(DBG_VM,"GRADING: KASSERT(!pframe_is_pinned(pf)) is going getting invoked right now ! \n");
         KASSERT(!pframe_is_pinned(pf));
+        dbg(DBG_VM,"GRADING: I've made it ! May I have 2 points please ! \n");
 	dbg(DBG_VNREF,"Fillpage: destinaiton object: 0x%ppf->pf_pagenum: %d\n",o,pf->pf_pagenum);
         /* look for the source page frame */
         pframe_set_dirty(pf);

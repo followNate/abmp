@@ -20,10 +20,9 @@ Aditya Deore:		25%
 
 DESIGN
 -------
-We have implemented 39/40 functions have been in Kernel Assignment #3.
+We have implemented 39 out of 40 functions in this Kernel Assignment #3.
 KASSERT Statements are used at appropriate locations as mentioned in the requirements document. dbg() statements are added in the code to generate console logs for debugging and testing purpose.
 These logs can also be used for validating the test cases.
-
 
 Submiting files:
 ----------------
@@ -52,12 +51,12 @@ Submiting files:
 
 KNOWN BUGS
 ----------
-The VM management is stuck in handle_pagefault. We are partially able to handle page fault.
+The Virtual Memory program is having a bug in handle_pagefault function.
 
 
 DEVIATIONS
 ----------
-We are not able to enter in userland. None of the test cases are working.
+We are not able to enter in userland. S5F5 is working
 
 
 REFERNCES & CREDITS
@@ -68,9 +67,12 @@ None.
 
 TESTING GUIDELINES
 ------------------					
-We implemented 39/40 functions  of the VM kernel assignment. 
-The program is partially able to handle page_fault.
-
+We implemented 39 out of 40 functions  of the Virtual Memory kernel assignment. This includes
+VM Areas, Anonymous Objects, Shadow Objects, Memory Management Unit, Traps and User Memory and 
+Process Memory Management. We tried our best to make the VM run. The program is partially able to handle page fault.
+It is able to handle page fault in the first go but later since invalid virtual address (vaddr)
+is passed, our kernel get panic. We havent implemeted the do_brk() function. 
+We are able to compile the entire code without any warning and error.  
 
 
 

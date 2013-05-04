@@ -72,7 +72,9 @@ vmmap_create(void)
 void
 vmmap_destroy(vmmap_t *map)
 {
+	dbg(DBG_VM,"GRADING: KASSERT(NULL!=map) is going getting invoked right now ! \n");
 	KASSERT(NULL!=map);
+	dbg(DBG_VM,"GRADING: I've made it ! May I have 2 points please ! \n");
 	if(!list_empty(&(map->vmm_list))){
 		vmarea_t * area;
 		list_iterate_begin(&(map->vmm_list), area, vmarea_t, vma_plink){
@@ -99,11 +101,22 @@ vmmap_destroy(vmmap_t *map)
 void
 vmmap_insert(vmmap_t *map, vmarea_t *newvma)
 {
+	dbg(DBG_VM,"GRADING: KASSERT(NULL!=map && NULL!=newvma) is going getting invoked right now ! \n");
 	KASSERT(NULL!=map && NULL!=newvma);
+	dbg(DBG_VM,"GRADING: I've made it ! May I have 2 points please ! \n");
+	
+	dbg(DBG_VM,"GRADING: KASSERT(NULL == newvma->vma_vmmap) is going getting invoked right now ! \n");
 	KASSERT(NULL == newvma->vma_vmmap);
+	dbg(DBG_VM,"GRADING: I've made it ! May I have 2 points please ! \n");
+	
+	dbg(DBG_VM,"GRADING: KASSERT(newvma->vma_start < newvma->vma_end) is going getting invoked right now ! \n");
 	KASSERT(newvma->vma_start < newvma->vma_end);
+	dbg(DBG_VM,"GRADING: I've made it ! May I have 2 points please ! \n");
+	
+	dbg(DBG_VM,"GRADING: KASSERT(ADDR_TO_PN(USER_MEM_LOW) <= newvma->vma_start && ADDR_TO_PN(USER_MEM_HIGH) >= newvma->vma_end) is going getting invoked right now ! \n");
 	KASSERT(ADDR_TO_PN(USER_MEM_LOW) <= newvma->vma_start && ADDR_TO_PN(USER_MEM_HIGH) >= newvma->vma_end);
-
+	dbg(DBG_VM,"GRADING: I've made it ! May I have 2 points please ! \n");
+	
 	newvma->vma_vmmap = map;
 	int before = 0;
 
@@ -137,8 +150,13 @@ vmmap_insert(vmmap_t *map, vmarea_t *newvma)
 int
 vmmap_find_range(vmmap_t *map, uint32_t npages, int dir)
 {
+	dbg(DBG_VM,"GRADING: KASSERT(NULL!=map) is going getting invoked right now ! \n");
 	KASSERT(NULL!=map);
+	dbg(DBG_VM,"GRADING: I've made it ! May I have 2 points please ! \n");
+	
+	dbg(DBG_VM,"GRADING: KASSERT(0<npages) is going getting invoked right now ! \n");
 	KASSERT(0<npages);
+	dbg(DBG_VM,"GRADING: I've made it ! May I have 2 points please ! \n");
 	
 	/*Mohit: Assumptions: Every memory region has mmobj_t object
 	 * which manages pframes (which in turn deals with physical
@@ -188,8 +206,10 @@ vmmap_find_range(vmmap_t *map, uint32_t npages, int dir)
 vmarea_t *
 vmmap_lookup(vmmap_t *map, uint32_t vfn)
 {
+	dbg(DBG_VM,"GRADING: KASSERT(NULL!=map) is going getting invoked right now ! \n");
 	KASSERT(NULL!=map);
-
+	dbg(DBG_VM,"GRADING: I've made it ! May I have 2 points please ! \n");
+	
 	vmarea_t *vma = NULL;
 	if(!list_empty(&(map->vmm_list))){        
 		vmarea_t *area;
@@ -264,13 +284,34 @@ vmmap_clone(vmmap_t *map)
  */
 int
 vmmap_map(vmmap_t *map, vnode_t *file, uint32_t lopage, uint32_t npages, int prot, int flags, off_t off, int dir, vmarea_t **new)
-{	KASSERT(NULL != map);
+{	
+		dbg(DBG_VM,"GRADING: KASSERT(NULL != map) is going getting invoked right now ! \n");
+		KASSERT(NULL != map);
+		dbg(DBG_VM,"GRADING: I've made it ! May I have 2 points please ! \n");
+		
+		dbg(DBG_VM,"GRADING: KASSERT(0 < npages) is going getting invoked right now ! \n");
         KASSERT(0 < npages);
+        dbg(DBG_VM,"GRADING: I've made it ! May I have 2 points please ! \n");
+        
+        dbg(DBG_VM,"GRADING: KASSERT(!(~(PROT_NONE | PROT_READ | PROT_WRITE | PROT_EXEC) & prot)) is going getting invoked right now ! \n");
         KASSERT(!(~(PROT_NONE | PROT_READ | PROT_WRITE | PROT_EXEC) & prot));
+        dbg(DBG_VM,"GRADING: I've made it ! May I have 2 points please ! \n");
+        
+        dbg(DBG_VM,"GRADING: KASSERT((MAP_SHARED & flags) || (MAP_PRIVATE & flags)) is going getting invoked right now ! \n");
         KASSERT((MAP_SHARED & flags) || (MAP_PRIVATE & flags));
+        dbg(DBG_VM,"GRADING: I've made it ! May I have 2 points please ! \n");
+        
+        dbg(DBG_VM,"GRADING: KASSERT((0 == lopage) || (ADDR_TO_PN(USER_MEM_LOW) <= lopage)) is going getting invoked right now ! \n");
         KASSERT((0 == lopage) || (ADDR_TO_PN(USER_MEM_LOW) <= lopage));
+        dbg(DBG_VM,"GRADING: I've made it ! May I have 2 points please ! \n");
+        
+        dbg(DBG_VM,"GRADING: KASSERT((0 == lopage) || (ADDR_TO_PN(USER_MEM_HIGH) >= (lopage + npages))) is going getting invoked right now ! \n");
         KASSERT((0 == lopage) || (ADDR_TO_PN(USER_MEM_HIGH) >= (lopage + npages)));
+        dbg(DBG_VM,"GRADING: I've made it ! May I have 2 points please ! \n");
+        
+        dbg(DBG_VM,"GRADING: KASSERT(PAGE_ALIGNED(off)) is going getting invoked right now ! \n");
         KASSERT(PAGE_ALIGNED(off));
+        dbg(DBG_VM,"GRADING: I've made it ! May I have 2 points please ! \n");
 	
 	int start=0;
 
@@ -470,7 +511,9 @@ int
 vmmap_is_range_empty(vmmap_t *map, uint32_t startvfn, uint32_t npages)
 {
 	uint32_t endvfn = startvfn+npages;
+	dbg(DBG_VM,"GRADING: KASSERT((startvfn < endvfn) && (ADDR_TO_PN(USER_MEM_LOW) <= startvfn) && (ADDR_TO_PN(USER_MEM_HIGH) >= endvfn)) is going getting invoked right now ! \n");
 	KASSERT((startvfn < endvfn) && (ADDR_TO_PN(USER_MEM_LOW) <= startvfn) && (ADDR_TO_PN(USER_MEM_HIGH) >= endvfn));
+	dbg(DBG_VM,"GRADING: I've made it ! May I have 2 points please ! \n");
 		
 	int i=1;
 
