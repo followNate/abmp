@@ -76,6 +76,12 @@ vmmap_destroy(vmmap_t *map)
 	if(!list_empty(&(map->vmm_list))){
 		vmarea_t * area;
 		list_iterate_begin(&(map->vmm_list), area, vmarea_t, vma_plink){
+			if(area->vma_obj->mmo_un.mmo_bottom_obj != NULL){
+				vnode_t *v = CONTAINER_OF((area->vma_obj->mmo_un.mmo_bottom_obj), vnode_t, vn_mmobj);
+				if(v->vn_nrespages < v->vn_refcount){
+					vput(v);
+				}
+			}
 			area->vma_obj->mmo_ops->put(area->vma_obj);
 			list_remove(&(area->vma_plink));
 			vmarea_free(area);
