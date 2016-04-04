@@ -1,3 +1,21 @@
+/******************************************************************************/
+/* Important Spring 2016 CSCI 402 usage information:                          */
+/*                                                                            */
+/* This fils is part of CSCI 402 kernel programming assignments at USC.       */
+/*         53616c7465645f5f2e8d450c0c5851acd538befe33744efca0f1c4f9fb5f       */
+/*         3c8feabc561a99e53d4d21951738da923cd1c7bbd11b30a1afb11172f80b       */
+/*         984b1acfbbf8fae6ea57e0583d2610a618379293cb1de8e1e9d07e6287e8       */
+/*         de7e82f3d48866aa2009b599e92c852f7dbf7a6e573f1c7228ca34b9f368       */
+/*         faaef0c0fcf294cb                                                   */
+/* Please understand that you are NOT permitted to distribute or publically   */
+/*         display a copy of this file (or ANY PART of it) for any reason.    */
+/* If anyone (including your prospective employer) asks you to post the code, */
+/*         you must inform them that you do NOT have permissions to do so.    */
+/* You are also NOT permitted to remove or alter this comment block.          */
+/* If this comment block is removed or altered in a submitted file, 20 points */
+/*         will be deducted.                                                  */
+/******************************************************************************/
+
 #include "kernel.h"
 #include "globals.h"
 #include "types.h"
@@ -25,38 +43,27 @@
 int
 lookup(vnode_t *dir, const char *name, size_t len, vnode_t **result)
 {
-        KASSERT(NULL != dir);
-        KASSERT(NULL != name);
-        
-        if (dir->vn_ops->lookup == NULL||(!S_ISDIR(dir->vn_mode)))
-        {
-                dbg(DBG_ERROR | DBG_VFS,"ERROR: lookup(): dir has no lookup()\n");
-                return -ENOTDIR;
-        }
-        if(strcmp(name,".")==0||len == 0)
-        {
-		dbg(DBG_VFS,"name (%s) points to current directory\n",name);
-                vref(dir);
-                *result=dir;
-                return 0;
-        }
-        if (len > NAME_LEN)
-        {
-                dbg(DBG_ERROR | DBG_VFS, "ERROR: lookup(): name is too long.\n");
-                return -ENAMETOOLONG;
-        }
-        int i = dir->vn_ops->lookup(dir,name,len,result);       /*Calling lookup for the vnode dir*/
-	 if(i<0)                                                 /* Return ENOTDIR if lookup fails*/
-        {
-                dbg(DBG_VFS,"ERROR: lookup(): dir has no entry with the given name:\n");
-                return i;
-        }
-       /* vref(*result);  Increment the refcount */
-        KASSERT(NULL != result);
-       /*NOT_YET_IMPLEMENTED("VFS: lookup");*/
-        return 0;                                               /* return 0 if succesful */
+		if (!dir || dir->vn_mode != S_IFDIR || dir->vn_ops->lookup == NULL) {
+			return -ENOTDIR;
+		}
 
+		int ret;
+
+		/* . and .. need to be finished */
+        if (!strcmp(name, ".")) {
+			ret = 0;
+		}
+		else if (!strcmp(name, "..")) {
+			ret = 0;
+		}
+		else {
+			ret = dir->vn_ops->lookup(dir, name, len, result);
+		}
+		
+		return ret;
 }
+
+
 /* When successful this function returns data in the following "out"-arguments:
  *  o res_vnode: the vnode of the parent directory of "name"
  *  o name: the `basename' (the element of the pathname)
@@ -76,109 +83,78 @@ lookup(vnode_t *dir, const char *name, size_t len, vnode_t **result)
  * be incremented.
  */
 int
-dir_namev(const char *pathname, size_t *namelen, const char **name,vnode_t *base, vnode_t **res_vnode)
+dir_namev(const char *pathname, size_t *namelen, const char **name,
+          vnode_t *base, vnode_t **res_vnode)
 {
-	KASSERT(NULL != pathname);
-	KASSERT(NULL!=res_vnode); 
-	vnode_t *dir_vnode;
-        vnode_t *ret_result;
-        char *file_name=(char *)pathname;
-        char *file_pass=(char *)pathname;
-        char *end=(char *)pathname + strlen(pathname);
-        dbg(DBG_VFS, "INFO: The Path is (%s)\n",  pathname);
-        if (strlen(pathname) > MAXPATHLEN)
-        {
-                dbg(DBG_ERROR | DBG_VFS, "ERROR: dir_namev(): The Path (%s) is too long.\n",  pathname);
-                return -ENAMETOOLONG;
-        }
-        if (strlen(pathname) == 0)
-        {
-                dbg(DBG_ERROR | DBG_VFS, "ERROR: dir_namev(): The name is invalid\n");
-                return -EINVAL;
-        }
-        if(pathname[0]=='/')
-        {
-                dir_vnode=vfs_root_vn;
-                vref(dir_vnode);
-                file_name++;    
-        }
-        else if(base == NULL)
-        {
-                dir_vnode = curproc->p_cwd;
-                vref(dir_vnode);
-        }
-        else
-        {
-                dir_vnode = base;
-                vref(dir_vnode);
-        }
-       /* if (file_name == end)
-        {
-                vput(dir_vnode);
-                return -ENOENT;
-        }*/     
-        while(file_pass != end)
-        { 
-                file_pass = strchr(file_name,'/');
-                if(NULL==dir_vnode)
-                {
-                
-                        dbg(DBG_ERROR | DBG_VFS, "ERROR: dir_namev(): lookup failed. a path element does not exist.\n");
-                        return -ENOENT;
-                }
+		if (strlen(pathname) > MAXPATHLEN) {
+			return -ENAMETOOLONG;
+		}
+		if (!strlen(pathname)) {
+			return -EINVAL;
+		}
+		
+		/* Set **res_vnode */
+		vnode_t *ptr, *temp;
+		int ret, len;
+		char *child = (char *)pathname, *parent = (char *)pathname;
+		if (*pathname == '/') {
+			ptr = vfs_root_vn;
+			parent++;
+			child++;
+		} else if (!base) {
+			ptr = curproc->p_cwd;
+		} else {
+			ptr = base;
+		}
 
-                if (!S_ISDIR(dir_vnode->vn_mode))
-                {
-                        dbg(DBG_ERROR | DBG_VFS, "ERROR: dir_namev(): lookup failed. a path element is not a directory.\n");
-                        vput(dir_vnode);
-                        return -ENOTDIR;
-                 }
-                 if(file_pass!=NULL)
-                 {
-                        int kk= file_pass - file_name ;
-                        if (kk > NAME_LEN)
-                        {
-                               dbg(DBG_ERROR | DBG_VFS, "ERROR: dir_namev(): lookup failed. Path component too long.\n");
-                               vput(dir_vnode);
-                               return -ENAMETOOLONG;
-                        }
-                        
-                        dbg(DBG_VFS, "The name passing to lookup is: (%s), namelen is (%d)\n", file_pass,*namelen);
-                        int ii=lookup(dir_vnode,file_name,file_pass - file_name,&ret_result);
-                        if(ii<0)
-                        {
-                               vput(dir_vnode);    
-                               return ii;      
-                        }
-                        vput(dir_vnode);
-                        dir_vnode = ret_result;
-                        file_pass++;
-                        file_name=file_pass;
-                        
-                 }
-                 else
-                        break;
-        }
-       *namelen = end-file_name;
-       *res_vnode = dir_vnode;
-       *name = (const char*)file_name;
+		vref(ptr);
+		
+		while (1) {
+			if (!ptr) {
+				return -ENOENT;
+			}
+			if (!S_ISDIR(ptr->vn_mode)) {
+				vput(ptr);
+				return -ENOTDIR;
+			}
 
-       dbg(DBG_VFS, "INFO: returning from namev.c and the name is (%s), namelen is (%d)\n", file_name,*namelen);
+			child = strchr(parent, '/');
+			len = child - parent;
 
+			if (len > NAME_LEN) {
+				vput(ptr);
+				return -ENAMETOOLONG;
+			}
+			
+			while (*child == '/') {
+				child++;
+			}
 
-	      
-	KASSERT(NULL!=*res_vnode);
-	KASSERT(NULL != namelen);
-        KASSERT(NULL != name);
+			if (*child == '\0' || !child) {
+				break;
+			}
 
-        /*NOT_YET_IMPLEMENTED("VFS: dir_namev");*/
-        return 0;
+			ret = lookup(ptr, parent, len, &temp);
+			vput(ptr);
+			if (!ret) {
+				ptr = temp;
+				parent = child;
+			} else {
+				return ret;
+			}
+		}
+
+		*namelen = len;
+		*name = parent;
+		*res_vnode = ptr;
+		
+		return 0;
 }
 
 /* This returns in res_vnode the vnode requested by the other parameters.
  * It makes use of dir_namev and lookup to find the specified vnode (if it
  * exists).  flag is right out of the parameters to open(2); see
- * <weenix/fnctl.h>.  If the O_CREAT flag is specified, and the file does
+ * <weenix/fcntl.h>.  If the O_CREAT flag is specified, and the file does
  * not exist call create() in the parent directory vnode.
  *
  * Note: Increments vnode refcount on *res_vnode.
@@ -186,48 +162,35 @@ dir_namev(const char *pathname, size_t *namelen, const char **name,vnode_t *base
 int
 open_namev(const char *pathname, int flag, vnode_t **res_vnode, vnode_t *base)
 {
-        KASSERT(pathname != NULL);
-        size_t namelen=0;
-        vnode_t *res_vnode1;
-        const char *name=NULL;
-        int i = dir_namev(pathname,&namelen,&name,base,&res_vnode1);
-	if(i<0)
-        {
-                return i;
-        }
-        if (!S_ISDIR(res_vnode1->vn_mode))
-        {
-                /* Entry is not a directory */
-                vput(res_vnode1);
-                return -ENOTDIR;
-        }
-        dbg(DBG_VFS,"Calling lookup() to check for the file existence\n");
-        int j=lookup(res_vnode1,name,namelen,res_vnode);     
-        if(j<0)
-        {
-		if(flag&O_CREAT)
-                {
-        		KASSERT(res_vnode1->vn_ops->create!=NULL);
-        		int k=(res_vnode1->vn_ops->create)(res_vnode1,name,namelen,res_vnode);
-        		if(k<0)
-        		{
-        			vput(res_vnode1);
-        			return k;
-        		}
-        	}
-        	else
-        	{
-        	        vput(res_vnode1);
-        	        return j;
-        	}		
-        }        
-       /* NOT_YET_IMPLEMENTED("VFS: open_namev");*/
-        vput(res_vnode1);
-        return 0;
+        /*************** kernel 2 ***************/
+        size_t namelen;
+		const char *name;
+		vnode_t *temp;
+		int base_ret = dir_namev(pathname, &namelen, &name, base, res_vnode);
+		if (!base_ret) {
+			return base_ret;
+		}
+
+		if (!S_ISDIR((*res_vnode)->vn_mode)) {
+			vput(*res_vnode);
+			return -ENOTDIR;
+		}
+
+		int lookup_ret = lookup(*res_vnode, name, namelen, &temp);
+		if (!lookup_ret) {
+			if (flag & O_CREAT) {
+				int create_ret = (*res_vnode)->vn_ops->create(*res_vnode, name, namelen, res_vnode);
+				if (!create_ret) {
+					return create_ret;
+				}
+			}
+		} else {
+			*res_vnode = temp;
+		}
+
+		return 0;
+		/*************** kernel 2 ***************/
 }
-
-
-
 
 #ifdef __GETCWD__
 /* Finds the name of 'entry' in the directory 'dir'. The name is writen
